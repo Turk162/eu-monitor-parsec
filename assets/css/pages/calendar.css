@@ -1,0 +1,510 @@
+/* ===================================================================
+   CALENDAR PAGE STYLES
+   ===================================================================
+   Custom styles for calendar.php page
+   Following Paper Dashboard design principles
+   ================================================================= */
+
+/* Sidebar Project Filter Styles */
+#project_select {
+    min-height: 120px;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+#project_select option {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+#project_select option:checked {
+    background-color: #51CACF;
+    color: white;
+}
+
+.btn-group-sm .btn {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+/* Button group improvements */
+.btn-group .btn-sm {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+/* Calendar Card */
+.calendar-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.calendar-card .card-header {
+    background: linear-gradient(135deg, #51CACF 0%, #667eea 100%);
+    color: white;
+    border-bottom: none;
+    padding: 20px;
+}
+
+.calendar-card .card-header .card-title {
+    color: white;
+    margin-bottom: 10px;
+}
+
+/* Calendar Legend */
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+    display: inline-block;
+}
+
+.legend-color.activity {
+    background-color: #007bff;
+}
+
+.legend-color.milestone {
+    background-color: #ffc107;
+}
+
+.legend-color.project {
+    background-color: #dc3545;
+}
+
+/* Separate Legend Card */
+.legend-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    margin-bottom: 20px;
+}
+
+.legend-card .calendar-legend {
+    gap: 20px;
+    margin: 0;
+}
+
+.legend-separator {
+    color: #6c757d;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.legend-card .legend-item {
+    font-size: 13px;
+    font-weight: 500;
+    color: black
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    width: 100%;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.calendar-day-header {
+    padding: 15px 8px;
+    text-align: center;
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 14px;
+    border-right: 1px solid #dee2e6;
+}
+
+.calendar-day-header:last-child {
+    border-right: none;
+}
+
+.calendar-body {
+    min-height: 400px;
+}
+
+.calendar-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid #eee;
+}
+
+.calendar-week:last-child {
+    border-bottom: none;
+}
+
+.calendar-day {
+    min-height: 80px;
+    padding: 8px;
+    border-right: 1px solid #eee;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.calendar-day:last-child {
+    border-right: none;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+}
+
+.calendar-day.other-month {
+    background-color: #fafafa;
+    color: #ccc;
+}
+
+.calendar-day.other-month .day-number {
+    color: #ddd;
+}
+
+.calendar-day.today {
+    background-color: #e3f2fd;
+    border: 2px solid #51CACF;
+}
+
+.calendar-day.today .day-number {
+    background-color: #51CACF;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.calendar-day.has-events {
+    background-color: #f0f8ff;
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* Day Events */
+.day-events {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.event-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.event-dot:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Event Type Colors */
+.event-dot.activity {
+    background-color: #007bff;
+}
+
+.event-dot.milestone {
+    background-color: #ffc107;
+}
+
+.event-dot.project {
+    background-color: #dc3545;
+}
+
+/* Event Status Colors */
+.event-dot.completed {
+    background-color: #28a745;
+}
+
+.event-dot.in_progress {
+    background-color: #17a2b8;
+}
+
+.event-dot.not_started {
+    background-color: #6c757d;
+}
+
+.event-dot.overdue {
+    background-color: #dc3545;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Upcoming Events */
+.upcoming-event {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    transition: all 0.2s ease;
+}
+
+.upcoming-event:last-child {
+    border-bottom: none;
+}
+
+.upcoming-event:hover {
+    background-color: #f8f9fa;
+    margin: 0 -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-radius: 8px;
+}
+
+.event-date {
+    min-width: 50px;
+    text-align: center;
+    margin-right: 15px;
+    background: linear-gradient(135deg, #51CACF 0%, #667eea 100%);
+    border-radius: 8px;
+    padding: 8px 6px;
+    color: white;
+}
+
+.event-day {
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.event-month {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.event-details {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.event-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #2c2c2c;
+    line-height: 1.2;
+}
+
+.event-project {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.event-type {
+    text-align: right;
+    min-width: 80px;
+}
+
+.event-type .badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+}
+
+/* Legend List */
+.legend-list {
+    padding: 0;
+}
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* Quick Actions */
+.d-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.btn-sm {
+    font-size: 12px;
+    padding: 6px 12px;
+}
+
+/* Navigation Buttons */
+.btn-group .btn {
+    border-radius: 6px;
+}
+
+.btn-group .btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-group .btn:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.btn-group .btn:not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .calendar-grid {
+        font-size: 12px;
+    }
+    
+    .calendar-day {
+        min-height: 60px;
+        padding: 4px;
+    }
+    
+    .day-number {
+        font-size: 12px;
+    }
+    
+    .event-dot {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .calendar-legend {
+        gap: 10px;
+    }
+    
+    .legend-item {
+        font-size: 11px;
+    }
+    
+    .upcoming-event {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 0;
+    }
+    
+    .event-date {
+        margin-bottom: 8px;
+        margin-right: 0;
+    }
+    
+    .event-type {
+        text-align: left;
+        margin-top: 8px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 6px !important;
+        margin-bottom: 4px;
+    }
+    
+    /* Mobile project filter */
+    #project_select {
+        min-height: 60px;
+        max-height: 80px;
+        font-size: 12px;
+    }
+    
+    .project-filter-container {
+        padding: 10px;
+    }
+    
+    .selected-projects-info {
+        margin-top: 10px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .calendar-day-header {
+        padding: 10px 4px;
+        font-size: 12px;
+    }
+    
+    .calendar-day {
+        min-height: 50px;
+        padding: 2px;
+    }
+    
+    .event-title {
+        font-size: 13px;
+    }
+    
+    .event-project {
+        font-size: 11px;
+    }
+    
+    .content {
+        padding: 0 15px 30px;
+    }
+    
+    /* Stack project filter on mobile */
+    .card-body .row {
+        flex-direction: column;
+    }
+    
+    .card-body .col-md-4 {
+        margin-bottom: 15px;
+    }
+    
+    .btn-group {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .calendar-legend {
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .selected-projects-info {
+        text-align: center;
+    }
+}

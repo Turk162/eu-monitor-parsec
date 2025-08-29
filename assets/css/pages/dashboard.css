@@ -1,0 +1,183 @@
+/* ===================================================================
+ *  PAGE-SPECIFIC STYLES FOR: Dashboard - VERSIONE CORRETTA
+ * =================================================================== */
+
+/* Ottimizzazione del layout della project-card */
+.project-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    padding: 15px 20px; /* Ridotto padding verticale da 20px a 15px */
+}
+
+.project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Ottimizzazione delle colonne per ridurre lo spazio bianco */
+.project-card .row {
+    align-items: center;
+    margin: 0; /* Rimuove margini predefiniti Bootstrap */
+}
+
+/* Colonna principale con informazioni progetto - usa più spazio */
+.project-card .col-md-6 {
+    flex: 1; /* Usa tutto lo spazio disponibile */
+    padding-right: 15px;
+}
+
+/* Progress column ottimizzata */
+.project-card .col-md-3:not(.text-right) {
+    flex: 0 0 auto; /* Non si espande, dimensione contenuto */
+    min-width: 120px;
+    padding: 0 10px;
+}
+
+/* Colonna controlli - ottimizzata per contenuto */
+.project-card .col-md-3.text-right {
+    flex: 0 0 auto; /* Non si espande */
+    min-width: 100px;
+    text-align: right;
+    padding-left: 10px;
+}
+
+/* Ottimizzazione titolo progetto */
+.project-card h6 {
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* Ottimizzazione descrizione */
+.project-card p.text-muted {
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Ottimizzazione info partners */
+.project-card small.text-muted {
+    font-size: 12px;
+}
+
+
+/* Deadline items styling */
+.deadline-item {
+    border-left: 3px solid #51CACF;
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+
+/* Statistics cards */
+.stat-card {
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: scale(1.02);
+}
+
+/* Fixed Logout Button - mantenuto invariato */
+.logout-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    border: none;
+    color: white !important;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+}
+
+.logout-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
+    color: white !important;
+    text-decoration: none !important;
+}
+
+/* User info styling - mantenuto invariato */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Media query per responsive */
+@media (max-width: 768px) {
+    .project-card .col-md-6,
+    .project-card .col-md-3 {
+        flex: 1 1 100%;
+        margin-bottom: 10px;
+        text-align: left !important;
+    }
+    
+    .project-card .col-md-3.text-right {
+        text-align: left !important;
+    }
+}
+
+/* Badge status ottimizzato */
+.project-card .badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+/* Bottone details ottimizzato */
+.project-card .btn-sm {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+/* Per la sezione "My European Projects" - riduci padding della card container */
+.col-md-8 > .card > .card-body {
+    padding: 15px 20px; /* Ridotto da 20px standard */
+}
+
+/* Ottimizzazione per stato empty (nessun progetto) */
+.text-center.py-4 {
+    padding: 30px 20px !important; /* Ridotto da py-4 standard */
+}
+
+/* Alternativa: layout flexbox più efficiente per le project-card */
+.project-card .row.align-items-center {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.project-card .project-info {
+    flex: 1;
+    min-width: 250px;
+}
+
+.project-card .project-progress {
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+.project-card .project-actions {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .project-card .project-info,
+    .project-card .project-progress,
+    .project-card .project-actions {
+        flex: 1 1 100%;
+        text-align: left;
+        margin-bottom: 10px;
+    }
+}

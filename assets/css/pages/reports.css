@@ -1,0 +1,179 @@
+.report-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            padding: 0px;
+        }
+        
+        .report-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .report-card.draft {
+            border-left: 4px solid #6c757d;
+        
+        }
+        
+        .report-card.submitted {
+            border-left: 4px solid #51cbce; /* Primary color */
+        }
+        
+        .report-card.approved {
+            border-left: 4px solid #6bd098; /* Success color */
+        }
+        
+        .report-card.rejected {
+            border-left: 4px solid #ef8157; /* Danger color */
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+
+        
+        .report-footer {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .view-toggle {
+            background: #f8f9fa;
+            border-radius: 25px;
+            padding: 5px;
+            display: inline-flex;
+        }
+        
+        .view-toggle .btn {
+            border-radius: 20px;
+            border: none;
+            padding: 8px 20px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .view-toggle .btn.active {
+            background: #51cbce; /* Primary color */
+            color: white;
+        }
+        
+        .create-report-btn {
+            background: linear-gradient(135deg, #6bd098 0%, #44c47d 100%); /* Success colors */
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .create-report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(107, 208, 152, 0.4); /* Success color rgba */
+            color: white;
+            text-decoration: none;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #51cbce; /* Primary color */
+            background: rgba(81, 203, 206, 0.05); /* Primary color rgba */
+        }
+        
+        .file-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .file-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f1f1;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+        
+        .participants-area {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        
+        .status-actions {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        /* Logout Button */
+        .logout-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            border: none;
+            color: white !important;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none !important;
+        }
+        .logout-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
+            color: white !important;
+            text-decoration: none !important;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Fix per card body nei report */
+.report-card .card-body {
+    padding: 0 !important;
+}
+
+.report-card .report-header,
+.report-card .report-body,
+.report-card .report-footer {
+    padding: 15px 20px;
+}
+
+.report-card .report-body {
+    padding: 20px;
+}

@@ -1,0 +1,64 @@
+/* ===================================================================
+ *  PAGE-SPECIFIC STYLES FOR: Add Project Work Packages
+ * =================================================================== */
+
+.required {
+    color: #e74c3c;
+}
+
+.wp-container {
+    border: 2px solid #51CACF;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+}
+
+.activity-item {
+    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.add-activity-btn {
+    border: 2px dashed #51CACF;
+    background: #f0fdfe;
+    color: #51CACF;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.add-activity-btn:hover {
+    background: #e0fafe;
+}
+
+.remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* Layout Overrides for Wizard Pages */
+.content {
+    min-height: 100vh !important;
+    padding: 30px 15px;
+    background: white !important;
+}
+
+.main-panel {
+    width: 90% !important;
+}
+
+.card {
+    background: white !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}

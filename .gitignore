@@ -1,0 +1,52 @@
+# File di configurazione database (IMPORTANTE: non committare mai le credenziali)
+config/database.php
+config/database_local.php
+
+# File di configurazione VS Code con credenziali SFTP
+.vscode/sftp.json
+
+# File di log
+*.log
+error_log
+access_log
+
+# File temporanei
+*.tmp
+*.temp
+*~
+
+# Upload directory (potrebbe contenere file sensibili)
+uploads/*
+!uploads/.gitkeep
+
+# File di sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Node modules se presenti
+node_modules/
+
+# File di backup
+*.bak
+*.backup
+*.old
+
+# File di ambiente specifici
+.env
+.env.local
+.env.production
+
+# Cache PHP
+*.cache
+
+# IDE files
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# File compressi
+*.zip
+*.tar.gz
+*.rar

@@ -1,0 +1,673 @@
+/* ===================================================================
+   SIMPLE GANTT TABLE STYLES
+   ===================================================================
+   Clean tabular layout inspired by traditional Gantt charts
+   ================================================================= */
+
+/* ===================================================================
+   FULLWIDTH GANTT LAYOUT
+   ================================================================= */
+
+/* Hide sidebar and adjust main panel for Gantt page */
+.gantt-fullwidth .sidebar {
+    display: none !important;
+}
+
+.gantt-fullwidth .main-panel {
+    width: 100% !important;
+    margin-left: 0 !important;
+}
+
+.gantt-fullwidth .content {
+    margin-top: 70px;
+}
+
+/* Custom Gantt Navbar */
+.gantt-fullwidth .navbar {
+    background: linear-gradient(135deg, #51CACF 0%, #667eea 100%) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.gantt-fullwidth .navbar-brand {
+    color: white !important;
+    font-weight: 600;
+}
+
+.gantt-fullwidth .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+.gantt-fullwidth .navbar-nav .nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===================================================================
+   PROJECT HEADER
+   ================================================================= */
+
+.project-header-card {
+    background: linear-gradient(135deg, #51CACF 0%, #667eea 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(81, 202, 207, 0.3);
+    border: none;
+}
+
+.project-header-card .card-body {
+    padding: 25px;
+}
+
+.project-stats {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.stat-item {
+    text-align: center;
+    color: white;
+}
+
+.stat-item strong {
+    font-size: 24px;
+    display: block;
+    line-height: 1;
+}
+
+/* ===================================================================
+   GANTT TABLE STYLES
+   ================================================================= */
+
+.gantt-table-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.gantt-table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.gantt-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+/* Table Headers */
+.gantt-table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0;
+    vertical-align: top;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.gantt-task-column {
+    width: 300px;
+    min-width: 300px;
+    border-right: 2px solid #dee2e6;
+}
+
+.gantt-dates-column {
+    width: 120px;
+    min-width: 120px;
+    border-right: 2px solid #dee2e6;
+}
+
+.gantt-month-column {
+    width: 80px;
+    min-width: 80px;
+    text-align: center;
+    border-right: 1px solid #e9ecef;
+}
+
+.gantt-month-column:last-child {
+    border-right: none;
+}
+
+.task-header,
+.dates-header,
+.month-header {
+    padding: 15px 10px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.month-header {
+    text-align: center;
+}
+
+.month-name {
+    font-weight: 700;
+    font-size: 12px;
+    color: #2c2c2c;
+}
+
+.month-year {
+    font-size: 10px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+/* Table Body Rows */
+.gantt-table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.gantt-table tbody tr:hover {
+    background-color: rgba(81, 202, 207, 0.05);
+}
+
+.gantt-wp-row {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.gantt-wp-row:hover {
+    background-color: rgba(81, 202, 207, 0.1);
+}
+
+.gantt-activity-row {
+    background-color: white;
+}
+
+.gantt-milestone-row {
+    background-color: #fff9e6;
+    border-top: 1px solid #ffc107;
+}
+
+/* Table Cells */
+.gantt-task-cell {
+    padding: 0;
+    border-right: 2px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.gantt-dates-cell {
+    padding: 8px;
+    border-right: 2px solid #dee2e6;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.gantt-month-cell {
+    padding: 4px;
+    border-right: 1px solid #e9ecef;
+    vertical-align: middle;
+    text-align: center;
+    position: relative;
+    height: 50px;
+}
+
+.gantt-month-cell:last-child {
+    border-right: none;
+}
+
+/* Task Information */
+.task-info {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    min-height: 50px;
+}
+
+.activity-info {
+    padding-left: 30px;
+}
+
+.milestone-info {
+    padding-left: 30px;
+}
+
+.wp-color-indicator {
+    width: 4px;
+    height: 30px;
+    border-radius: 2px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.activity-indent {
+    width: 20px;
+    height: 1px;
+    border-bottom: 1px solid #dee2e6;
+    margin-right: 8px;
+    margin-top: 10px;
+    flex-shrink: 0;
+}
+
+.milestone-indent {
+    width: 20px;
+    height: 1px;
+    border-bottom: 1px dotted #ffc107;
+    margin-right: 8px;
+    margin-top: 10px;
+    flex-shrink: 0;
+}
+
+.task-content {
+    flex: 1;
+}
+
+.task-name {
+    font-weight: 600;
+    color: #2c2c2c;
+    margin-bottom: 2px;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.gantt-activity-row .task-name {
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.task-details {
+    font-size: 11px;
+    color: #6c757d;
+    line-height: 1.2;
+}
+
+/* Dates Information */
+.dates-info {
+    text-align: center;
+}
+
+.start-date,
+.end-date {
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.start-date {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.end-date {
+    color: #dc3545;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.milestone-count {
+    font-size: 11px;
+    color: #ffc107;
+    font-weight: 600;
+}
+
+/* Gantt Bars */
+.gantt-bar {
+    height: 20px;
+    border-radius: 10px;
+    margin: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.gantt-bar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    opacity: 1 !important;
+}
+
+.wp-bar {
+    height: 24px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+.activity-bar {
+    height: 16px;
+    border-radius: 8px;
+    margin: 4px 2px;
+}
+
+/* Milestone styles */
+.milestone-marker {
+    width: 12px;
+    height: 12px;
+    background-color: #ffc107;
+    border: 2px solid #fff;
+    border-radius: 2px;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.milestone-marker:hover {
+    background-color: #ff8f00;
+    transform: translateY(-50%) scale(1.2);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+}
+
+.milestone-marker.completed {
+    background-color: #28a745;
+}
+
+.milestone-marker.in-progress {
+    background-color: #007bff;
+}
+
+.milestone-marker.overdue {
+    background-color: #dc3545;
+    animation: pulse 1.5s infinite;
+}
+/* ===================================================================
+   LEGEND STYLES
+   ================================================================= */
+
+.legend-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 12px;
+    border-radius: 6px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.legend-symbol {
+    width: 20px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    color: #ffc107;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.legend-text {
+    color: #2c2c2c;
+    font-weight: 500;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   ================================================================= */
+
+@media (max-width: 1200px) {
+    .gantt-task-column {
+        width: 250px;
+        min-width: 250px;
+    }
+    
+    .gantt-dates-column {
+        width: 100px;
+        min-width: 100px;
+    }
+    
+    .gantt-month-column {
+        width: 70px;
+        min-width: 70px;
+    }
+}
+
+@media (max-width: 992px) {
+    .gantt-task-column {
+        width: 220px;
+        min-width: 220px;
+    }
+    
+    .gantt-dates-column {
+        width: 90px;
+        min-width: 90px;
+    }
+    
+    .gantt-month-column {
+        width: 60px;
+        min-width: 60px;
+    }
+    
+    .task-name {
+        font-size: 12px;
+    }
+    
+    .task-details {
+        font-size: 10px;
+    }
+    
+    .month-name {
+        font-size: 10px;
+    }
+    
+    .month-year {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 768px) {
+    .gantt-fullwidth .content {
+        margin-top: 60px;
+        padding: 0 10px 30px;
+    }
+    
+    .project-header-card .card-body {
+        padding: 20px;
+    }
+    
+    .gantt-task-column {
+        width: 180px;
+        min-width: 180px;
+    }
+    
+    .gantt-dates-column {
+        width: 80px;
+        min-width: 80px;
+    }
+    
+    .gantt-month-column {
+        width: 50px;
+        min-width: 50px;
+    }
+    
+    .task-info {
+        padding: 8px 10px;
+        min-height: 40px;
+    }
+    
+    .activity-info {
+        padding-left: 20px;
+    }
+    
+    .milestone-info {
+        padding-left: 20px;
+    }
+    
+    .task-name {
+        font-size: 11px;
+    }
+    
+    .task-details {
+        font-size: 9px;
+    }
+    
+    .gantt-bar {
+        height: 16px;
+        margin: 1px;
+    }
+    
+    .wp-bar {
+        height: 20px;
+    }
+    
+    .activity-bar {
+        height: 14px;
+    }
+    
+    .legend-container {
+        gap: 15px;
+    }
+    
+    .legend-item {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .gantt-table {
+        min-width: 800px;
+        font-size: 11px;
+    }
+    
+    .gantt-task-column {
+        width: 150px;
+        min-width: 150px;
+    }
+    
+    .gantt-dates-column {
+        width: 70px;
+        min-width: 70px;
+    }
+    
+    .gantt-month-column {
+        width: 45px;
+        min-width: 45px;
+    }
+    
+    .task-header,
+    .dates-header,
+    .month-header {
+        padding: 10px 5px;
+        font-size: 11px;
+    }
+    
+    .month-name {
+        font-size: 9px;
+    }
+    
+    .month-year {
+        font-size: 8px;
+    }
+    
+    .task-name {
+        font-size: 10px;
+    }
+    
+    .task-details {
+        font-size: 8px;
+    }
+    
+    .start-date,
+    .end-date {
+        font-size: 9px;
+    }
+    
+    .wp-color-indicator {
+        width: 3px;
+        height: 20px;
+        margin-right: 6px;
+    }
+    
+    .legend-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ===================================================================
+   UTILITY CLASSES
+   ================================================================= */
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Scroll behavior */
+.gantt-table-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.gantt-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.gantt-table-container::-webkit-scrollbar-thumb {
+    background: #51CACF;
+    border-radius: 4px;
+}
+
+.gantt-table-container::-webkit-scrollbar-thumb:hover {
+    background: #459ca1;
+}
+
+/* ===================================================================
+   ANIMATIONS
+   ================================================================= */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.gantt-table tbody tr {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Navbar responsive improvements */
+.navbar-nav-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+.navbar-nav-scroll .navbar-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.gantt-fullwidth .dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.gantt-fullwidth .dropdown-item {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.gantt-fullwidth .dropdown-item:hover {
+    background: #f8f9fa;
+}

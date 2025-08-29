@@ -1,0 +1,320 @@
+/* ===================================================================
+ *  PAGE-SPECIFIC STYLES FOR: Activities Page
+ * =================================================================== */
+
+.activity-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.activity-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.activity-card.overdue {
+    border-left: 4px solid #dc3545;
+}
+
+.activity-card.due-soon {
+    border-left: 4px solid #ffc107;
+}
+
+.activity-card.completed {
+    border-left: 4px solid #28a745;
+    opacity: 0.8;
+}
+
+/* My Responsibility Styling */
+.activity-card.my-responsibility {
+    border-left: 4px solid #51CACF !important;
+    background: linear-gradient(135deg, rgba(81, 202, 207, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.activity-card.my-responsibility:hover {
+    background: linear-gradient(135deg, rgba(81, 202, 207, 0.1) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.responsibility-badge {
+    background: linear-gradient(135deg, #51CACF 0%, #4bb8bd 100%);
+    color: white;
+    padding: 12px 6px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 600;
+    margin: 0 5px 5px 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.other-activity-badge {
+    background: #e9ecef;
+    color: #6c757d;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.activity-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.activity-header .text-info {
+    color: #0c5460 !important;
+    font-weight: 500;
+}
+
+.activity-header .text-muted {
+    color: #495057 !important;
+}
+
+.activity-header small {
+    color: #6c757d;
+}
+
+.activity-header * {
+    transition: color 0.3s ease;
+}
+
+.activity-body {
+    padding: 20px;
+}
+
+.activity-footer {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.progress-bar-container {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.quick-update {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.status-selector {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: #495057;
+    cursor: pointer;
+}
+
+.progress-input {
+    width: 60px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 12px;
+}
+
+.deadline-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.filter-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.view-toggle {
+    background: #f8f9fa;
+    border-radius: 25px;
+    padding: 5px;
+    display: inline-flex;
+}
+
+.view-toggle .btn {
+    border-radius: 20px;
+    border: none;
+    padding: 8px 20px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.view-toggle .btn.active {
+    background: #51CACF;
+    color: white;
+}
+
+.activity-table {
+    background: white;
+    border-radius: 12px;
+}
+
+.activity-table th {
+    border-top: none;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    padding: 15px;
+}
+
+.activity-table td {
+    padding: 15px;
+    vertical-align: middle;
+}
+
+.activity-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.activity-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.activity-table tbody tr.my-responsibility {
+    background: rgba(81, 202, 207, 0.05);
+}
+
+.activity-table tbody tr.my-responsibility:hover {
+    background: rgba(81, 202, 207, 0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #dee2e6;
+}
+
+/* My Activities Toggle */
+.my-activities-toggle {
+    background: white;
+    border: 2px solid #51CACF;
+    border-radius: 25px;
+    padding: 8px 16px;
+    color: #51CACF;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.my-activities-toggle:hover,
+.my-activities-toggle.active {
+    background: #51CACF;
+    color: white;
+    text-decoration: none;
+}
+
+.update-btn {
+    background: #51CACF;
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.update-btn:hover {
+    background: #4bb8bd;
+}
+
+.update-btn:disabled {
+    background: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.days-left {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 2px;
+}
+
+.days-left.urgent { 
+    color: #721c24; 
+    background: rgba(220, 53, 69, 0.1);
+}
+.days-left.warning { 
+    color: #664d03; 
+    background: rgba(255, 193, 7, 0.1);
+}
+.days-left.safe { 
+    color: #0f5132; 
+    background: rgba(40, 167, 69, 0.1);
+}
+
+/* Status Selector Colors */
+.status-selector {
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    border: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 30px; /* Make space for arrow */
+}
+
+.status-selector.status-not-started {
+    background-color: #e91e63; /* Dark Pink */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M8 11.293l-4.646-4.647.707-.707L8 9.879l3.939-3.939.707.707z'/%3E%3C/svg%3E");
+}
+
+.status-selector.status-in-progress {
+    background-color: #ffc107; /* Yellow */
+    color: #212529; /* Dark text for yellow background */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3E%3Cpath d='M8 11.293l-4.646-4.647.707-.707L8 9.879l3.939-3.939.707.707z'/%3E%3C/svg%3E");
+}
+
+.status-selector.status-completed {
+    background-color: #28a745; /* Green */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M8 11.293l-4.646-4.647.707-.707L8 9.879l3.939-3.939.707.707z'/%3E%3C/svg%3E");
+}
+
+/* Styling for options inside the select */
+.status-selector option {
+    background: white;
+    color: #212529;
+}
+
+/* Table view specific adjustments */
+.activity-table .status-selector {
+    width: 100%;
+    min-width: 180px;
+}

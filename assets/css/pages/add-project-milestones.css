@@ -1,0 +1,35 @@
+/* ===================================================================
+ *  PAGE-SPECIFIC STYLES FOR: Add Project Milestones
+ * =================================================================== */
+
+.milestone-item {
+    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    position: relative;
+}
+
+.remove-btn {
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Layout Overrides for Wizard Pages */
+.content {
+    min-height: 100vh !important;
+    padding: 30px 15px;
+    background: white !important;
+}
+
+.main-panel {
+    width: 90% !important;
+}
+
+.card {
+    background: white !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}

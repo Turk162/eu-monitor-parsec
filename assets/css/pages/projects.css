@@ -1,0 +1,382 @@
+/* ===================================================================
+ *  PAGE-SPECIFIC STYLES FOR: Projects List Page - VERSIONE OTTIMIZZATA
+ * =================================================================== */
+
+/* NUOVA VERSIONE OTTIMIZZATA DELLE PROJECT CARD - Con specificità aumentata */
+.content .project-card.card {
+    background: white !important;
+    border-radius: 16px !important;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+    margin-bottom: 25px !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+}
+
+.content .project-card.card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
+}
+
+/* Progress indicator basato sul tempo trascorso */
+.content .project-card .progress-indicator {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 3px !important;
+    background: rgba(255,255,255,0.3) !important;
+    z-index: 2 !important;
+}
+
+.content .project-card .progress-bar-custom {
+    height: 100% !important;
+    background: rgba(255,255,255,0.8) !important;
+    transition: width 0.3s ease !important;
+}
+
+/* Header più compatto con gradient di status */
+.content .project-card .project-header {
+    background: linear-gradient(135deg, #51CACF 0%, #4bb8bd 100%) !important;
+    padding: 20px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 16px 16px 0 0 !important;
+    border: none !important;
+}
+
+.content .project-card .project-header.status-active {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.content .project-card .project-header.status-planning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+}
+
+.content .project-card .project-header.status-completed {
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%) !important;
+}
+
+.content .project-card .project-header.status-suspended {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+
+.content .project-card .project-header::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 100px !important;
+    height: 100% !important;
+    background: rgba(255,255,255,0.1) !important;
+    transform: skewX(-15deg) !important;
+    transform-origin: top right !important;
+}
+
+/* Titolo e info progetto */
+.content .project-card .project-title {
+    color: white !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+    line-height: 1.3 !important;
+}
+
+.content .project-card .project-title .nc-icon {
+    margin-right: 8px !important;
+    color: white !important;
+}
+
+.content .project-card .project-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 10px !important;
+}
+
+.content .project-card .program-badge {
+    background: rgba(255,255,255,0.25) !important;
+    color: white !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    border: none !important;
+}
+
+.content .project-card .coordinator-info {
+    color: rgba(255,255,255,0.9) !important;
+    font-size: 13px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.content .project-card .partners-count {
+    background: rgba(255,255,255,0.2) !important;
+    color: white !important;
+    padding: 3px 10px !important;
+    border-radius: 15px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+/* Body compatto */
+.content .project-card .project-body {
+    padding: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    background: white !important;
+}
+
+.content .project-card .project-description {
+    color: #6c757d !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+}
+
+.content .project-card .project-stats {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: #f8f9fa !important;
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    margin: 10px 0 !important;
+    border: none !important;
+}
+
+.content .project-card .stat-item {
+    text-align: center !important;
+    flex: 1 !important;
+}
+
+.content .project-card .stat-value {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #2c2c2c !important;
+    display: block !important;
+}
+
+.content .project-card .stat-label {
+    font-size: 11px !important;
+    color: #6c757d !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Styling specifico per i giorni rimanenti */
+.content .project-card .days-remaining {
+    color: #28a745 !important; /* Verde per molti giorni */
+}
+
+.content .project-card .days-remaining.warning {
+    color: #ffc107 !important; /* Giallo per giorni in range medio */
+}
+
+.content .project-card .days-remaining.danger {
+    color: #dc3545 !important; /* Rosso per pochi giorni */
+}
+
+.content .project-card .budget-display {
+    color: #28a745 !important;
+}
+
+.content .project-card .project-timeline {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 13px !important;
+    color: #6c757d !important;
+    background: #f8f9fa !important;
+    padding: 10px 15px !important;
+    border-radius: 8px !important;
+}
+
+/* Actions footer */
+.content .project-card .project-footer {
+    padding: 15px 20px !important;
+    border-top: 1px solid #f1f1f1 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: white !important;
+    border-radius: 0 0 16px 16px !important;
+}
+
+.content .project-card .action-buttons {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.content .project-card .btn-action {
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border: none !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.content .project-card .btn-primary-action {
+    background: linear-gradient(135deg, #51CACF, #4bb8bd) !important;
+    color: white !important;
+}
+
+.content .project-card .btn-secondary-action {
+    background: #f8f9fa !important;
+    color: #6c757d !important;
+    border: 1px solid #e9ecef !important;
+}
+
+.content .project-card .btn-action:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    text-decoration: none !important;
+}
+
+.content .project-card .btn-primary-action:hover {
+    color: white !important;
+}
+
+.content .project-card .btn-secondary-action:hover {
+    color: #495057 !important;
+}
+
+/* ===================================================================
+   FILTER SECTION - Mantenuto invariato
+   =================================================================== */
+
+.filter-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.search-box {
+    border-radius: 25px;
+    border: 1px solid #e9ecef;
+    padding: 10px 20px;
+}
+
+.search-box:focus {
+    border-color: #51CACF;
+    box-shadow: 0 0 0 0.2rem rgba(81, 202, 207, 0.25);
+}
+
+.btn-filter {
+    border-radius: 20px;
+    padding: 8px 20px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.program-badge-filter {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.partner-count-old {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.budget-info {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #dee2e6;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   =================================================================== */
+
+@media (max-width: 768px) {
+    .project-card {
+        margin-bottom: 20px;
+    }
+    
+    .project-header {
+        padding: 15px;
+    }
+    
+    .project-body {
+        padding: 15px;
+    }
+    
+    .project-footer {
+        padding: 10px 15px;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .btn-action {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .project-meta {
+        gap: 10px;
+    }
+    
+    .project-stats {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .stat-item {
+        flex: 1;
+        min-width: 80px;
+    }
+}
+
+@media (max-width: 576px) {
+    .project-title {
+        font-size: 16px;
+    }
+    
+    .project-stats {
+        padding: 10px 12px;
+    }
+    
+    .stat-value {
+        font-size: 14px;
+    }
+    
+    .project-timeline {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+}

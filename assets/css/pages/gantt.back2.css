@@ -1,0 +1,861 @@
+/* ===================================================================
+   PROJECT GANTT CHART STYLES
+   ===================================================================
+   Custom styles for project-gantt.php page
+   Following Paper Dashboard design principles
+   ================================================================= */
+
+/* ===================================================================
+   FULLWIDTH GANTT LAYOUT
+   ================================================================= */
+
+/* Hide sidebar and adjust main panel for Gantt page */
+.gantt-fullwidth .sidebar {
+    display: none !important;
+}
+
+.gantt-fullwidth .main-panel {
+    width: 100% !important;
+    margin-left: 0 !important;
+}
+
+.gantt-fullwidth .content {
+    margin-top: 70px; /* Adjust for navbar height */
+}
+
+/* Custom Gantt Navbar */
+.gantt-fullwidth .navbar {
+    background: linear-gradient(135deg, #51CACF 0%, #667eea 100%) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.gantt-fullwidth .navbar-brand {
+    color: white !important;
+    font-weight: 600;
+}
+
+.gantt-fullwidth .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+.gantt-fullwidth .navbar-nav .nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.gantt-fullwidth .navbar-nav .nav-link i {
+    margin-right: 5px;
+}
+
+/* Navbar scroll container */
+.navbar-nav-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+.navbar-nav-scroll .navbar-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+/* Dropdown adjustments */
+.gantt-fullwidth .dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.gantt-fullwidth .dropdown-item {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.gantt-fullwidth .dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+
+/* ===================================================================
+   PROJECT HEADER SECTION
+   ================================================================= */
+
+.project-header-card {
+    background: linear-gradient(135deg, #51CACF 0%, #667eea 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(81, 202, 207, 0.3);
+    margin-bottom: 25px;
+}
+
+.project-header-card .card-body {
+    padding: 25px;
+}
+
+.project-header-card .card-title,
+.project-header-card h5,
+.project-header-card p {
+    color: white;
+}
+
+.project-header-card .text-primary {
+    color: white !important;
+    font-weight: 600;
+}
+
+.project-header-card .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Progress Circle Large */
+.project-progress-summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.progress-circle-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #28a745 0deg,
+        #28a745 calc(var(--progress, 0) * 3.6deg),
+        rgba(255, 255, 255, 0.3) calc(var(--progress, 0) * 3.6deg),
+        rgba(255, 255, 255, 0.3) 360deg
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.progress-circle-inner {
+    width: 65px;
+    height: 65px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #2c2c2c;
+}
+
+.progress-percentage {
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.progress-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.progress-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-item strong {
+    font-size: 16px;
+    display: block;
+    line-height: 1;
+}
+
+.stat-item small {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+/* ===================================================================
+   SIDEBAR CARDS STYLING
+   ================================================================= */
+
+.card {
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    border: none;
+}
+
+.card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 15px 20px;
+}
+
+.card-header .card-title {
+    margin-bottom: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c2c2c;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Project Info Items */
+.project-info-item {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.project-info-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.project-info-item label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.project-info-item p {
+    margin-bottom: 2px;
+    font-weight: 500;
+    color: #2c2c2c;
+}
+
+.project-info-item small {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+/* ===================================================================
+   GANTT CONTROLS
+   ================================================================= */
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.btn-group-sm .btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+.zoom-btn.active {
+    background-color: #51CACF;
+    border-color: #51CACF;
+    color: white;
+}
+
+.custom-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.custom-control {
+    padding-left: 1.5rem;
+    min-height: auto;
+}
+
+.custom-control-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c2c2c;
+    cursor: pointer;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #51CACF;
+    border-color: #51CACF;
+}
+
+/* ===================================================================
+   LEGEND STYLING
+   ================================================================= */
+
+.legend-section {
+    margin-bottom: 20px;
+}
+
+.legend-section:last-child {
+    margin-bottom: 0;
+}
+
+.legend-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c2c2c;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 5px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.legend-bar {
+    width: 20px;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.legend-bar.completed {
+    background-color: #28a745;
+}
+
+.legend-bar.in-progress {
+    background: linear-gradient(90deg, #007bff 50%, #e9ecef 50%);
+}
+
+.legend-bar.not-started {
+    background-color: #e9ecef;
+    border: 1px dashed #6c757d;
+}
+
+.legend-bar.overdue {
+    background-color: #dc3545;
+    animation: pulse-red 1.5s infinite;
+}
+
+.legend-milestone {
+    width: 12px;
+    height: 12px;
+    transform: rotate(45deg);
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.legend-milestone.completed {
+    background-color: #28a745;
+}
+
+.legend-milestone.upcoming {
+    background-color: #ffc107;
+}
+
+.legend-text {
+    color: #2c2c2c;
+    font-weight: 500;
+}
+
+/* ===================================================================
+   QUICK STATISTICS
+   ================================================================= */
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.stat-row:last-child {
+    margin-bottom: 0;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #2c2c2c;
+}
+
+.next-milestone {
+    background: rgba(81, 202, 207, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.next-milestone label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #51CACF;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.next-milestone p {
+    margin-bottom: 5px;
+    color: #2c2c2c;
+}
+
+/* ===================================================================
+   GANTT CHART CONTAINER
+   ================================================================= */
+
+.gantt-chart-card {
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.gantt-main-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    background: white;
+    border-radius: 0 0 12px 12px;
+}
+
+.gantt-labels-container {
+    width: 280px;
+    flex-shrink: 0;
+    border-right: 2px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+}
+
+.gantt-labels-header {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #2c2c2c;
+    background: #f8f9fa;
+}
+
+.gantt-labels-body {
+    overflow-y: scroll;
+    flex: 1;
+}
+
+.gantt-timeline-container {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.gantt-chart {
+    min-width: 800px;
+    width: 100%;
+    position: relative;
+    background: #fafafa;
+}
+
+/* Timeline Header */
+.timeline-header {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 50px;
+}
+
+.timeline-header-cell {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 8px;
+    text-align: center;
+    border-right: 1px solid #dee2e6;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    background: #f8f9fa;
+}
+
+.timeline-header-cell:last-child {
+    border-right: none;
+}
+
+.timeline-header-cell.current-month {
+    background: rgba(81, 202, 207, 0.1);
+    color: #51CACF;
+    font-weight: 700;
+}
+
+/* Gantt Body */
+.gantt-body {
+    min-height: 400px;
+    position: relative;
+    overflow-y: scroll;
+}
+
+.gantt-row {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 10px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.gantt-labels-body .gantt-row:hover {
+    background: rgba(81, 202, 207, 0.05);
+}
+
+.gantt-row.wp-row {
+    background: rgba(248, 249, 250, 0.8);
+    font-weight: 600;
+    min-height: 45px;
+}
+
+.gantt-row.activity-row {
+    font-size: 13px;
+}
+
+.gantt-label {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #2c2c2c;
+}
+
+.wp-label {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.activity-label {
+    font-weight: 500;
+    color: #4b5563;
+    font-size: 12px;
+    padding-left: 25px;
+}
+
+.gantt-timeline {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.gantt-row-padding {
+    height: 20px;
+}
+
+/* Gantt Bars */
+.gantt-bar {
+    height: 20px;
+    border-radius: 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.gantt-bar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.wp-bar {
+    height: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.activity-bar {
+    height: 15px;
+    border-radius: 8px;
+    opacity: 0.8;
+}
+
+.activity-bar:hover {
+    opacity: 1;
+}
+
+/* Progress Overlay */
+.progress-overlay {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Status-specific styling */
+.gantt-bar.completed {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.gantt-bar.in-progress {
+    background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+}
+
+.gantt-bar.not-started {
+    background: #e9ecef;
+    border: 2px dashed #6c757d;
+    color: #6c757d;
+}
+
+.gantt-bar.overdue {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    animation: pulse-red 2s infinite;
+}
+
+/* Milestones */
+.milestone-marker {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 14px;
+    height: 14px;
+    z-index: 5;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.milestone-marker:hover {
+    transform: translateY(-50%) rotate(45deg) scale(1.2);
+}
+
+.milestone-marker.completed {
+    background: #28a745;
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
+}
+
+.milestone-marker.upcoming {
+    background: #ffc107;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+}
+
+.milestone-marker.overdue {
+    background: #dc3545;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+    animation: pulse-red 1.5s infinite;
+}
+
+/* Today Line */
+.today-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #dc3545, #e74c3c);
+    z-index: 20;
+    opacity: 0.8;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+}
+
+.today-line::before {
+    content: 'TODAY';
+    position: absolute;
+    top: 10px;
+    left: 8px;
+    background: #dc3545;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+    text-shadow: none;
+}
+
+/* ===================================================================
+   ANIMATIONS
+   ================================================================= */
+
+@keyframes pulse-red {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.gantt-row {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* ===================================================================
+   TOOLTIPS
+   ================================================================= */
+
+.gantt-tooltip {
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 250px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.gantt-tooltip .tooltip-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #51CACF;
+}
+
+.gantt-tooltip .tooltip-content {
+    margin-bottom: 2px;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   ================================================================= */
+
+   
+
+@media (max-width: 1200px) {
+    .gantt-label {
+        width: 200px;
+    }
+    
+    .timeline-header-cell {
+        min-width: 60px;
+        padding: 8px 4px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 992px) {
+    .project-progress-summary {
+        justify-content: center;
+        margin-top: 15px;
+    }
+    
+    .gantt-label {
+        width: 180px;
+    }
+    
+    .gantt-chart {
+        min-width: 600px;
+    }
+}
+
+@media (max-width: 768px) {
+    .project-header-card .card-body {
+        padding: 20px;
+    }
+    
+    .progress-circle-large {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .progress-circle-inner {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .progress-percentage {
+        font-size: 14px;
+    }
+    
+    .gantt-container {
+        margin: 0 -15px;
+    }
+    
+    .gantt-label {
+        width: 150px;
+        font-size: 12px;
+    }
+    
+    .gantt-bar {
+        height: 18px;
+    }
+    
+    .wp-bar {
+        height: 22px;
+    }
+    
+    .activity-bar {
+        height: 14px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    .control-group {
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .gantt-chart {
+        min-width: 500px;
+    }
+    
+    .gantt-label {
+        width: 120px;
+        font-size: 11px;
+    }
+    
+    .timeline-header-cell {
+        min-width: 50px;
+        font-size: 10px;
+    }
+    
+    .today-line::before {
+        display: none;
+    }
+    
+    .progress-stats {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 10px;
+    }
+}

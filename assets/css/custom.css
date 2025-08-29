@@ -1,0 +1,274 @@
+/* ===================================================================
+   CSS IMPROVEMENTS FOR BETTER READABILITY
+   Add this to each page's <style> section or create a custom.css file
+   =================================================================== */
+
+/* BASE TEXT COLORS - Make all text darker and more readable */
+body {
+    color: #2c2c2c !important; /* Much darker than default #6c757d */
+    font-weight: 400;
+}
+
+/* CARD TEXT IMPROVEMENTS */
+.card-body {
+    color: #2c2c2c !important;
+}
+
+.card-title {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+.card-category {
+    color: #4a4a4a !important; /* Darker than default muted */
+    font-weight: 500;
+}
+
+/* MUTED TEXT - Less muted, more readable */
+.text-muted {
+    color: #4a4a4a !important; /* Instead of very light #6c757d */
+}
+
+/* SMALL TEXT IMPROVEMENTS */
+small, .small {
+    color: #3a3a3a !important;
+    font-weight: 400;
+}
+
+/* SIDEBAR TEXT IMPROVEMENTS */
+.sidebar .nav li a p {
+    color: #2c2c2c !important;
+    font-weight: 500;
+}
+
+.sidebar .nav li.active a p {
+    color: #51CACF !important;
+    font-weight: 600;
+}
+
+/* TABLE TEXT IMPROVEMENTS */
+.table {
+    color: #2c2c2c !important;
+}
+
+.table th {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+.table td {
+    color: #2c2c2c !important;
+}
+
+/* FORM LABELS AND INPUTS */
+label, .form-label {
+    color: #1a1a1a !important;
+    font-weight: 500;
+}
+
+.form-control {
+    color: #2c2c2c !important;
+    border: 1px solid #ccc !important; /* More visible borders */
+}
+
+.form-control:focus {
+    color: #1a1a1a !important;
+    border-color: #51CACF !important;
+    box-shadow: 0 0 0 0.2rem rgba(81, 202, 207, 0.25) !important;
+}
+
+/* DROPDOWN TEXT */
+select.form-control option {
+    color: #2c2c2c !important;
+}
+
+/* ACTIVITY SPECIFIC IMPROVEMENTS */
+.activity-card h6 {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+.activity-card .text-muted {
+    color: #4a4a4a !important;
+}
+
+.activity-card .text-info {
+    color: #0056b3 !important; /* Darker blue */
+    font-weight: 500;
+}
+
+/* PROJECT CARD IMPROVEMENTS */
+.project-card h5, .project-card h6 {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+.project-card .text-muted {
+    color: #4a4a4a !important;
+}
+
+/* MILESTONE AND DEADLINE TEXT */
+.milestone-item h6 {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+.deadline-badge {
+    color: #2c2c2c !important;
+    font-weight: 500;
+}
+
+/* BADGE IMPROVEMENTS */
+.badge {
+    font-weight: 500;
+    font-size: 0.75em;
+}
+
+.badge-secondary {
+    background-color: #4a4a4a !important; /* Darker gray */
+}
+
+.badge-info {
+    background-color: #0056b3 !important; /* Darker info blue */
+}
+
+/* BUTTON TEXT IMPROVEMENTS */
+.btn {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #51CACF 0%, #4bb8bd 100%);
+    border: none;
+    color: white !important;
+    font-weight: 500;
+}
+
+.btn-outline-primary {
+    color: #0056b3 !important;
+    border-color: #0056b3 !important;
+}
+
+.btn-outline-primary:hover {
+    background: #0056b3 !important;
+    border-color: #0056b3 !important;
+}
+
+/* NAVBAR TEXT */
+.navbar-brand {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+/* FOOTER TEXT */
+.footer {
+    color: #4a4a4a !important;
+}
+
+.footer a {
+    color: #2c2c2c !important;
+}
+
+/* STATS CARD IMPROVEMENTS */
+.numbers p {
+    font-weight: 500;
+}
+
+.numbers .card-category {
+    color: #4a4a4a !important;
+    font-weight: 500;
+}
+
+.numbers .card-title {
+    color: #1a1a1a !important;
+    font-weight: 700;
+}
+
+/* ALERT IMPROVEMENTS */
+.alert {
+    font-weight: 400;
+}
+
+.alert-info {
+    color: #0c5460 !important;
+    background-color: #d1ecf1 !important;
+    border-color: #bee5eb !important;
+}
+
+.alert-success {
+    color: #155724 !important;
+    background-color: #d4edda !important;
+    border-color: #c3e6cb !important;
+}
+
+.alert-warning {
+    color: #856404 !important;
+    background-color: #fff3cd !important;
+    border-color: #ffeaa7 !important;
+}
+
+.alert-danger {
+    color: #721c24 !important;
+    background-color: #f8d7da !important;
+    border-color: #f5c6cb !important;
+}
+
+/* SECTION TITLES */
+.section-title {
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+/* EMPTY STATE TEXT */
+.empty-state {
+    color: #4a4a4a !important;
+}
+
+.empty-state h4 {
+    color: #2c2c2c !important;
+    font-weight: 600;
+}
+
+/* IMPROVE CONTRAST FOR BETTER ACCESSIBILITY */
+a {
+    color: #0056b3 !important;
+}
+
+a:hover {
+    color: #004085 !important;
+}
+
+/* LIST GROUP IMPROVEMENTS */
+.list-group-item {
+    color: #2c2c2c !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa !important;
+    color: #1a1a1a !important;
+}
+
+/* TAB IMPROVEMENTS */
+.nav-tabs .nav-link {
+    color: #4a4a4a !important;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* IMPROVE INPUT PLACEHOLDERS */
+.form-control::placeholder {
+    color: #6c757d !important;
+    opacity: 0.8;
+}
+
+/* TOOLTIP IMPROVEMENTS */
+.tooltip-inner {
+    background-color: #1a1a1a !important;
+    color: white !important;
+    font-weight: 400;
+}

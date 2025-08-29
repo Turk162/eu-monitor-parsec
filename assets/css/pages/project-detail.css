@@ -1,0 +1,519 @@
+/* ===================================================================
+ *  PROJECT DETAIL PAGE STYLES - VERSIONE OTTIMIZZATA
+ * =================================================================== */
+
+/* ===================================================================
+   HEADER OTTIMIZZATO - Sostituisce il vecchio project-header
+   =================================================================== */
+
+.content .optimized-header {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+    margin-bottom: 20px !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+.content .header-top-bar {
+    height: 4px !important;
+    width: 100% !important;
+    background: linear-gradient(135deg, #51CACF 0%, #4bb8bd 100%) !important;
+}
+
+.content .header-top-bar.status-active {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.content .header-top-bar.status-planning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+}
+
+.content .header-top-bar.status-completed {
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%) !important;
+}
+
+.content .header-top-bar.status-suspended {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+
+.content .header-content {
+    padding: 20px 25px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+}
+
+.content .project-info {
+    flex: 1 !important;
+    min-width: 300px !important;
+}
+
+.content .project-title-optimized {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #2c2c2c !important;
+    margin-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.content .project-title-optimized .nc-icon {
+    color: #51CACF !important;
+    font-size: 22px !important;
+}
+
+.content .project-subtitle {
+    color: #6c757d !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 15px !important;
+}
+
+.content .project-meta-row {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+    margin-bottom: 15px !important;
+}
+
+.content .meta-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-size: 13px !important;
+    color: #6c757d !important;
+}
+
+.content .meta-item i {
+    color: #51CACF !important;
+    width: 14px !important;
+}
+
+.content .meta-item strong {
+    color: #2c2c2c !important;
+}
+
+.content .status-badge-optimized {
+    color: white !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    background: linear-gradient(135deg, #51CACF, #4bb8bd) !important;
+}
+
+.content .status-badge-optimized.status-active {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
+.content .status-badge-optimized.status-planning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+}
+
+.content .status-badge-optimized.status-completed {
+    background: linear-gradient(135deg, #6f42c1, #e83e8c) !important;
+}
+
+.content .status-badge-optimized.status-suspended {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+.content .program-badge-optimized {
+    background: #e3f2fd !important;
+    color: #1976d2 !important;
+    padding: 4px 10px !important;
+    border-radius: 15px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.content .header-stats {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 10px !important;
+    min-width: 200px !important;
+}
+
+.content .budget-compact {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #28a745 !important;
+    margin-bottom: 5px !important;
+}
+
+.content .timeline-compact {
+    text-align: right !important;
+    font-size: 12px !important;
+    color: #6c757d !important;
+}
+
+.content .days-remaining-compact {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    min-width: 120px !important;
+}
+
+.content .days-remaining-compact.warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+}
+
+.content .days-remaining-compact.danger {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+.content .days-remaining-compact.completed {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+}
+
+.content .progress-indicator-detail {
+    background: #f1f3f4 !important;
+    height: 6px !important;
+    border-radius: 3px !important;
+    overflow: hidden !important;
+    margin: 15px 0 10px 0 !important;
+}
+
+.content .progress-bar-detail {
+    background: linear-gradient(135deg, #51CACF, #4bb8bd) !important;
+    height: 100% !important;
+    border-radius: 3px !important;
+    transition: width 0.3s ease !important;
+}
+
+.content .progress-text {
+    font-size: 11px !important;
+    color: #6c757d !important;
+    text-align: left !important;
+    margin-top: 5px !important;
+}
+
+/* Back button ottimizzato */
+.content .back-button-optimized {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #6c757d !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+    margin-bottom: 15px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    background: white !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+
+.content .back-button-optimized:hover {
+    color: #51CACF !important;
+    background: #f8f9fa !important;
+    text-decoration: none !important;
+    transform: translateX(-2px) !important;
+}
+
+/* Responsive per header ottimizzato */
+@media (max-width: 768px) {
+    .content .header-content {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .content .header-stats {
+        align-items: stretch !important;
+        margin-top: 15px !important;
+    }
+    
+    .content .timeline-compact {
+        text-align: left !important;
+    }
+    
+    .content .project-meta-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+}
+
+/* ===================================================================
+   STILI ESISTENTI MANTENUTI E OTTIMIZZATI
+   =================================================================== */
+
+/* Nasconde il vecchio project-header se presente */
+.content .project-header {
+    display: none !important;
+}
+
+.content .section-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 20px !important;
+    border-bottom: 1px solid #eee !important;
+    padding-bottom: 10px !important;
+}
+
+.content .section-title i {
+    margin-right: 8px !important;
+    color: #51CACF !important;
+}
+
+.content .activity-item {
+    border-bottom: 1px solid #eee !important;
+    padding: 15px 0 !important;
+}
+
+.content .activity-item:last-child {
+    border-bottom: none !important;
+}
+
+.content .activity-item h6 {
+    font-weight: 600 !important;
+    color: #444 !important;
+}
+
+.content .activity-item small {
+    font-size: 12px !important;
+}
+
+.content .timeline-date {
+    font-size: 11px !important;
+    color: #888 !important;
+    margin-top: 5px !important;
+}
+
+.content .timeline-date i {
+    margin-right: 3px !important;
+}
+
+.content .list-group-item {
+    border: none !important;
+    border-bottom: 1px solid #eee !important;
+    padding: 12px 15px !important;
+    font-size: 15px !important;
+    color: #555 !important;
+}
+
+.content .list-group-item:last-child {
+    border-bottom: none !important;
+}
+
+.content .list-group-item i {
+    margin-right: 10px !important;
+    font-size: 18px !important;
+    vertical-align: middle !important;
+}
+
+.content .list-group-item:hover {
+    background-color: #f8f9fa !important;
+    color: #51CACF !important;
+}
+
+/* WP Card Styles */
+.content .wp-card {
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+    margin-bottom: 20px !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+.content .wp-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    border-color: #51CACF !important;
+}
+
+.content .wp-header {
+    background: #f8f9fa !important;
+    padding: 20px !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.content .wp-header h5 {
+    font-weight: 700 !important;
+    color: #333 !important;
+    margin-bottom: 8px !important;
+}
+
+.content .wp-header h5 i {
+    margin-right: 8px !important;
+    color: #51CACF !important;
+}
+
+/* Partner Card Styles */
+.content .partner-card {
+    border: 1px solid #e9ecef !important;
+    border-radius: 10px !important;
+    padding: 20px !important;
+    margin-bottom: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+.content .partner-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    border-color: #51CACF !important;
+}
+
+.content .partner-card.border-primary {
+    border-color: #28a745 !important;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(255, 255, 255, 1) 100%) !important;
+}
+
+.content .partner-card h6 {
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+.content .partner-card h6 i {
+    margin-right: 8px !important;
+    color: #51CACF !important;
+}
+
+.content .partner-card .badge {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+}
+
+/* Milestone Item Styles */
+.content .milestone-item {
+    border-left: 4px solid #dee2e6 !important;
+    padding: 15px 20px !important;
+    margin-bottom: 15px !important;
+    background: white !important;
+    border-radius: 0 8px 8px 0 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+.content .milestone-item.completed {
+    border-left-color: #28a745 !important;
+    background: rgba(40, 167, 69, 0.05) !important;
+}
+
+.content .milestone-item.overdue {
+    border-left-color: #dc3545 !important;
+    background: rgba(220, 53, 69, 0.05) !important;
+}
+
+.content .milestone-item.pending {
+    border-left-color: #ffc107 !important;
+    background: rgba(255, 193, 7, 0.05) !important;
+}
+
+.content .milestone-item h6 {
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+.content .milestone-item h6 i {
+    margin-right: 8px !important;
+    color: #ffc107 !important;
+}
+
+.content .milestone-item .timeline-date {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+/* Fix per Bootstrap tabs */
+.content .tab-content > .tab-pane:not(.active) {
+    display: none !important;
+}
+
+/* Cards generali */
+.content .card {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    border: 1px solid #e9ecef !important;
+    margin-bottom: 20px !important;
+}
+
+.content .card-header {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 15px 20px !important;
+}
+
+.content .card-body {
+    padding: 20px !important;
+}
+
+/* Nav tabs ottimizzate */
+.content .nav-tabs .nav-link {
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+    padding: 10px 15px !important;
+}
+
+.content .nav-tabs .nav-link.active {
+    border-bottom-color: #51CACF !important;
+    color: #51CACF !important;
+    background: none !important;
+}
+
+.content .nav-tabs .nav-link:hover {
+    color: #51CACF !important;
+    border-bottom-color: rgba(81, 202, 207, 0.5) !important;
+}
+
+/* Budget display ottimizzato */
+.content .budget-display {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #28a745 !important;
+}
+
+/* Info badge ottimizzato */
+.content .info-badge {
+    display: inline-block !important;
+    padding: 4px 8px !important;
+    border-radius: 12px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    margin-right: 8px !important;
+    margin-bottom: 5px !important;
+    background: #f8f9fa !important;
+    color: #6c757d !important;
+}
+
+/* Responsive generale */
+@media (max-width: 576px) {
+    .content .project-title-optimized {
+        font-size: 20px !important;
+    }
+    
+    .content .header-content {
+        padding: 15px 20px !important;
+    }
+    
+    .content .budget-compact {
+        font-size: 18px !important;
+    }
+    
+    .content .wp-header,
+    .content .partner-card,
+    .content .card-body {
+        padding: 15px !important;
+    }
+}
