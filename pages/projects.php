@@ -145,11 +145,14 @@ $base_sql = "
     SELECT 
         p.*, 
         COUNT(DISTINCT pp.partner_id) as partner_count,
+        COUNT(DISTINCT wp.id) as work_package_count,
+        COUNT(DISTINCT a.id) as activity_count,
         AVG(wp.progress) as avg_progress,
         u.full_name as coordinator_name
     FROM projects p 
     LEFT JOIN project_partners pp ON p.id = pp.project_id
     LEFT JOIN work_packages wp ON p.id = wp.project_id
+    LEFT JOIN activities a ON wp.id = a.work_package_id
     LEFT JOIN users u ON p.coordinator_id = u.id
 ";
 
@@ -435,17 +438,17 @@ $stats = getDashboardStats($conn, $user_id, $user_role);
                     <div class="stat-label">Days Left</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">
-                        <?= $project['activity_count'] ?? 0 ?>
-                    </span>
-                    <div class="stat-label">Activities</div>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">
-                        <?= $project['wp_count'] ?? 0 ?>
-                    </span>
-                    <div class="stat-label">WPs</div>
-                </div>
+    <span class="stat-value">
+        <?= $project['activity_count'] ?? 0 ?>
+    </span>
+    <div class="stat-label">Activities</div>
+</div>
+<div class="stat-item">
+    <span class="stat-value">
+        <?= $project['work_package_count'] ?? 0 ?>
+    </span>
+    <div class="stat-label">WPs</div>
+</div>
                 <div class="stat-item">
                     <span class="stat-value budget-display">
                         <?= $budget_compact ?>

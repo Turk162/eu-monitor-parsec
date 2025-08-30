@@ -125,39 +125,14 @@ if ($_POST) {
             font-size: 14px;
         }
         
-        .demo-accounts {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            font-size: 12px;
-        }
         
-        .demo-accounts h6 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .demo-account {
-            margin-bottom: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .demo-account:last-child {
-            border-bottom: none;
-        }
-        
-        .demo-account strong {
-            color: #51CACF;
-        }
     </style>
 </head>
 
 <body class="login-page">
     <div class="login-card">
         <div class="login-header">
-            <h2><i class="nc-icon nc-badge text-info"></i> Project Manager</h2>
+            <h3><i class="nc-icon nc-badge text-info"></i> EU Project Manager <br> Parsec</h3>
             <p>European Projects Management</p>
         </div>
         
@@ -192,30 +167,7 @@ if ($_POST) {
             </button>
         </form>
         
-        <!-- DEMO ACCOUNTS for testing -->
-        <div class="demo-accounts">
-            <h6><i class="nc-icon nc-settings-gear-65"></i> Test Accounts:</h6>
-            
-            <div class="demo-account">
-                <strong>Super Admin:</strong><br>
-                Username: <code>admin</code> | Password: <code>admin123</code>
-            </div>
-            
-            <div class="demo-account">
-                <strong>Project Coordinator:</strong><br>
-                Username: <code>coordinator</code> | Password: <code>coord123</code>
-            </div>
-            
-            <div class="demo-account">
-                <strong>Spain Partner:</strong><br>
-                Username: <code>partner_spain</code> | Password: <code>partner123</code>
-            </div>
-            
-            <div class="demo-account">
-                <strong>Greece Partner:</strong><br>
-                Username: <code>partner_greece</code> | Password: <code>partner123</code>
-            </div>
-        </div>
+        
     </div>
 
     <!-- Core JS Files -->
@@ -225,19 +177,6 @@ if ($_POST) {
     
     <!-- Quick Login JS -->
     <script>
-        // Quick click for demo accounts
-        document.querySelectorAll('.demo-account').forEach(function(account) {
-            account.style.cursor = 'pointer';
-            account.addEventListener('click', function() {
-                const text = this.textContent;
-                const username = text.match(/Username: (\w+)/)[1];
-                const password = text.match(/Password: (\w+)/)[1];
-                
-                document.querySelector('input[name="username"]').value = username;
-                document.querySelector('input[name="password"]').value = password;
-            });
-        });
-        
         // Auto-focus on first field
         document.querySelector('input[name="username"]').focus();
     </script>

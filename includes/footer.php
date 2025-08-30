@@ -64,6 +64,7 @@ $current_year = date('Y');
                 }
             });
         });
+        
     </script>
 
     <!-- Page-specific script -->

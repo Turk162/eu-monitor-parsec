@@ -2,7 +2,9 @@
 // ===================================================================
 // DASHBOARD - Page-specific configuration
 // ===================================================================
-
+// DEBUG - aggiungi all'inizio del file dashboard.php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 // ===================================================================
 //  PAGE CONFIGURATION
 // ===================================================================
@@ -96,74 +98,83 @@ $recent_reports = $stmt->fetchAll();
                 <!-- ALERT MESSAGE -->
                 <?php displayAlert(); ?>
                 
+                <script>
+function markAsRead(alertId, alertElement) {
+    fetch('../api/mark_alert_read.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `alert_id=${alertId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alertElement.remove();
+        } else {
+            console.error('Error:', data.error);
+        }
+    })
+    .catch(error => console.error('Fetch error:', error));
+}
+</script>
                 <?php
-                // Handle marking alerts as read (moved to top of block for logical flow)
-                if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'mark_alert_read') {
-                    $alert_id = (int)$_POST['alert_id'];
-                    $stmt = $conn->prepare("UPDATE alerts SET is_read = 1 WHERE id = ? AND user_id = ?");
-                    $stmt->execute([$alert_id, $user_id]);
-                    // Redirect to clear POST data and refresh alerts
-                    header('Location: dashboard.php');
-                    exit;
-                }
 
-                // --- NEW: Persistent Risk Alert Generation ---
-                if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
-                    require_once '../includes/classes/AlertSystem.php';
-                    $alertSystem = new AlertSystem($conn);
+// --- MODIFIED: Persistent Risk Alert Generation ---
+if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
+    require_once '../includes/classes/AlertSystem.php';
+    $alertSystem = new AlertSystem($conn);
 
-                    // 1. Get all critical risks for projects the user has access to
-                    $critical_risks_query = "
-                        SELECT pr.id as project_risk_id, pr.project_id, pr.current_score, pr.status, r.critical_threshold, r.description as risk_description
-                        FROM project_risks pr
-                        JOIN risks r ON pr.risk_id = r.id
-                        JOIN projects p ON pr.project_id = p.id
-                    ";
-                    $critical_risks_params = [];
+    // Get all critical risks for projects the user has access to
+    $critical_risks_query = "
+        SELECT pr.id as project_risk_id, pr.project_id, pr.current_score, pr.status, 
+               r.critical_threshold, r.description as risk_description
+        FROM project_risks pr
+        JOIN risks r ON pr.risk_id = r.id
+        JOIN projects p ON pr.project_id = p.id
+    ";
+    $critical_risks_params = [];
 
-                    if ($user_role === 'coordinator') {
-                        // If coordinator, only show risks for projects they coordinate
-                        $critical_risks_query .= " WHERE p.coordinator_id = ?";
-                        $critical_risks_params[] = $user_id;
-                    }
-                    // Super admin sees all, so no additional WHERE for them
+    if ($user_role === 'coordinator') {
+        // Only show risks for projects where user is the coordinator
+        $critical_risks_query .= " WHERE p.coordinator_id = ?";
+        $critical_risks_params[] = $user_id;
+    }
+    // Super admin sees all projects, so no additional WHERE clause
+    
+    $stmt_critical_risks = $conn->prepare($critical_risks_query . " HAVING pr.current_score >= r.critical_threshold");
+    $stmt_critical_risks->execute($critical_risks_params);
+    $critical_risks = $stmt_critical_risks->fetchAll(PDO::FETCH_ASSOC);
 
-                    $critical_risks_query .= " HAVING pr.current_score >= r.critical_threshold"; 
-                    
-                    $stmt_critical_risks = $conn->prepare($critical_risks_query);
-                    $stmt_critical_risks->execute($critical_risks_params);
-                    $critical_risks = $stmt_critical_risks->fetchAll(PDO::FETCH_ASSOC);
-
-                    foreach ($critical_risks as $risk) {
-                        // Check if an unread persistent alert already exists for this risk and user
-                        $existing_alert_stmt = $conn->prepare("
-                            SELECT id FROM alerts 
-                            WHERE user_id = ? 
-                            AND project_id = ? 
-                            AND type = 'risk_persistent' 
-                            AND message LIKE ? 
-                            AND is_read = 0
-                        ");
-                        $search_message = "%Risk '" . htmlspecialchars($risk['risk_description']) . "' (Score: {$risk['current_score']}%"; 
-                        $existing_alert_stmt->execute([$user_id, $risk['project_id'], $search_message]);
-                        
-                        if (!$existing_alert_stmt->fetch()) {
-                            // If no unread persistent alert exists, create one
-                            $alertTitle = "Persistent Risk Alert: " . htmlspecialchars($alertSystem->getProjectName($risk['project_id']));
-                            $alertMessage = "Risk '" . htmlspecialchars($risk['risk_description']) . "' (Score: {$risk['current_score']}, Status: {$risk['status']}) is currently critical. Please review.";
-                            
-                            $alertSystem->createDashboardAlert(
-                                $user_id, 
-                                $risk['project_id'], 
-                                null, // No activity ID for persistent risk alerts
-                                'risk_persistent', 
-                                $alertTitle, 
-                                $alertMessage
-                            );
-                        }
-                    }
-                }
-                // --- END NEW: Persistent Risk Alert Generation ---
+    // Generate alerts only for currently critical risks
+    foreach ($critical_risks as $risk) {
+        // Check if ANY alert exists for this risk in the last 24 hours
+        $existing_alert_stmt = $conn->prepare("
+            SELECT id FROM alerts 
+            WHERE user_id = ? 
+            AND project_id = ? 
+            AND type = 'risk_persistent' 
+            AND message LIKE ? 
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        ");
+        $search_message = "%Risk '" . htmlspecialchars($risk['risk_description']) . "' (Score: {$risk['current_score']}%"; 
+        $existing_alert_stmt->execute([$user_id, $risk['project_id'], $search_message]);
+        
+        if (!$existing_alert_stmt->fetch()) {
+            // Create alert only if none exists in the last 24 hours
+            $alertTitle = "Critical Risk Alert: " . htmlspecialchars($alertSystem->getProjectName($risk['project_id']));
+            $alertMessage = "Risk '" . htmlspecialchars($risk['risk_description']) . "' (Score: {$risk['current_score']}, Status: {$risk['status']}) is currently critical. Please review.";
+            
+            $alertSystem->createDashboardAlert(
+                $user_id, 
+                $risk['project_id'], 
+                null,
+                'risk_persistent', 
+                $alertTitle, 
+                $alertMessage
+            );
+        }
+    }
+}
+// --- END MODIFIED ---
 
                 // Fetch unread dashboard alerts for the current user (including newly generated persistent ones)
                 $dashboard_alerts = [];
@@ -231,10 +242,10 @@ $recent_reports = $stmt->fetchAll();
                                     <form method="POST" style="display:inline-block; margin-left: 10px;">
                                         <input type="hidden" name="action" value="mark_alert_read">
                                         <input type="hidden" name="alert_id" value="<?= $alert['id'] ?>">
-                                    </form>
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="font-size: 1rem; line-height: 1;">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
+<button onclick="markAsRead(<?= $alert['id'] ?>, this.closest('.alert'))" class="btn btn-link btn-sm p-0">
+    Mark as Read
+</button>                                   </form>
+                                   
                                 </div>
                                 <?php endforeach; ?>
                             </div>
@@ -497,6 +508,9 @@ $recent_reports = $stmt->fetchAll();
                     </div>
                 </div>
             </div>
+
+            <script>
+
 
                <!-- FOOTER-->
            <?php include '../includes/footer.php'; ?>

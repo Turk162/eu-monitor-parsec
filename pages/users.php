@@ -167,6 +167,9 @@ if ($user_role === 'super_admin') {
                                     <th>Role</th>
                                     <th>Organization</th>
                                     <th>Status</th>
+                                    <?php if ($user_role === 'super_admin'): ?>
+                                    <th>Actions</th>
+                                    <?php endif; ?>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($users as $user): ?>
@@ -176,6 +179,12 @@ if ($user_role === 'super_admin') {
                                             <td><?= getRoleDisplayName($user['role']) ?></td>
                                             <td><?= htmlspecialchars($user['organization_name'] ?? 'N/A') ?></td>
                                             <td><?= $user['is_active'] ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>' ?></td>
+                                            <?php if ($user_role === 'super_admin'): ?>
+                                            <td>
+                                                <a href="edit-user.php?id=<?= $user['id'] ?>" class="btn btn-info btn-sm">Edit</a>
+                                                <a href="delete-user.php?id=<?= $user['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>
+                                            </td>
+                                            <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
