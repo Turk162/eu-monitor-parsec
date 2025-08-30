@@ -242,8 +242,8 @@ if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
                                     <form method="POST" style="display:inline-block; margin-left: 10px;">
                                         <input type="hidden" name="action" value="mark_alert_read">
                                         <input type="hidden" name="alert_id" value="<?= $alert['id'] ?>">
-<button onclick="markAsRead(<?= $alert['id'] ?>, this.closest('.alert'))" class="btn btn-link btn-sm p-0">
-    Mark as Read
+<button onclick="markAsRead(<?= $alert['id'] ?>, this.closest('.alert'))" class="btn btn-link btn-sm p-0"><strong>
+    Mark as Read</strong>
 </button>                                   </form>
                                    
                                 </div>
