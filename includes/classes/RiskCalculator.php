@@ -11,14 +11,44 @@ class RiskCalculator {
 
     /**
      * Il costruttore stabilisce la connessione al database.
+     * Può accettare una connessione PDO esistente o crearne una nuova.
+     *
+     * @param PDO|null $pdo Una connessione PDO esistente.
      */
-    public function __construct() {
-        try {
-            $database = new Database();
-            $this->pdo = $database->connect();
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Errore di connessione al database: " . $e->getMessage());
+    public function __construct($pdo = null) {
+        if ($pdo) {
+            $this->pdo = $pdo;
+        } else {
+            try {
+                $database = new Database();
+                $this->pdo = $database->connect();
+            } catch (PDOException $e) {
+                // In un'applicazione reale, questo dovrebbe essere gestito più elegantemente
+                // (es. loggare l'errore e mostrare un messaggio generico).
+                die("Errore di connessione al database: " . $e->getMessage());
+            }
+        }
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+
+    /**
+     * Elabora un report di attività appena creato per ricalcolare i rischi del progetto associato.
+     *
+     * @param int $reportId L'ID del report di attività.
+     */
+    public function processReport($reportId) {
+        // 1. Trova il project_id dal report
+        $stmt = $this->pdo->prepare("SELECT project_id FROM activity_reports WHERE id = :reportId");
+        $stmt->execute(['reportId' => $reportId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result && !empty($result['project_id'])) {
+            $projectId = $result['project_id'];
+            // 2. Esegui il ricalcolo di tutti i rischi per quel progetto
+            $this->calculateAllRisksForProject($projectId);
+        } else {
+            // Opzionale: logga un errore se il report o il progetto non vengono trovati
+            // Per esempio: error_log("RiskCalculator: Impossibile trovare il progetto per il report ID: " . $reportId);
         }
     }
 
