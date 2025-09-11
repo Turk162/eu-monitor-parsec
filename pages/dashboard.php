@@ -504,13 +504,12 @@ if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
                                 </div>
                             </div>
                         </div>
-                        <?php endif; ?>
+<?php endif; ?>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <script>
-
-
-               <!-- FOOTER-->
-           <?php include '../includes/footer.php'; ?>
+<?php include '../includes/footer.php'; ?>

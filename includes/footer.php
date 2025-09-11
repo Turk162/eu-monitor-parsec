@@ -64,6 +64,15 @@ $current_year = date('Y');
                 }
             });
         });
+
+        // Funzione per marcare alert come letti
+function markAsRead(alertId, alertElement) {
+    // Submit del form per marcare come letto
+    const form = alertElement.querySelector('form');
+    if (form) {
+        form.submit();
+    }
+}
         
     </script>
 
