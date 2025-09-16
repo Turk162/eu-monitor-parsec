@@ -98,24 +98,6 @@ $recent_reports = $stmt->fetchAll();
                 <!-- ALERT MESSAGE -->
                 <?php displayAlert(); ?>
                 
-                <script>
-function markAsRead(alertId, alertElement) {
-    fetch('../api/mark_alert_read.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `alert_id=${alertId}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alertElement.remove();
-        } else {
-            console.error('Error:', data.error);
-        }
-    })
-    .catch(error => console.error('Fetch error:', error));
-}
-</script>
                 <?php
 
 // --- MODIFIED: Persistent Risk Alert Generation ---
@@ -216,53 +198,54 @@ if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
                         </p>
                     </div>
                     
-                    <!-- NOTIFICATIONS SECTION - Più piccolo (4 colonne) -->
-                    <div class="col-md-4">
-                        <?php if (!empty($dashboard_alerts)): ?>
-                        <div class="notifications-section">
-                            <h6 class="mb-3">
-                                <i class="nc-icon nc-bell-55 text-warning"></i>
-                                Your Notifications
-                            </h6>
-                            <div class="notifications-container" style="max-height: 300px; overflow-y: auto;">
-                                <?php foreach ($dashboard_alerts as $alert): ?>
-                                <div class="alert alert-<?php 
-                                    switch ($alert['type']) {
-                                        case 'risk': echo 'danger'; break;
-                                        case 'deadline': echo 'warning'; break;
-                                        case 'milestone': echo 'info'; break;
-                                        default: echo 'primary'; break;
-                                    }
-                                ?> alert-dismissible fade show mb-2" role="alert" style="padding: 8px 12px; font-size: 0.9em;">
-                                    <strong><?= htmlspecialchars($alert['title']) ?></strong>
-                                    <p class="mb-2"><small><?= htmlspecialchars($alert['message']) ?></small></p>
-                                    <?php if ($alert['project_id']): ?>
-                                        <small class="text-muted">Project: <?= htmlspecialchars($alert['project_name']) ?></small>
-                                    <?php endif; ?>
-                                    <form method="POST" style="display:inline-block; margin-left: 10px;">
-                                        <input type="hidden" name="action" value="mark_alert_read">
-                                        <input type="hidden" name="alert_id" value="<?= $alert['id'] ?>">
-<button onclick="markAsRead(<?= $alert['id'] ?>, this.closest('.alert'))" class="btn btn-link btn-sm p-0"><strong>
-    Mark as Read</strong>
-</button>                                   </form>
-                                   
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                        <?php else: ?>
-                        <div class="notifications-section">
-                            <h6 class="mb-3">
-                                <i class="nc-icon nc-bell-55 text-muted"></i>
-                                Your Notifications
-                            </h6>
-                            <div class="text-center text-muted">
-                                <i class="nc-icon nc-check-2" style="font-size: 1.5rem;"></i>
-                                <p class="mt-2 mb-0">No notifications</p>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                    </div>
+                   <!-- NOTIFICATIONS SECTION - VERSIONE CORRETTA -->
+<div class="col-md-4">
+    <?php if (!empty($dashboard_alerts)): ?>
+    <div class="notifications-section">
+        <h6 class="mb-3">
+            <i class="nc-icon nc-bell-55 text-warning"></i>
+            Your Notifications
+        </h6>
+        <div class="notifications-container" style="max-height: 300px; overflow-y: auto;">
+            <?php foreach ($dashboard_alerts as $alert): ?>
+            <div class="alert alert-<?php 
+                switch ($alert['type']) {
+                    case 'risk': echo 'danger'; break;
+                    case 'deadline': echo 'warning'; break;
+                    case 'milestone': echo 'info'; break;
+                    default: echo 'primary'; break;
+                }
+            ?> alert-dismissible fade show mb-2" role="alert" style="padding: 8px 12px; font-size: 0.9em;">
+                <strong><?= htmlspecialchars($alert['title']) ?></strong>
+                <p class="mb-2"><small><?= htmlspecialchars($alert['message']) ?></small></p>
+                <?php if ($alert['project_id']): ?>
+                    <small class="text-muted">Project: <?= htmlspecialchars($alert['project_name']) ?></small>
+                <?php endif; ?>
+                
+                <!-- UNICO BUTTON: Mark as Read -->
+                <button type="button" 
+                        class="btn btn-link btn-sm p-0 mark-as-read-btn" 
+                        data-alert-id="<?= $alert['id'] ?>"
+                        style="margin-left: 10px;">
+                    <strong>Mark as Read</strong>
+                </button>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php else: ?>
+    <div class="notifications-section">
+        <h6 class="mb-3">
+            <i class="nc-icon nc-bell-55 text-muted"></i>
+            Your Notifications
+        </h6>
+        <div class="text-center text-muted">
+            <i class="nc-icon nc-check-2" style="font-size: 1.5rem;"></i>
+            <p class="mt-2 mb-0">No notifications</p>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
                 </div>
             </div>
         </div>
@@ -511,5 +494,97 @@ if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
         </div>
     </div>
 </div>
+<!-- SCRIPT INLINE PER NOTIFICATIONS -->
+<script>
+// Aspetta che jQuery sia disponibile
+function waitForJQuery() {
+    if (typeof $ !== 'undefined') {
+        console.log('🚀 jQuery found, initializing script...');
+        initNotificationsScript();
+    } else {
+        console.log('⏳ Waiting for jQuery...');
+        setTimeout(waitForJQuery, 100);
+    }
+}
 
+function initNotificationsScript() {
+    $(document).ready(function() {
+        console.log('🚀 Inline JavaScript loaded successfully');
+        
+        // Handle "Mark as Read" button clicks using event delegation
+        $(document).on('click', '.mark-as-read-btn', function(e) {
+            e.preventDefault();
+            console.log('✅ Mark as Read button clicked');
+            
+            const button = $(this);
+            const alertId = button.data('alert-id');
+            const alertContainer = button.closest('.alert');
+            
+            console.log('📋 Alert ID:', alertId);
+            
+            if (!alertId) {
+                console.error('❌ No alert ID found');
+                return;
+            }
+            
+            // Disable button and show loading state
+            button.prop('disabled', true).html('<strong>Processing...</strong>');
+            
+            console.log('🔄 Sending AJAX request...');
+            
+            // Send AJAX request to mark alert as read
+            $.ajax({
+                url: '../api/mark_alert_read.php',
+                type: 'POST',
+                data: {
+                    action: 'mark_alert_read',
+                    alert_id: alertId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('✅ AJAX Success:', response);
+                    
+                    // If successful, fade out and remove the alert
+                    alertContainer.fadeOut(400, function() {
+                        $(this).remove();
+                        
+                        // Check if there are no more alerts left
+                        const remainingAlerts = $('.notifications-container .alert').length;
+                        console.log('📊 Remaining alerts:', remainingAlerts);
+                        
+                        if (remainingAlerts === 0) {
+                            // Replace notifications container with "no notifications" message
+                            $('.notifications-section').html(`
+                                <h6 class="mb-3">
+                                    <i class="nc-icon nc-bell-55 text-muted"></i>
+                                    Your Notifications
+                                </h6>
+                                <div class="text-center text-muted">
+                                    <i class="nc-icon nc-check-2" style="font-size: 1.5rem;"></i>
+                                    <p class="mt-2 mb-0">No notifications</p>
+                                </div>
+                            `);
+                        }
+                    });
+                    
+                    // Show simple success message
+                    alert('Notification marked as read!');
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ AJAX Error - Status:', status);
+                    console.error('❌ AJAX Error - Error:', error);
+                    console.error('❌ AJAX Error - Response:', xhr.responseText);
+                    
+                    // If error, re-enable button and show error message
+                    button.prop('disabled', false).html('<strong>Mark as Read</strong>');
+                    alert('Error: ' + error);
+                }
+            });
+        });
+    });
+}
+
+// Avvia la ricerca di jQuery
+waitForJQuery();
+</script>
 <?php include '../includes/footer.php'; ?>
