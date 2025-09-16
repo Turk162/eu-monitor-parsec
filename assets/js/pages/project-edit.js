@@ -318,4 +318,141 @@ $(document).ready(function() {
             }
         });
     }
+
+    // AGGIUNGERE ALLA FINE del file assets/js/pages/project-edit.js
+// Dopo la chiusura di $(document).ready(function() { ... });
+
+// --- GOOGLE GROUPS FUNCTIONALITY ---
+$(document).ready(function() {
+    
+    // Google Groups URL validation
+    $('#google_groups_url').on('blur', function() {
+        const url = $(this).val().trim();
+        const statusIndicator = $('.groups-status');
+        const testButton = $('.btn-groups-test');
+        
+        if (url) {
+            if (isValidGoogleGroupsUrl(url)) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                statusIndicator.removeClass('not-configured').addClass('configured')
+                    .html('<i class="nc-icon nc-check-2"></i> URL Valido');
+                testButton.prop('disabled', false);
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+                statusIndicator.removeClass('configured').addClass('not-configured')
+                    .html('<i class="nc-icon nc-simple-remove"></i> URL Non Valido');
+                testButton.prop('disabled', true);
+            }
+        } else {
+            $(this).removeClass('is-valid is-invalid');
+            statusIndicator.removeClass('configured').addClass('not-configured')
+                .html('<i class="nc-icon nc-simple-remove"></i> Non configurato');
+            testButton.prop('disabled', true);
+        }
+    });
+
+    // Google Groups form validation
+    $('#googleGroupsForm').on('submit', function(e) {
+        const url = $('#google_groups_url').val().trim();
+        
+        if (url && !isValidGoogleGroupsUrl(url)) {
+            e.preventDefault();
+            alert('Inserire un URL Google Groups valido.\nFormato corretto: https://groups.google.com/g/nome-gruppo');
+            $('#google_groups_url').focus();
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        $(this).find('button[type="submit"]').prop('disabled', true).html(
+            '<i class="nc-icon nc-refresh-69 spin"></i> Salvando...'
+        );
+    });
+
+    // Test Google Groups link functionality
+    $(document).on('click', '.btn-groups-test', function(e) {
+        e.preventDefault();
+        const url = $('#google_groups_url').val().trim();
+        
+        if (url && isValidGoogleGroupsUrl(url)) {
+            // Open in new window/tab
+            window.open(url, '_blank', 'noopener,noreferrer');
+            
+            // Optional: track the test action
+            console.log('Google Groups link tested:', url);
+        } else {
+            alert('URL Google Groups non valido o vuoto');
+        }
+    });
+
+    // Auto-save for Google Groups URL (integrates with existing auto-save)
+    $('#google_groups_url').addClass('auto-save');
+
+    // Initialize Google Groups status on page load
+    const initialUrl = $('#google_groups_url').val().trim();
+    if (initialUrl) {
+        $('#google_groups_url').trigger('blur');
+    }
+
 });
+
+// Utility function to validate Google Groups URL
+function isValidGoogleGroupsUrl(url) {
+    if (!url) return false;
+    
+    // Check if it's a valid URL
+    try {
+        const urlObj = new URL(url);
+        
+        // Check if it's a Google Groups URL
+        if (!urlObj.hostname.includes('groups.google.com')) {
+            return false;
+        }
+        
+        // Check for common Google Groups URL patterns
+        const validPatterns = [
+            /^https:\/\/groups\.google\.com\/g\/[a-zA-Z0-9_-]+/,  // /g/group-name
+            /^https:\/\/groups\.google\.com\/forum\/#!forum\/[a-zA-Z0-9_-]+/, // legacy format
+            /^https:\/\/groups\.google\.com\/d\/forum\/[a-zA-Z0-9_-]+/ // another format
+        ];
+        
+        return validPatterns.some(pattern => pattern.test(url));
+        
+    } catch (e) {
+        return false;
+    }
+}
+
+// Function to show Google Groups status message
+function showGroupsMessage(message, type = 'info') {
+    // Create or update status message
+    let messageDiv = $('#google-groups-message');
+    if (messageDiv.length === 0) {
+        messageDiv = $('<div id="google-groups-message" class="alert mt-2" style="display:none;"></div>');
+        $('#google_groups_url').closest('.form-group').append(messageDiv);
+    }
+    
+    // Set message type and content
+    messageDiv.removeClass('alert-success alert-danger alert-warning alert-info')
+        .addClass('alert-' + type)
+        .html(message)
+        .fadeIn();
+    
+    // Auto-hide after 3 seconds
+    setTimeout(function() {
+        messageDiv.fadeOut();
+    }, 3000);
+}
+
+// Add to existing form validation (extend the existing form validation)
+const originalFormValidation = $('#basicDetailsForm').data('events');
+$('#googleGroupsForm').on('submit', function(e) {
+    // Leverage existing form validation patterns
+    const form = $(this);
+    if (!form[0].checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+        form.addClass('was-validated');
+    }
+});
+});
+

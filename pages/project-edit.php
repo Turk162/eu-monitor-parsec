@@ -1,204 +1,7 @@
 <?php
+
 // Page configuration (BEFORE including header)
 $page_title = 'Edit Project - EU Project Manager';
-$page_styles = '
-    .form-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border-left: 4px solid #51CACF;
-    }
-    
-    .form-section h6 {
-        color: #2c3e50;
-        font-weight: 600;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .section-icon {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, #51CACF 0%, #45b7bd 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 14px;
-    }
-    
-    .form-control:focus, .form-control:active {
-        border-color: #51CACF;
-        box-shadow: 0 0 0 0.2rem rgba(81, 202, 207, 0.25);
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #51CACF 0%, #45b7bd 100%);
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #45b7bd 0%, #3a9ca2 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    
-    .required-field::after {
-        content: " *";
-        color: #e74c3c;
-        font-weight: bold;
-    }
-    
-    .partner-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        background: white;
-        transition: all 0.3s ease;
-    }
-    
-    .partner-card:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transform: translateY(-2px);
-    }
-    
-    .partner-card.selected {
-        border-color: #51CACF;
-        background: #f0fdff;
-    }
-    
-    .wp-card {
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        overflow: hidden;
-    }
-    
-    .wp-header {
-        background: linear-gradient(135deg, #51CACF 0%, #45b7bd 100%);
-        color: white;
-        padding: 12px 15px;
-        font-weight: 600;
-    }
-    
-    .wp-body {
-        padding: 15px;
-    }
-    
-    .file-upload-area {
-        border: 2px dashed #dee2e6;
-        border-radius: 8px;
-        padding: 30px;
-        text-align: center;
-        background: #f8f9fa;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .file-upload-area:hover {
-        border-color: #51CACF;
-        background: #f0fdff;
-    }
-    
-    .file-upload-area.dragover {
-        border-color: #51CACF;
-        background: #e6fffe;
-    }
-    
-    .progress {
-        height: 8px;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .progress-bar {
-        background: linear-gradient(135deg, #51CACF 0%, #45b7bd 100%);
-    }
-    
-    .nav-tabs .nav-link {
-        border-radius: 8px 8px 0 0;
-        border: none;
-        background: #f8f9fa;
-        color: #6c757d;
-        margin-right: 5px;
-        transition: all 0.3s ease;
-    }
-    
-    .nav-tabs .nav-link.active {
-        background: linear-gradient(135deg, #51CACF 0%, #45b7bd 100%);
-        color: white;
-        border: none;
-    }
-    
-    .nav-tabs .nav-link:hover {
-        background: #e9ecef;
-        color: #495057;
-    }
-    
-    .nav-tabs .nav-link.active:hover {
-        background: linear-gradient(135deg, #45b7bd 0%, #3a9ca2 100%);
-        color: white;
-    }
-    
-    .alert-info {
-        background: linear-gradient(135deg, #e6fffe 0%, #f0fdff 100%);
-        border-color: #51CACF;
-        color: #2c5358;
-    }
-    
-    .badge-status {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    .status-planning { background: #ffeaa7; color: #2d3436; }
-    .status-active { background: #00b894; color: white; }
-    .status-suspended { background: #e17055; color: white; }
-    .status-completed { background: #6c5ce7; color: white; }
-    
-    .auto-save-indicator {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #00b894;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 1000;
-    }
-    
-    .auto-save-indicator.show {
-        opacity: 1;
-    }
-    
-    @media (max-width: 768px) {
-        .form-section {
-            padding: 15px;
-        }
-        
-        .partner-card {
-            padding: 12px;
-        }
-        
-        .nav-tabs .nav-link {
-            font-size: 14px;
-            padding: 8px 12px;
-        }
-    }
-';
 
 // Include header (handles session, auth, database, user variables)
 require_once '../includes/header.php';
@@ -534,6 +337,29 @@ case 'add_work_package':
         }
         $_SESSION['error'] = "Error: " . $e->getMessage();
     }
+    // 1. Nel blocco di gestione del POST (intorno alla riga dove vengono gestiti gli altri campi)
+if (isset($_POST['google_groups_url'])) {
+    $google_groups_url = trim($_POST['google_groups_url']);
+    
+    // Validazione URL Google Groups (opzionale)
+    if (!empty($google_groups_url) && !filter_var($google_groups_url, FILTER_VALIDATE_URL)) {
+        $_SESSION['error'] = "URL Google Groups non valido";
+    } elseif (!empty($google_groups_url) && !str_contains($google_groups_url, 'groups.google.com')) {
+        $_SESSION['error'] = "Inserire un URL Google Groups valido (groups.google.com)";
+    } else {
+        // Aggiorna il database
+        $stmt = $conn->prepare("UPDATE projects SET google_groups_url = ? WHERE id = ?");
+        if ($stmt->execute([$google_groups_url, $project_id])) {
+            $_SESSION['success'] = "URL Google Groups aggiornato con successo";
+        } else {
+            $_SESSION['error'] = "Errore nell'aggiornamento URL Google Groups";
+        }
+    }
+}
+
+$project_query = "SELECT *, google_groups_url FROM projects WHERE id = ?";
+
+
 }
 
 // Get project partners
@@ -714,6 +540,8 @@ $status_options = [
 <?php include '../includes/sidebar.php'; ?>
 <?php include '../includes/navbar.php'; ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="../assets/js/pages/project-edit.js"></script>
+<link rel="stylesheet" href="../assets/css/pages/project-edit.css">
 
 <div class="content">
     <div class="row">
@@ -867,7 +695,46 @@ $status_options = [
                                             </div>
                                         </div>
                                     </div>
-
+                                    
+                                <!-- 3. SEZIONE HTML DA AGGIUNGERE NEL FORM (dopo la sezione budget o dove preferisci) -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="nc-icon nc-chat-33"></i>
+                    Google Groups Integration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="google_groups_url">URL Google Groups</label>
+                    <input type="url" 
+                           class="form-control" 
+                           id="google_groups_url" 
+                           name="google_groups_url"
+                           value="<?= htmlspecialchars($project['google_groups_url'] ?? '') ?>"
+                           placeholder="https://groups.google.com/g/your-group-name">
+                    <small class="form-text text-muted">
+                        Inserisci l'URL del Google Group associato a questo progetto. 
+                        <br>Esempio: https://groups.google.com/g/bridge-project-team
+                    </small>
+                </div>
+                
+                <?php if (!empty($project['google_groups_url'])): ?>
+                    <div class="form-group">
+                        <a href="<?= htmlspecialchars($project['google_groups_url']) ?>" 
+                           target="_blank" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="nc-icon nc-zoom-split"></i>
+                            Visualizza Google Group
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
                                     <?php if ($user_role === 'super_admin'): ?>
                                     <div class="row">
                                         <div class="col-md-12">
@@ -1559,474 +1426,6 @@ $status_options = [
     </div>
 </div>
 
-<script>
-// Auto-save functionality
-let autoSaveTimeout;
-$('.auto-save').on('input', function() {
-    clearTimeout(autoSaveTimeout);
-    const field = $(this).attr('name');
-    const value = $(this).val();
-    
-    autoSaveTimeout = setTimeout(function() {
-        $.ajax({
-            url: '',
-            method: 'POST',
-            data: {
-                action: 'auto_save',
-                field: field,
-                value: value
-            },
-            success: function(response) {
-                showAutoSaveIndicator();
-            }
-        });
-    }, 2000); // Auto-save after 2 seconds of inactivity
-});
-
-function showAutoSaveIndicator() {
-    $('#autoSaveIndicator').addClass('show');
-    setTimeout(function() {
-        $('#autoSaveIndicator').removeClass('show');
-    }, 2000);
-}
-
-// Project duration calculation
-function updateProjectDuration() {
-    const startDate = new Date($('#start_date').val());
-    const endDate = new Date($('#end_date').val());
-    
-    if (startDate && endDate && endDate > startDate) {
-        const timeDiff = endDate.getTime() - startDate.getTime();
-        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        const monthsDiff = Math.round(daysDiff / 30);
-        
-        $('#projectDuration').text(daysDiff + ' days (' + monthsDiff + ' months)');
-    }
-}
-
-$('#start_date, #end_date').on('change', updateProjectDuration);
-
-// Add partner form validation
-$('#addPartnerForm').on('submit', function(e) {
-    const partnerId = $('#partner_id').val();
-    if (!partnerId) {
-        e.preventDefault();
-        alert('Please select a partner organization.');
-        return false;
-    }
-    
-    // Prevent double submission
-    $(this).find('button[type="submit"]').prop('disabled', true).text('Adding...');
-});
-// Delete partner functionality
-$(document).on('click', '.btn-delete-partner', function() {
-    const partnerId = $(this).data('partner-id');
-    const partnerName = $(this).data('partner-name');
-    
-    if (confirm(`Are you sure you want to remove "${partnerName}" from this project?\n\nThis action cannot be undone.`)) {
-        $.ajax({
-            url: '',
-            method: 'POST',
-            data: {
-                action: 'delete_partner',
-                partner_id: partnerId
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error removing partner. Please try again.');
-            }
-        });
-    }
-});
-
-// Delete work package functionality
-$(document).on('click', '.btn-delete-wp', function() {
-    const wpId = $(this).data('wp-id');
-    const wpName = $(this).data('wp-name');
-    
-    if (confirm(`Are you sure you want to delete "${wpName}"?\n\nThis will also delete all associated activities and reports.\nThis action cannot be undone.`)) {
-        $.ajax({
-            url: '',
-            method: 'POST',
-            data: {
-                action: 'delete_work_package',
-                wp_id: wpId
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting work package. Please try again.');
-            }
-        });
-    }
-});
-
-// File upload handling
-$('#fileInput').on('change', function() {
-    const files = this.files;
-    if (files.length > 0) {
-        uploadFiles(files);
-    }
-});
-
-// Drag and drop functionality
-$('.file-upload-area').on('dragover', function(e) {
-    e.preventDefault();
-    $(this).addClass('dragover');
-});
-
-$('.file-upload-area').on('dragleave', function(e) {
-    e.preventDefault();
-    $(this).removeClass('dragover');
-});
-
-$('.file-upload-area').on('drop', function(e) {
-    e.preventDefault();
-    $(this).removeClass('dragover');
-    
-    const files = e.originalEvent.dataTransfer.files;
-    if (files.length > 0) {
-        uploadFiles(files);
-    }
-});
-
-function uploadFiles(files) {
-    const formData = new FormData();
-    formData.append('action', 'upload_files');
-    formData.append('project_id', <?= $project_id ?>);
-    
-    for (let i = 0; i < files.length; i++) {
-        formData.append('files[]', files[i]);
-    }
-    
-    $('#uploadProgress').show();
-    
-    $.ajax({
-        url: 'upload-project-files.php',
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        xhr: function() {
-            const xhr = new window.XMLHttpRequest();
-            xhr.upload.addEventListener('progress', function(e) {
-                if (e.lengthComputable) {
-                    const percentComplete = (e.loaded / e.total) * 100;
-                    $('#uploadProgress .progress-bar').css('width', percentComplete + '%');
-                }
-            });
-            return xhr;
-        },
-        success: function(response) {
-            $('#uploadProgress').hide();
-            location.reload(); // Refresh to show uploaded files
-        },
-        error: function() {
-            $('#uploadProgress').hide();
-            alert('Error uploading files. Please try again.');
-        }
-    });
-}
-
-// Delete file functionality
-$(document).on('click', '.btn-delete-file', function() {
-    if (confirm('Are you sure you want to delete this file?')) {
-        const fileId = $(this).data('file-id');
-        
-        $.ajax({
-            url: 'delete-project-file.php',
-            method: 'POST',
-            data: {
-                file_id: fileId
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting file. Please try again.');
-            }
-        });
-    }
-});
-
-// Add/Edit Activity Modals
-$(document).on('click', '.btn-add-activity', function() {
-    const wpId = $(this).data('wp-id');
-    $('#add_work_package_id').val(wpId);
-    $('#addActivityModal').modal('show');
-});
-
-$(document).on('click', '.btn-edit-activity', function() {
-    const activityId = $(this).data('activity-id');
-    
-    $.ajax({
-        url: `../api/get_activity_details.php?id=${activityId}`,
-        method: 'GET',
-        dataType: 'json',
-        success: function(activity) {
-            if (activity.error) {
-                alert(activity.error);
-                return;
-            }
-            
-            let formHtml = `
-                <div class="row">
-                    <div class="col-md-4"><div class="form-group"><label>Activity Number</label><input type="text" name="activity_number" class="form-control" value="${activity.activity_number || ''}"></div></div>
-                    <div class="col-md-8"><div class="form-group"><label>Activity Name</label><input type="text" name="name" class="form-control" value="${activity.name || ''}" required></div></div>
-                </div>
-                <div class="form-group"><label>Description</label><textarea name="description" class="form-control" rows="3">${activity.description || ''}</textarea></div>
-                <div class="row">
-                    <div class="col-md-6"><div class="form-group"><label>Responsible Partner</label><select name="responsible_partner_id" class="form-control"></select></div></div>
-                    <div class="col-md-6"><div class="form-group"><label>Budget (€)</label><input type="number" name="budget" class="form-control" value="${activity.budget || ''}" step="0.01" min="0"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><label>Start Date</label><input type="date" name="start_date" class="form-control" value="${activity.start_date || ''}"></div>
-                    <div class="col-md-4"><label>End Date</label><input type="date" name="end_date" class="form-control" value="${activity.end_date || ''}"></div>
-                    <div class="col-md-4"><label>Due Date</label><input type="date" name="due_date" class="form-control" value="${activity.due_date || ''}"></div>
-                </div>
-            `;
-            
-            $('#editActivityModalBody').html(formHtml);
-            
-            // Populate partner dropdown and select the correct one
-            const partnerSelect = $('#editActivityModalBody select[name="responsible_partner_id"]');
-            partnerSelect.append('<option value="">Select Partner...</option>');
-            <?php foreach ($all_project_partners as $p): ?>
-                partnerSelect.append(`<option value="<?= $p['partner_id'] ?>"><?= htmlspecialchars($p['organization']) ?></option>`);
-            <?php endforeach; ?>
-            partnerSelect.val(activity.responsible_partner_id);
-
-            $('#edit_activity_id').val(activityId);
-            $('#editActivityModal').modal('show');
-        },
-        error: function() {
-            alert('Failed to fetch activity details.');
-        }
-    });
-});
-
-$(document).on('click', '.btn-delete-activity', function() {
-    const activityId = $(this).data('activity-id');
-    if (confirm('Are you sure you want to delete this activity?')) {
-        const form = $('<form action="" method="POST"></form>');
-        form.append(`<input type="hidden" name="action" value="delete_activity">`);
-        form.append(`<input type="hidden" name="activity_id" value="${activityId}">`);
-        form.appendTo('body').submit();
-    }
-});
-
-// Milestone Modals
-$(document).on('click', '.btn-edit-milestone', function() {
-    const milestoneId = $(this).data('milestone-id');
-    
-    $.ajax({
-        url: `../api/get_milestone_details.php?id=${milestoneId}`,
-        method: 'GET',
-        dataType: 'json',
-        success: function(milestone) {
-            if (milestone.error) {
-                alert(milestone.error);
-                return;
-            }
-            
-            let formHtml = `
-                <div class="row">
-                    <div class="col-md-6"><div class="form-group"><label>Milestone Name</label><input type="text" name="name" class="form-control" value="${milestone.name || ''}" required></div></div>
-                    <div class="col-md-6"><div class="form-group"><label>Due Date</label><input type="date" name="due_date" class="form-control" value="${milestone.due_date || ''}" required></div></div>
-                </div>
-                <div class="form-group"><label>Description</label><textarea name="description" class="form-control" rows="2">${milestone.description || ''}</textarea></div>
-                <div class="row">
-                    <div class="col-md-6"><div class="form-group"><label>Work Package</label><select name="work_package_id" class="form-control"></select></div></div>
-                    <div class="col-md-6"><div class="form-group"><label>Status</label><select name="status" class="form-control"></select></div></div>
-                </div>
-                <div class="form-group"><label>Completed Date</label><input type="date" name="completed_date" class="form-control" value="${milestone.completed_date || ''}"></div>
-            `;
-            
-            $('#editMilestoneModalBody').html(formHtml);
-            
-            // Populate WP dropdown
-            const wpSelect = $('#editMilestoneModalBody select[name="work_package_id"]');
-            wpSelect.append('<option value="">-- No specific WP --</option>');
-            <?php foreach ($work_packages as $wp): ?>
-                wpSelect.append(`<option value="<?= $wp['id'] ?>"><?= htmlspecialchars($wp['wp_number'] . ': ' . $wp['name']) ?></option>`);
-            <?php endforeach; ?>
-            wpSelect.val(milestone.work_package_id);
-
-            // Populate Status dropdown
-            const statusSelect = $('#editMilestoneModalBody select[name="status"]');
-            const statusOptions = ['pending', 'completed', 'overdue'];
-            statusOptions.forEach(s => {
-                statusSelect.append(`<option value="${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</option>`);
-            });
-            statusSelect.val(milestone.status);
-
-            $('#edit_milestone_id').val(milestoneId);
-            $('#editMilestoneModal').modal('show');
-        },
-        error: function() {
-            alert('Failed to fetch milestone details.');
-        }
-    });
-});
-
-$(document).on('click', '.btn-delete-milestone', function() {
-    const milestoneId = $(this).data('milestone-id');
-    if (confirm('Are you sure you want to delete this milestone?')) {
-        const form = $('<form action="" method="POST"></form>');
-        form.append(`<input type="hidden" name="action" value="delete_milestone">`);
-        form.append(`<input type="hidden" name="milestone_id" value="${milestoneId}">`);
-        form.appendTo('body').submit();
-    }
-});
-
-// Edit Work Package Modal
-$(document).on('click', '.btn-edit-wp', function() {
-    const wpId = $(this).data('wp-id');
-    
-    $.ajax({
-        url: `../api/get_work_package_details.php?id=${wpId}`,
-        method: 'GET',
-        dataType: 'json',
-        success: function(wp) {
-            if (wp.error) {
-                alert(wp.error);
-                return;
-            }
-            
-            let formHtml = `
-                <div class="row">
-                    <div class="col-md-3"><div class="form-group"><label>WP Number</label><input type="text" name="wp_number" class="form-control" value="${wp.wp_number || ''}" required></div></div>
-                    <div class="col-md-9"><div class="form-group"><label>Work Package Name</label><input type="text" name="wp_name" class="form-control" value="${wp.name || ''}" required></div></div>
-                </div>
-                <div class="form-group"><label>Description</label><textarea name="wp_description" class="form-control" rows="3">${wp.description || ''}</textarea></div>
-                <div class="row">
-                    <div class="col-md-4"><div class="form-group"><label>Lead Partner</label><select name="lead_partner_id" class="form-control"></select></div></div>
-                    <div class="col-md-4"><div class="form-group"><label>Budget (€)</label><input type="number" name="wp_budget" class="form-control" value="${wp.budget || ''}" step="0.01" min="0" required></div></div>
-                    <div class="col-md-4"><div class="form-group"><label>Status</label><select name="status" class="form-control"></select></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="form-group"><label>Start Date</label><input type="date" name="wp_start_date" class="form-control" value="${wp.start_date || ''}" required></div></div>
-                    <div class="col-md-4"><div class="form-group"><label>End Date</label><input type="date" name="wp_end_date" class="form-control" value="${wp.end_date || ''}" required></div></div>
-                    <div class="col-md-4"><div class="form-group"><label>Progress (%)</label><input type="number" name="progress" class="form-control" value="${wp.progress || '0'}" min="0" max="100" step="1"></div></div>
-                </div>
-            `;
-            
-            $('#editWorkPackageModalBody').html(formHtml);
-            
-            // Populate Lead Partner dropdown
-            const leadPartnerSelect = $('#editWorkPackageModalBody select[name="lead_partner_id"]');
-            leadPartnerSelect.append('<option value="">Select Lead Partner...</option>');
-            <?php foreach ($all_project_partners as $p): ?>
-                leadPartnerSelect.append(`<option value="<?= $p['partner_id'] ?>"><?= htmlspecialchars($p['full_name'] . ' (' . $p['organization'] . ')') ?></option>`);
-            <?php endforeach; ?>
-            leadPartnerSelect.val(wp.lead_partner_id);
-
-            // Populate Status dropdown
-            const statusSelect = $('#editWorkPackageModalBody select[name="status"]');
-            const statusOptions = ['not_started', 'in_progress', 'completed', 'delayed'];
-            statusOptions.forEach(s => {
-                statusSelect.append(`<option value="${s}">${s.replace(/_/g, ' ').charAt(0).toUpperCase() + s.replace(/_/g, ' ').slice(1)}</option>`);
-            });
-            statusSelect.val(wp.status);
-
-            $('#edit_wp_id').val(wpId);
-            $('#editWorkPackageModal').modal('show');
-        },
-        error: function() {
-            alert('Failed to fetch Work Package details.');
-        }
-    });
-});
-
-// Form validation
-$('#basicDetailsForm').on('submit', function(e) {
-    const startDate = new Date($('#start_date').val());
-    const endDate = new Date($('#end_date').val());
-    
-    if (endDate <= startDate) {
-        e.preventDefault();
-        alert('End date must be after start date.');
-        return false;
-    }
-});
-
-$('#workPackageForm').on('submit', function(e) {
-    const wpStartDate = new Date($('#wp_start_date').val());
-    const wpEndDate = new Date($('#wp_end_date').val());
-    
-    if (wpEndDate <= wpStartDate) {
-        e.preventDefault();
-        alert('Work package end date must be after start date.');
-        return false;
-    }
-});
-
-$('#editWorkPackageModal form').on('submit', function(e) {
-    const wpStartDate = new Date($(this).find('input[name="wp_start_date"]').val());
-    const wpEndDate = new Date($(this).find('input[name="wp_end_date"]').val());
-    
-    if (wpEndDate <= wpStartDate) {
-        e.preventDefault();
-        alert('Work package end date must be after start date.');
-        return false;
-    }
-});
-
-$('#addMilestoneForm').on('submit', function(e) {
-    const msDueDate = new Date($(this).find('input[name="due_date"]').val());
-    if (msDueDate < new Date()) {
-        // Optional: prevent adding milestones in the past
-        // e.preventDefault();
-        // alert('Due date cannot be in the past.');
-        // return false;
-    }
-});
-
-$('#editMilestoneModal form').on('submit', function(e) {
-    const msDueDate = new Date($(this).find('input[name="due_date"]').val());
-    const msCompletedDate = $(this).find('input[name="completed_date"]').val();
-    const msStatus = $(this).find('select[name="status"]').val();
-
-    if (msStatus === 'completed' && !msCompletedDate) {
-        e.preventDefault();
-        alert('Completed date is required if status is completed.');
-        return false;
-    }
-    if (msCompletedDate && new Date(msCompletedDate) < msDueDate) {
-        e.preventDefault();
-        alert('Completed date cannot be before due date.');
-        return false;
-    }
-});
-
-// Initialize tooltips and popovers
-$(document).ready(function() {
-    $('[data-toggle="tooltip"]').tooltip();
-    
-    // Show appropriate tab based on URL hash
-    if (window.location.hash) {
-        const tabId = window.location.hash.replace('#', '') + '-tab';
-        $('#' + tabId).tab('show');
-    }
-    
-    // Update URL hash when tab changes
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        const tabId = $(e.target).attr('href').replace('#', '');
-        window.location.hash = tabId;
-    });
-});
-
-// Utility function for file size formatting
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-</script>
-
+<!-- Edit Project Modal -->
+<div class="modal fade" id="editProjectModal" tabindex
 <?php include '../includes/footer.php'; ?>

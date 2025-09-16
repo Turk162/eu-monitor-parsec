@@ -131,7 +131,7 @@ $_SESSION['error'] = 'You do not have permission to view this project.';
 // Fetch all project-related data in a series of queries.
 // Project Details
 $project_stmt = $conn->prepare("
-    SELECT p.*, u.full_name as coordinator_name, u.email as coordinator_email, partner.name as coordinator_org
+    SELECT p.*, u.full_name as coordinator_name, u.email as coordinator_email, partner.name as coordinator_org, google_groups_url
     FROM projects p 
     LEFT JOIN users u ON p.coordinator_id = u.id
     LEFT JOIN partners partner ON u.partner_id = partner.id
@@ -376,7 +376,7 @@ include '../includes/header.php';
                                                         <p><strong>Partners:</strong><br>
                                                         <?= count($partners) ?> organizations from <?= count(array_unique(array_column($partners, 'country'))) ?> countries</p>
                                                     </div>
-                                                </div>
+                                                </div>                                              
                                                 
                                                 <!-- Recent Activities -->
                                                 <h5 class="section-title mt-4">
@@ -442,7 +442,28 @@ include '../includes/header.php';
                                                         <i class="nc-icon nc-calendar-60 text-warning"></i>
                                                         Project Timeline
                                                     </a>
-                                                    
+<!-- Google groups link -->
+
+<?php if (!empty($project['google_groups_url'])): ?>
+    <a href="<?= htmlspecialchars($project['google_groups_url']) ?>" 
+       target="_blank"
+       class="list-group-item list-group-item-action">
+        <i class="nc-icon nc-chat-33 text-info"></i>
+        Project Discussions
+        <i class="nc-icon nc-minimal-right float-right mt-1" style="font-size: 12px;"></i>
+    </a>
+<?php endif; ?>
+
+<?php 
+// Se sei admin e non c'è Google Groups configurato, mostra link per configurare
+if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_admin', 'coordinator', 'admin'])): 
+?>
+    <a href="project-edit.php?id=<?= $project_id ?>#google_groups_url" 
+       class="list-group-item list-group-item-action list-group-item-light">
+        <i class="nc-icon nc-simple-add text-muted"></i>
+        <span class="text-muted">Add Project Discussions</span>
+    </a>
+<?php endif; ?>                                 
                                                        <?php if ($user_role === 'super_admin' || $user_role === 'coordinator'): ?>
                                                        <a href="manage-project-risks.php?project_id=<?= $project['id'] ?>" 
                                                        class="list-group-item list-group-item-action">
@@ -462,8 +483,7 @@ include '../includes/header.php';
     <i class="nc-icon nc-simple-remove text-danger"></i>
     Delete Project
 </a>
-                                                    <?php endif; ?>
-                                                </div>
+                                                    <?php endif; ?>                                               </div>
 
                                                 
                                            
