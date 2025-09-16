@@ -96,12 +96,168 @@ $(document).ready(function() {
         $('#add_work_package_id').val(wpId);
         $('#addActivityModal').modal('show');
     });
+// SOSTITUISCI la funzione .btn-edit-activity nel tuo project-edit.js con questa:
 
-    $(document).on('click', '.btn-edit-activity', function() {
-        const activityId = $(this).data('activity-id');
-        fetchAndPopulateModal(activityId, 'get_activity_details', '#editActivityModal', '#editActivityModalBody');
+$(document).on('click', '.btn-edit-activity', function() {
+    const activityId = $(this).data('activity-id');
+    
+    $.ajax({
+        url: `../api/get_activity_details.php?id=${activityId}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function(activity) {
+            if (activity.error) {
+                alert(activity.error);
+                return;
+            }
+            
+            let formHtml = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Activity Number</label>
+                            <input type="text" name="activity_number" class="form-control" value="${activity.activity_number || ''}">
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label>Activity Name</label>
+                            <input type="text" name="name" class="form-control" value="${activity.name || ''}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" rows="3">${activity.description || ''}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Responsible Partner</label>
+                            <select name="responsible_partner_id" class="form-control" required>
+                                <option value="">Loading partners...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Budget (€)</label>
+                            <input type="number" name="budget" class="form-control" value="${activity.budget || ''}" step="0.01" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="${activity.start_date || ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label>End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="${activity.end_date || ''}">
+                    </div>
+                </div>
+            `;
+            
+            // Popola il contenuto del modale
+            $('#editActivityModalBody').html(formHtml);
+            
+            // CHIAVE: Imposta l'ID dell'attività nel campo hidden
+            $('#edit_activity_id').val(activityId);
+            
+            // Carica i partner del progetto tramite AJAX
+            loadProjectPartners(activity.responsible_partner_id);
+            
+            // Mostra il modale
+            $('#editActivityModal').modal('show');
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', status, error);
+            alert('Errore nel recuperare i dettagli dell\'attività: ' + error);
+        }
     });
+});
 
+// AGGIUNGI questa nuova funzione nel tuo project-edit.js:
+
+function loadProjectPartners(selectedPartnerId = null) {
+    const partnerSelect = $('#editActivityModalBody select[name="responsible_partner_id"]');
+    
+    // Ottieni l'ID del progetto dalla URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('id');
+    
+    if (!projectId) {
+        console.error('Project ID not found in URL');
+        partnerSelect.html('<option value="">Error: Project ID not found</option>');
+        return;
+    }
+    
+    // Carica i partner tramite AJAX
+    $.ajax({
+        url: `../api/get_project_partners.php?project_id=${projectId}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function(partners) {
+            partnerSelect.empty();
+            partnerSelect.append('<option value="">Select Partner...</option>');
+            
+            if (partners && partners.length > 0) {
+                partners.forEach(partner => {
+                    const selected = (partner.partner_id == selectedPartnerId) ? 'selected' : '';
+                    const orgName = partner.organization || partner.name || 'Unknown';
+                    const country = partner.country || 'N/A';
+                    partnerSelect.append(`<option value="${partner.partner_id}" ${selected}>${orgName} (${country})</option>`);
+                });
+                
+                console.log('Partners loaded successfully:', partners.length);
+            } else {
+                partnerSelect.append('<option value="">No partners found</option>');
+                console.warn('No partners found for project');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading partners:', status, error);
+            partnerSelect.html('<option value="">Error loading partners</option>');
+            
+            // Fallback: prova a usare i partner già presenti nella pagina
+            loadPartnersFromPage(selectedPartnerId);
+        }
+    });
+}
+
+// AGGIUNGI questa funzione di fallback nel tuo project-edit.js:
+
+function loadPartnersFromPage(selectedPartnerId = null) {
+    const partnerSelect = $('#editActivityModalBody select[name="responsible_partner_id"]');
+    
+    console.log('Trying fallback: loading partners from page');
+    
+    // Cerca i partner nelle dropdown esistenti nella pagina
+    const existingOptions = $('#lead_partner_id option, select[name="responsible_partner_id"] option').not('[value=""]');
+    
+    if (existingOptions.length > 0) {
+        partnerSelect.empty();
+        partnerSelect.append('<option value="">Select Partner...</option>');
+        
+        const addedPartners = new Set();
+        
+        existingOptions.each(function() {
+            const value = $(this).val();
+            const text = $(this).text();
+            
+            if (value && !addedPartners.has(value)) {
+                addedPartners.add(value);
+                const selected = (value == selectedPartnerId) ? 'selected' : '';
+                partnerSelect.append(`<option value="${value}" ${selected}>${text}</option>`);
+            }
+        });
+        
+        console.log('Fallback loaded partners:', addedPartners.size);
+    } else {
+        partnerSelect.html('<option value="">No partners available</option>');
+        console.error('No partners found anywhere on the page');
+    }
+}
     $(document).on('click', '.btn-delete-activity', function() {
         const activityId = $(this).data('activity-id');
         if (confirm('Are you sure you want to delete this activity?')) {
@@ -110,10 +266,163 @@ $(document).ready(function() {
     });
 
     // --- MILESTONE MANAGEMENT ---
-    $(document).on('click', '.btn-edit-milestone', function() {
-        const milestoneId = $(this).data('milestone-id');
-        fetchAndPopulateModal(milestoneId, 'get_milestone_details', '#editMilestoneModal', '#editMilestoneModalBody');
+// SOSTITUISCI la funzione .btn-edit-milestone nel tuo project-edit.js con questa:
+
+$(document).on('click', '.btn-edit-milestone', function() {
+    const milestoneId = $(this).data('milestone-id');
+    
+    $.ajax({
+        url: `../api/get_milestone_details.php?id=${milestoneId}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function(milestone) {
+            if (milestone.error) {
+                alert(milestone.error);
+                return;
+            }
+            
+            let formHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Milestone Name</label>
+                            <input type="text" name="name" class="form-control" value="${milestone.name || ''}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Due Date</label>
+                            <input type="date" name="due_date" class="form-control" value="${milestone.due_date || ''}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" rows="2">${milestone.description || ''}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Work Package</label>
+                            <select name="work_package_id" class="form-control">
+                                <option value="">Loading work packages...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" class="form-control">
+                                <option value="pending">Pending</option>
+                                <option value="completed">Completed</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Completed Date</label>
+                    <input type="date" name="completed_date" class="form-control" value="${milestone.completed_date || ''}">
+                </div>
+            `;
+            
+            // Popola il contenuto del modale
+            $('#editMilestoneModalBody').html(formHtml);
+            
+            // CHIAVE: Imposta l'ID della milestone nel campo hidden
+            $('#edit_milestone_id').val(milestoneId);
+            
+            // Imposta lo status selezionato
+            $('#editMilestoneModalBody select[name="status"]').val(milestone.status);
+            
+            // Carica i work packages del progetto
+            loadProjectWorkPackages(milestone.work_package_id);
+            
+            // Mostra il modale
+            $('#editMilestoneModal').modal('show');
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error loading milestone:', status, error);
+            alert('Errore nel recuperare i dettagli della milestone: ' + error);
+        }
     });
+});
+
+// AGGIUNGI questa nuova funzione nel tuo project-edit.js:
+
+function loadProjectWorkPackages(selectedWpId = null) {
+    const wpSelect = $('#editMilestoneModalBody select[name="work_package_id"]');
+    
+    // Ottieni l'ID del progetto dalla URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('id');
+    
+    if (!projectId) {
+        console.error('Project ID not found in URL');
+        wpSelect.html('<option value="">Error: Project ID not found</option>');
+        return;
+    }
+    
+    // Carica i work packages tramite AJAX
+    $.ajax({
+        url: `../api/get_project_work_packages.php?project_id=${projectId}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function(workPackages) {
+            wpSelect.empty();
+            wpSelect.append('<option value="">-- No specific WP --</option>');
+            
+            if (workPackages && workPackages.length > 0) {
+                workPackages.forEach(wp => {
+                    const selected = (wp.id == selectedWpId) ? 'selected' : '';
+                    wpSelect.append(`<option value="${wp.id}" ${selected}>${wp.wp_number}: ${wp.name}</option>`);
+                });
+                
+                console.log('Work packages loaded successfully:', workPackages.length);
+            } else {
+                console.warn('No work packages found for project');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading work packages:', status, error);
+            
+            // Fallback: carica dai work packages già presenti nella pagina
+            loadWorkPackagesFromPage(selectedWpId);
+        }
+    });
+}
+
+// AGGIUNGI questa funzione di fallback nel tuo project-edit.js:
+
+function loadWorkPackagesFromPage(selectedWpId = null) {
+    const wpSelect = $('#editMilestoneModalBody select[name="work_package_id"]');
+    
+    console.log('Trying fallback: loading work packages from page');
+    
+    // Cerca i work packages nelle dropdown esistenti nella pagina
+    const existingWpOptions = $('#lead_partner_id option, select[name="work_package_id"] option').not('[value=""]');
+    
+    wpSelect.empty();
+    wpSelect.append('<option value="">-- No specific WP --</option>');
+    
+    // Prova a estrarre work packages dalle cards visibili nella pagina
+    const wpCards = $('.work-package-card, .wp-card');
+    if (wpCards.length > 0) {
+        wpCards.each(function() {
+            const wpId = $(this).data('wp-id');
+            const wpTitle = $(this).find('h6, .wp-title, .card-title').first().text().trim();
+            
+            if (wpId && wpTitle) {
+                const selected = (wpId == selectedWpId) ? 'selected' : '';
+                wpSelect.append(`<option value="${wpId}" ${selected}>${wpTitle}</option>`);
+            }
+        });
+        
+        console.log('Fallback loaded work packages from cards:', wpCards.length);
+    } else {
+        console.error('No work packages found anywhere on the page');
+    }
+}
 
     $(document).on('click', '.btn-delete-milestone', function() {
         const milestoneId = $(this).data('milestone-id');

@@ -190,15 +190,14 @@ case 'add_work_package':
                 $responsible_partner_id = (int)$_POST['responsible_partner_id'];
                 $start_date = $_POST['start_date'];
                 $end_date = $_POST['end_date'];
-                $due_date = $_POST['due_date'];
                 $budget = (float)$_POST['budget'];
 
                 $stmt = $conn->prepare("
-                    INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date, due_date, budget)
+                    INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date, budget)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
-                if ($stmt->execute([$wp_id, $project_id, $activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $due_date, $budget])) {
+                if ($stmt->execute([$wp_id, $project_id, $activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $budget])) {
                     $_SESSION['success'] = "Activity added successfully!";
                 } else {
                     throw new Exception("Failed to add activity");
@@ -213,16 +212,15 @@ case 'add_work_package':
                 $responsible_partner_id = (int)$_POST['responsible_partner_id'];
                 $start_date = $_POST['start_date'];
                 $end_date = $_POST['end_date'];
-                $due_date = $_POST['due_date'];
                 $budget = (float)$_POST['budget'];
 
                 $stmt = $conn->prepare("
                     UPDATE activities
-                    SET activity_number = ?, name = ?, description = ?, responsible_partner_id = ?, start_date = ?, end_date = ?, due_date = ?, budget = ?
+                    SET activity_number = ?, name = ?, description = ?, responsible_partner_id = ?, start_date = ?, end_date = ?, budget = ?
                     WHERE id = ?
                 ");
 
-                if ($stmt->execute([$activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $due_date, $budget, $activity_id])) {
+                if ($stmt->execute([$activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $budget, $activity_id])) {
                     $_SESSION['success'] = "Activity updated successfully!";
                 } else {
                     throw new Exception("Failed to update activity");
