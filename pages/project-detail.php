@@ -491,82 +491,84 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                                         </div>
                                     </div>
                                     
-                                    <!-- WORK PACKAGES TAB -->
-                                    <div class="tab-pane fade" id="workpackages" role="tabpanel">
-                                        <h5 class="section-title">
-                                            <i class="nc-icon nc-layers-3"></i>
-                                            Work Packages Overview
-                                        </h5>
-                                        
-                                        <?php if (empty($work_packages)): ?>
-                                        <div class="text-center py-5">
-                                            <i class="nc-icon nc-folder" style="font-size: 48px; color: #ccc;"></i>
-                                            <p class="text-muted">No work packages defined for this project yet.</p>
-                                        </div>
-                                        <?php else: ?>
-                                        
-                                        <div class="row">
-                                            <?php foreach($work_packages as $wp): ?>
-                                            <div class="col-md-6 col-lg-4">
-                                                <div class="wp-card card">
-                                                    <div class="wp-header">
-                                                        <div class="d-flex justify-content-between align-items-start">
-                                                            <div>
-                                                                <h5 class="mb-1">
-                                                                    <i class="nc-icon nc-layers-3 text-info"></i>
-                                                                    <?= htmlspecialchars($wp['wp_number']) ?>
-                                                                </h5>
-                                                                <p class="mb-2" style="font-size: 14px; font-weight: 600;">
-                                                                    <?= htmlspecialchars($wp['name']) ?>
-                                                                </p>
-                                                                <small class="text-muted">
-                                                                    Lead: <?= htmlspecialchars($wp['lead_partner_name'] ?? 'Not assigned') ?>
-                                                                </small>
-                                                            </div>
-                                                            
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <p class="text-muted mb-3" style="font-size: 13px;">
-                                                            <?= htmlspecialchars(substr($wp['description'], 0, 100)) ?>
-                                                            <?= strlen($wp['description']) > 100 ? '...' : '' ?>
-                                                        </p>
-                                                        
-                                                        <div class="row text-center">
-                                                            <div class="col-6">
-                                                                <small class="text-muted">Activities</small><br>
-                                                                <strong><?= $wp['activity_count'] ?></strong>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <small class="text-muted">Status</small><br>
-                                                                <?= getStatusBadge($wp['status']) ?>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <?php if ($wp['budget']): ?>
-                                                        <div class="text-center mt-2">
-                                                            <small class="text-success">
-                                                                <i class="nc-icon nc-money-coins"></i>
-                                                                €<?= number_format($wp['budget'], 0, ',', '.') ?>
-                                                            </small>
-                                                        </div>
-                                                        <?php endif; ?>
-                                                        
-                                                        <div class="text-center mt-3">
-                                                            <a href="activities.php?wp=<?= $wp['id'] ?>" 
-                                                               class="btn btn-primary btn-sm">
-                                                                <i class="nc-icon nc-paper"></i>
-                                                                View Activities
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                        
-                                        <?php endif; ?>
-                                    </div>
+                                   <!-- WORK PACKAGES TAB - Sezione aggiornata per punto 1 -->
+<div class="tab-pane fade" id="workpackages" role="tabpanel">
+    <h5 class="section-title">
+        <i class="nc-icon nc-layers-3"></i>
+        Work Packages Overview
+    </h5>
+    
+    <?php if (empty($work_packages)): ?>
+    <div class="text-center py-5">
+        <i class="nc-icon nc-folder" style="font-size: 48px; color: #ccc;"></i>
+        <p class="text-muted">No work packages defined for this project yet.</p>
+    </div>
+    <?php else: ?>
+    
+    <div class="row">
+        <?php foreach($work_packages as $wp): ?>
+        <div class="col-md-6 col-lg-4">
+            <div class="wp-card card">
+                <div class="wp-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-1">
+                                <i class="nc-icon nc-layers-3 text-info"></i>
+                                <?= htmlspecialchars($wp['wp_number']) ?>
+                            </h5>
+                            <p class="mb-2" style="font-size: 14px; font-weight: 600;">
+                                <?= htmlspecialchars($wp['name']) ?>
+                            </p>
+                            <small class="text-muted">
+                                Lead: <?= htmlspecialchars($wp['lead_partner_name'] ?? 'Not assigned') ?>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3" style="font-size: 13px;">
+                        <?= htmlspecialchars(substr($wp['description'], 0, 100)) ?>
+                        <?= strlen($wp['description']) > 100 ? '...' : '' ?>
+                    </p>
+                    
+                                       <!-- NUOVO LAYOUT A 3 COLONNE: Activities - Budget - Status -->
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted">Activities</small><br>
+                            <strong><?= $wp['activity_count'] ?></strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Budget</small><br>
+                            <?php if ($wp['budget']): ?>
+                            <small class="text-success">
+                                <i class="nc-icon nc-money-coins"></i>
+                                €<?= number_format($wp['budget'], 0, ',', '.') ?>
+                            </small>
+                            <?php else: ?>
+                            <small class="text-muted">N/A</small>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Status</small><br>
+                            <?= getStatusBadge($wp['status']) ?>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="activities.php?wp=<?= $wp['id'] ?>" 
+                           class="btn btn-primary btn-sm">
+                            <i class="nc-icon nc-paper"></i>
+                            View Activities
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <?php endif; ?>
+</div>
                                     
                                     <!-- PARTNERS TAB -->
                                     <div class="tab-pane fade" id="partners" role="tabpanel">

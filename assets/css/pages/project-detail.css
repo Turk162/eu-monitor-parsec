@@ -323,14 +323,18 @@
     color: #51CACF !important;
 }
 
-/* WP Card Styles */
+/* ===================================================================
+   WP CARD STYLES - Versione pulita e organizzata
+   =================================================================== */
+
+/* Container principale della card */
 .content .wp-card {
     border: 1px solid #e9ecef !important;
     border-radius: 12px !important;
-    transition: all 0.3s ease !important;
     margin-bottom: 20px !important;
     overflow: hidden !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    transition: all 0.3s ease !important;
 }
 
 .content .wp-card:hover {
@@ -339,6 +343,7 @@
     border-color: #51CACF !important;
 }
 
+/* Header della card */
 .content .wp-header {
     background: #f8f9fa !important;
     padding: 20px !important;
@@ -346,16 +351,26 @@
     border-radius: 12px 12px 0 0 !important;
 }
 
-.content .wp-header h5 {
+/* Titolo del Work Package - SPECIFICITÀ AUMENTATA per vincere conflitti */
+.content .wp-card .wp-header h5 {
     font-weight: 700 !important;
     color: #333 !important;
     margin-bottom: 8px !important;
+    transition: color 0.3s ease !important;
+}
+
+/* Hover effect bordeaux - SPECIFICITÀ MASSIMA */
+.content .wp-card .wp-header h5:hover,
+.content .wp-card:hover .wp-header h5:hover {
+    color: #8B0000 !important;
+    cursor: pointer !important;
 }
 
 .content .wp-header h5 i {
     margin-right: 8px !important;
     color: #51CACF !important;
 }
+
 
 /* Partner Card Styles */
 .content .partner-card {

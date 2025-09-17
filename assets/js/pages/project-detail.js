@@ -2,6 +2,38 @@
  *  PAGE-SPECIFIC SCRIPTS FOR: Project Detail Page
  * =================================================================== */
 
+// Gestione hover bordeaux per i titoli WP - Intercetta hover della CARD
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('JavaScript WP hover caricato'); // Debug
+    
+    // Seleziona tutte le WP cards
+    const wpCards = document.querySelectorAll('.wp-card');
+    console.log('Trovate WP cards:', wpCards.length); // Debug
+    
+    wpCards.forEach(function(card, index) {
+        const title = card.querySelector('.wp-header h5');
+        if (title) {
+            console.log('Configurando hover per card', index + 1);
+            
+            const originalColor = '#333';
+            
+            // Hover sulla CARD - titolo bordeaux
+            card.addEventListener('mouseenter', function() {
+                console.log('Hover IN su card', index + 1);
+                title.style.color = '#8B0000 !important';
+                title.style.cursor = 'pointer';
+            });
+            
+            // Mouse leave dalla CARD - ripristina colore
+            card.addEventListener('mouseleave', function() {
+                console.log('Hover OUT da card', index + 1);
+                title.style.color = originalColor + ' !important';
+                title.style.cursor = 'default';
+            });
+        }
+    });
+});
+
 $(document).ready(function() {
     // Initialize Bootstrap tooltips for progress circles
     $('.progress-circle').tooltip({
@@ -53,6 +85,8 @@ $(document).ready(function() {
  * @param {string} projectName - The name of the project for the confirmation dialog.
  * @param {string} csrfToken - The CSRF token to validate the request.
  */
+
+
 function confirmDeleteProject(projectId, projectName, csrfToken) {
     const confirmationMessage = `Are you sure you want to DELETE the project "${projectName}"?\n\nThis action is irreversible and will remove all associated data, including work packages, activities, and reports.`;
 
