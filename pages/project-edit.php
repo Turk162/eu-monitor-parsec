@@ -278,25 +278,27 @@ case 'update_work_package_with_budgets':
 
 
             case 'add_activity':
-                $wp_id = (int)$_POST['work_package_id'];
-                $activity_number = sanitizeInput($_POST['activity_number']);
-                $activity_name = sanitizeInput($_POST['name']);
-                $activity_description = sanitizeInput($_POST['description']);
-                $responsible_partner_id = (int)$_POST['responsible_partner_id'];
-                $start_date = $_POST['start_date'];
-                $end_date = $_POST['end_date'];
+    $wp_id = (int)$_POST['work_package_id'];
+    $activity_number = sanitizeInput($_POST['activity_number']);
+    $activity_name = sanitizeInput($_POST['name']);
+    $activity_description = sanitizeInput($_POST['description']);
+    $responsible_partner_id = !empty($_POST['responsible_partner_id']) ? (int)$_POST['responsible_partner_id'] : null;
+    $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+    $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+    $status = sanitizeInput($_POST['status']) ?: 'not_started';
+    $progress = !empty($_POST['progress']) ? (float)$_POST['progress'] : 0.00;
 
-                $stmt = $conn->prepare("
-                    INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
+    $stmt = $conn->prepare("
+        INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date, status, progress)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
 
-                if ($stmt->execute([$wp_id, $project_id, $activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date])) {
-                    $_SESSION['success'] = "Activity added successfully!";
-                } else {
-                    throw new Exception("Failed to add activity");
-                }
-                break;
+    if ($stmt->execute([$wp_id, $project_id, $activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $status, $progress])) {
+        $_SESSION['success'] = "Activity added successfully!";
+    } else {
+        throw new Exception("Failed to add activity");
+    }
+    break;
 
             case 'update_activity':
                 $activity_id = (int)$_POST['activity_id'];
@@ -1390,7 +1392,7 @@ window.projectData = {
     </div> <!-- End row -->
 </div> <!-- End content -->
 
-<!-- Add Activity Modal -->
+<!-- Add Activity Modal (AGGIORNATO - SENZA BUDGET) -->
 <div class="modal fade" id="addActivityModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -1434,11 +1436,31 @@ window.projectData = {
                                 </select>
                             </div>
                         </div>
-                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="not_started">Not Started</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="delayed">Delayed</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-4"><label>Start Date</label><input type="date" name="start_date" class="form-control"></div>
-                        <div class="col-md-4"><label>End Date</label><input type="date" name="end_date" class="form-control"></div>
+                        <div class="col-md-4">
+                            <label>Start Date</label>
+                            <input type="date" name="start_date" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label>End Date</label>
+                            <input type="date" name="end_date" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Progress (%)</label>
+                            <input type="number" name="progress" class="form-control" min="0" max="100" step="0.1" value="0">
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
