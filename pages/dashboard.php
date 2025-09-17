@@ -99,64 +99,87 @@ $recent_reports = $stmt->fetchAll();
                 <?php displayAlert(); ?>
                 
                 <?php
+// --- IMPROVED: Persistent Risk Alert Generation ---
+                if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
+                    require_once '../includes/classes/AlertSystem.php';
+                    $alertSystem = new AlertSystem($conn);
 
-// --- MODIFIED: Persistent Risk Alert Generation ---
-if (isset($user_id) && in_array($user_role, ['super_admin', 'coordinator'])) {
-    require_once '../includes/classes/AlertSystem.php';
-    $alertSystem = new AlertSystem($conn);
+                    // MIGLIORATA: Query che filtra solo rischi ATTUALMENTE critici e attivi
+                    $critical_risks_query = "
+                        SELECT 
+                            pr.id as project_risk_id, 
+                            pr.project_id, 
+                            pr.current_score, 
+                            pr.status, 
+                            r.critical_threshold, 
+                            r.description as risk_description,
+                            p.name as project_name
+                        FROM project_risks pr
+                        JOIN risks r ON pr.risk_id = r.id
+                        JOIN projects p ON pr.project_id = p.id
+                        WHERE 1=1
+                    ";
+                    $critical_risks_params = [];
 
-    // Get all critical risks for projects the user has access to
-    $critical_risks_query = "
-        SELECT pr.id as project_risk_id, pr.project_id, pr.current_score, pr.status, 
-               r.critical_threshold, r.description as risk_description
-        FROM project_risks pr
-        JOIN risks r ON pr.risk_id = r.id
-        JOIN projects p ON pr.project_id = p.id
-    ";
-    $critical_risks_params = [];
+                    // Filtra per utente se coordinator
+                    if ($user_role === 'coordinator') {
+                        $critical_risks_query .= " AND p.coordinator_id = ?";
+                        $critical_risks_params[] = $user_id;
+                    }
 
-    if ($user_role === 'coordinator') {
-        // Only show risks for projects where user is the coordinator
-        $critical_risks_query .= " WHERE p.coordinator_id = ?";
-        $critical_risks_params[] = $user_id;
-    }
-    // Super admin sees all projects, so no additional WHERE clause
-    
-    $stmt_critical_risks = $conn->prepare($critical_risks_query . " HAVING pr.current_score >= r.critical_threshold");
-    $stmt_critical_risks->execute($critical_risks_params);
-    $critical_risks = $stmt_critical_risks->fetchAll(PDO::FETCH_ASSOC);
+                    // NUOVA LOGICA: Solo rischi EFFETTIVAMENTE critici
+                    $critical_risks_query .= " 
+                        AND pr.current_score >= r.critical_threshold  -- Score supera soglia critica
+                        AND pr.status IN ('High', 'Critical')         -- Status attuale è High o Critical
+                        AND pr.current_score > 6                      -- Score minimo significativo
+                        AND p.status IN ('active')                    -- Solo progetti attivi
+                    ";
+                    
+                    $critical_risks_query .= " ORDER BY pr.current_score DESC, pr.last_updated DESC";
+                    
+                    $stmt_critical_risks = $conn->prepare($critical_risks_query);
+                    $stmt_critical_risks->execute($critical_risks_params);
+                    $critical_risks = $stmt_critical_risks->fetchAll(PDO::FETCH_ASSOC);
 
-    // Generate alerts only for currently critical risks
-    foreach ($critical_risks as $risk) {
-        // Check if ANY alert exists for this risk in the last 24 hours
-        $existing_alert_stmt = $conn->prepare("
-            SELECT id FROM alerts 
-            WHERE user_id = ? 
-            AND project_id = ? 
-            AND type = 'risk_persistent' 
-            AND message LIKE ? 
-            AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-        ");
-        $search_message = "%Risk '" . htmlspecialchars($risk['risk_description']) . "' (Score: {$risk['current_score']}%"; 
-        $existing_alert_stmt->execute([$user_id, $risk['project_id'], $search_message]);
-        
-        if (!$existing_alert_stmt->fetch()) {
-            // Create alert only if none exists in the last 24 hours
-            $alertTitle = "Critical Risk Alert: " . htmlspecialchars($alertSystem->getProjectName($risk['project_id']));
-            $alertMessage = "Risk '" . htmlspecialchars($risk['risk_description']) . "' (Score: {$risk['current_score']}, Status: {$risk['status']}) is currently critical. Please review.";
-            
-            $alertSystem->createDashboardAlert(
-                $user_id, 
-                $risk['project_id'], 
-                null,
-                'risk_persistent', 
-                $alertTitle, 
-                $alertMessage
-            );
-        }
-    }
-}
-// --- END MODIFIED ---
+                    foreach ($critical_risks as $risk) {
+                        // MIGLIORATO: Check più specifico per evitare duplicati
+                        $existing_alert_stmt = $conn->prepare("
+                            SELECT id FROM alerts 
+                            WHERE user_id = ? 
+                            AND project_id = ? 
+                            AND type = 'risk_persistent' 
+                            AND message LIKE ? 
+                            AND is_read = 0
+                            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOURS)  -- Solo alert delle ultime 24h
+                        ");
+                        
+                        // Pattern più preciso per evitare false positive
+                        $search_message = "%Risk '" . $risk['risk_description'] . "' (Score: " . $risk['current_score'] . ",%"; 
+                        $existing_alert_stmt->execute([$user_id, $risk['project_id'], $search_message]);
+                        
+                        if (!$existing_alert_stmt->fetch()) {
+                            // MIGLIORATO: Alert più informativo
+                            $alertTitle = "Critical Risk: " . htmlspecialchars($risk['project_name']);
+                            
+                            $statusEmoji = $risk['status'] === 'Critical' ? '🚨' : '⚠️';
+                            $alertMessage = $statusEmoji . " Risk '" . htmlspecialchars($risk['risk_description']) . 
+                                          "' (Score: {$risk['current_score']}, Status: {$risk['status']}) requires immediate attention.";
+                            
+                            // Solo per rischi veramente critici (score > 9) o con status Critical
+                            if ($risk['current_score'] > 9 || $risk['status'] === 'Critical') {
+                                $alertSystem->createDashboardAlert(
+                                    $user_id, 
+                                    $risk['project_id'], 
+                                    null,
+                                    'risk_persistent', 
+                                    $alertTitle, 
+                                    $alertMessage
+                                );
+                            }
+                        }
+                    }
+                }
+                // --- END IMPROVED: Persistent Risk Alert Generation ---
 
                 // Fetch unread dashboard alerts for the current user (including newly generated persistent ones)
                 $dashboard_alerts = [];
