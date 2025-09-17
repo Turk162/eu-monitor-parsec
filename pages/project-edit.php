@@ -1439,7 +1439,6 @@ window.projectData = {
                     <div class="row">
                         <div class="col-md-4"><label>Start Date</label><input type="date" name="start_date" class="form-control"></div>
                         <div class="col-md-4"><label>End Date</label><input type="date" name="end_date" class="form-control"></div>
-                        <div class="col-md-4"><label>Due Date</label><input type="date" name="due_date" class="form-control"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
