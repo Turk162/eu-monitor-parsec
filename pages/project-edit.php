@@ -60,7 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $budget = (float)$_POST['budget'];
                 $status = $_POST['status'];
                 $coordinator_id = ($user_role === 'super_admin') ? (int)$_POST['coordinator_id'] : $project['coordinator_id'];
-                
+                $google_groups_url = isset($_POST['google_groups_url']) ? trim($_POST['google_groups_url']) : '';
+
                 // Validation
                 $errors = [];
                 if (empty($name)) $errors[] = "Project name is required";
@@ -71,15 +72,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($budget <= 0) $errors[] = "Budget must be greater than 0";
                 if ($start_date >= $end_date) $errors[] = "End date must be after start date";
                 if (empty($coordinator_id)) $errors[] = "Coordinator is required";
-                
+
+// Validate Google Groups URL
+if (!empty($google_groups_url) && !filter_var($google_groups_url, FILTER_VALIDATE_URL)) {
+    $errors[] = "Invalid Google Groups URL";
+} elseif (!empty($google_groups_url) && !str_contains($google_groups_url, 'groups.google.com')) {
+    $errors[] = "Please enter a valid Google Groups URL (groups.google.com)";
+}                
+
+
                 if (empty($errors)) {
                     $sql = "
-                        UPDATE projects 
-                        SET name = ?, description = ?, program_type = ?, start_date = ?, 
-                            end_date = ?, budget = ?, status = ?, updated_at = NOW()";
-                    
-                    $params = [$name, $description, $program_type, $start_date, $end_date, $budget, $status];
+                     SET name = ?, description = ?, program_type = ?, start_date = ?, 
+        end_date = ?, budget = ?, status = ?, google_groups_url = ?, updated_at = NOW()";
 
+                    $params = [$name, $description, $program_type, $start_date, $end_date, $budget, $status, $google_groups_url];
                     if ($user_role === 'super_admin') {
                         $sql .= ", coordinator_id = ?";
                         $params[] = $coordinator_id;
@@ -335,118 +342,70 @@ case 'add_work_package':
         }
         $_SESSION['error'] = "Error: " . $e->getMessage();
     }
-    // 1. Nel blocco di gestione del POST (intorno alla riga dove vengono gestiti gli altri campi)
-if (isset($_POST['google_groups_url'])) {
-    $google_groups_url = trim($_POST['google_groups_url']);
-    
-    // Validazione URL Google Groups (opzionale)
-    if (!empty($google_groups_url) && !filter_var($google_groups_url, FILTER_VALIDATE_URL)) {
-        $_SESSION['error'] = "URL Google Groups non valido";
-    } elseif (!empty($google_groups_url) && !str_contains($google_groups_url, 'groups.google.com')) {
-        $_SESSION['error'] = "Inserire un URL Google Groups valido (groups.google.com)";
-    } else {
-        // Aggiorna il database
-        $stmt = $conn->prepare("UPDATE projects SET google_groups_url = ? WHERE id = ?");
-        if ($stmt->execute([$google_groups_url, $project_id])) {
-            $_SESSION['success'] = "URL Google Groups aggiornato con successo";
-        } else {
-            $_SESSION['error'] = "Errore nell'aggiornamento URL Google Groups";
-        }
-    }
+  
 }
-
-$project_query = "SELECT *, google_groups_url FROM projects WHERE id = ?";
-
-
-}
-
-// Get project partners
+// Single comprehensive query for all project partners data
 $partners_stmt = $conn->prepare("
-    SELECT pp.*, p.name as organization, p.country, p.organization_type,
-           u.full_name, u.email
+    SELECT 
+        pp.partner_id, 
+        pp.role, 
+        pp.budget_allocated, 
+        p.name as organization, 
+        p.country, 
+        p.organization_type,
+        u.full_name, 
+        u.email
     FROM project_partners pp
-    JOIN partners p ON pp.partner_id = p.id
-    LEFT JOIN users u ON u.partner_id = p.id
+    INNER JOIN partners p ON pp.partner_id = p.id
+    LEFT JOIN users u ON u.partner_id = p.id AND u.role IN ('coordinator', 'partner', 'admin')
     WHERE pp.project_id = ?
-    ORDER BY pp.role DESC, p.name
+    ORDER BY 
+        CASE WHEN pp.role = 'coordinator' THEN 0 ELSE 1 END,
+        p.name ASC
 ");
 $partners_stmt->execute([$project_id]);
-$all_project_partners = $partners_stmt->fetchAll();
+$all_project_partners = $partners_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Separate Lead Partner from other partners
+
+// Process partners data into different structures needed by the application
 $lead_partner = null;
 $project_partners = [];
+$current_coordinator = null;
+$coordinator_partner_id = null;
+
 foreach ($all_project_partners as $partner) {
     if ($partner['role'] === 'coordinator') {
         $lead_partner = $partner;
+        $current_coordinator = $partner['partner_id'];
+        $coordinator_partner_id = $partner['partner_id'];
     } else {
         $project_partners[] = $partner;
     }
 }
 
-// Get the ID of the coordinator's partner organization
-$coordinator_partner_id = null;
-if ($lead_partner) {
-    $coordinator_partner_id = $lead_partner['partner_id'];
-}
+// Partners data for JavaScript (reuse the same array with proper structure)
+$partners_for_dropdown = $all_project_partners;
 
 
-// Get available partners for selection, excluding the coordinator
+// Get available partners for selection, excluding already assigned ones
 $available_partners_query = "
     SELECT p.id, p.name as organization, p.country, p.organization_type
     FROM partners p
     WHERE p.id NOT IN (
         SELECT DISTINCT partner_id FROM project_partners WHERE project_id = ? AND partner_id IS NOT NULL
     )
+    ORDER BY p.name
 ";
 
-
-// Query per ottenere TUTTI i partner del progetto (incluso coordinator)
-$project_partners_stmt = $conn->prepare("
-    SELECT 
-        pp.partner_id, 
-        pp.role, 
-        pp.budget_allocated, 
-        p.name, 
-        p.country, 
-        p.organization_type
-    FROM project_partners pp
-    INNER JOIN partners p ON pp.partner_id = p.id
-    WHERE pp.project_id = ?
-    ORDER BY 
-        CASE WHEN pp.role = 'coordinator' THEN 0 ELSE 1 END,
-        p.name ASC
-");
-$project_partners_stmt->execute([$project_id]);
-$project_partners = $project_partners_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Trova il coordinator attuale
-$current_coordinator = null;
-foreach ($project_partners as $partner) {
-    if ($partner['role'] === 'coordinator') {
-        $current_coordinator = $partner['partner_id'];
-        break;
-    }
-}
-
-// Also exclude the coordinator ID if it exists
-if ($coordinator_partner_id) {
-    $available_partners_query .= " AND p.id != ?";
-}
-
-$available_partners_query .= " ORDER BY p.name";
-
 $available_partners_stmt = $conn->prepare($available_partners_query);
-
-$params = [$project_id];
-if ($coordinator_partner_id) {
-    $params[] = $coordinator_partner_id;
-}
-
-$available_partners_stmt->execute($params);
+$available_partners_stmt->execute([$project_id]);
 $available_partners = $available_partners_stmt->fetchAll();
 
-// Get available coordinators for the dropdown
+
+// ===================================================================
+// COORDINATORS FOR DROPDOWN (Super Admin Only)
+// ===================================================================
+
 $coordinators = [];
 if ($user_role === 'super_admin') {
     $coord_stmt = $conn->prepare("
@@ -532,6 +491,7 @@ $status_options = [
     'suspended' => 'Suspended',
     'completed' => 'Completed'
 ];
+
 ?>
 
 <!-- MAIN CONTENT after header -->
@@ -540,6 +500,17 @@ $status_options = [
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="../assets/js/pages/project-edit.js"></script>
 <link rel="stylesheet" href="../assets/css/pages/project-edit.css">
+<script>
+
+
+// Variabili globali per JavaScript
+window.projectData = {
+    projectId: <?= $project_id ?>,
+    workPackages: <?= json_encode($work_packages) ?>,
+    allProjectPartners: <?= json_encode($partners_for_dropdown) ?>
+};
+</script>
+
 
 <div class="content">
     <div class="row">
@@ -854,12 +825,11 @@ $status_options = [
                                             <div class="col-md-6 col-lg-4 mb-3">
                                                 <div class="partner-card">
                                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <h6 class="mb-1"><?= htmlspecialchars($partner['name']) ?></h6>
-                                                        <div class="d-flex align-items-center gap-2">
+<h6 class="mb-1"><?= htmlspecialchars($partner['organization']) ?></h6>                                                        <div class="d-flex align-items-center gap-2">
                                                             <span class="badge badge-secondary">Partner</span>
                                                             <button class="btn btn-sm btn-danger btn-delete-partner" 
                                                                     data-partner-id="<?= $partner['partner_id'] ?>"
-                                                                    data-partner-name="<?= htmlspecialchars($partner['name']) ?>"
+                                                                    data-partner-name="<?= htmlspecialchars($partner['organization']) ?>"
                                                                     title="Remove Partner">
                                                                 <i class="nc-icon nc-simple-remove"></i>
                                                             </button>
@@ -1042,7 +1012,7 @@ $status_options = [
                     <?php foreach ($project_partners as $partner): ?>
                         <option value="<?= $partner['partner_id'] ?>" 
                                 <?= ($partner['partner_id'] == $current_coordinator) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($partner['name']) ?>
+                            <?= htmlspecialchars($partner['organization']) ?>
                             (<?= htmlspecialchars($partner['country']) ?>)
                             <?php if ($partner['role'] === 'coordinator'): ?>
                                 - <span style="color: #51CACF; font-weight: bold;">COORDINATOR</span>

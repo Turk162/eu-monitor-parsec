@@ -83,6 +83,12 @@ $(document).ready(function() {
     });
 
     // --- WORK PACKAGE & ACTIVITY MANAGEMENT ---
+
+    $(document).on('click', '.btn-edit-wp', function() {
+    const wpId = $(this).data('wp-id');
+    fetchAndPopulateModal(wpId, 'get_work_package_details', '#editWorkPackageModal', '#editWorkPackageModalBody');
+});
+
     $(document).on('click', '.btn-delete-wp', function() {
         const wpId = $(this).data('wp-id');
         const wpName = $(this).data('wp-name');
@@ -582,43 +588,48 @@ function loadWorkPackagesFromPage(selectedWpId = null) {
                     selectElement.val(milestone.status);
                     $('#edit_milestone_id').val(id); // Set the hidden milestone ID
                 } else if (apiAction === 'get_work_package_details') {
-                    const wp = data;
-                    formHtml = `
-                        <div class="row">
-                            <div class="col-md-3"><div class="form-group"><label>WP Number</label><input type="text" name="wp_number" class="form-control" value="${wp.wp_number || ''}" required></div></div>
-                            <div class="col-md-9"><div class="form-group"><label>Work Package Name</label><input type="text" name="name" class="form-control" value="${wp.name || ''}" required></div></div>
-                        </div>
-                        <div class="form-group"><label>Description</label><textarea name="description" class="form-control" rows="3">${wp.description || ''}</textarea></div>
-                        <div class="row">
-                            <div class="col-md-4"><div class="form-group"><label>Lead Partner</label><select name="lead_partner_id" class="form-control"></select></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>Budget (€)</label><input type="number" name="budget" class="form-control" value="${wp.budget || ''}" step="0.01" min="0" required></div></div>
-                            <div class="col-md-4"><div class="form-group"><label>Status</label><select name="status" class="form-control"></select></div></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4"><label>Start Date</label><input type="date" name="start_date" class="form-control" value="${wp.start_date || ''}" required></div>
-                            <div class="col-md-4"><label>End Date</label><input type="date" name="end_date" class="form-control" value="${wp.end_date || ''}" required></div>
-                            <div class="col-md-4"><div class="form-group"><label>Progress (%)</label><input type="number" name="progress" class="form-control" value="${wp.progress || '0'}" min="0" max="100" step="1"></div></div>
-                        </div>
-                    `;
-                    $(modalBodySelector).html(formHtml);
+    const wp = data;
+    
+    // NOMI DEI CAMPI CORRETTI per allinearsi con il PHP
+    formHtml = `
+        <div class="row">
+            <div class="col-md-3"><div class="form-group"><label>WP Number</label><input type="text" name="wp_number" class="form-control" value="${wp.wp_number || ''}" required></div></div>
+            <div class="col-md-9"><div class="form-group"><label>Work Package Name</label><input type="text" name="wp_name" class="form-control" value="${wp.name || ''}" required></div></div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea name="wp_description" class="form-control" rows="3">${wp.description || ''}</textarea></div>
+        <div class="row">
+            <div class="col-md-4"><div class="form-group"><label>Lead Partner</label><select name="lead_partner_id" class="form-control"></select></div></div>
+            <div class="col-md-4"><div class="form-group"><label>Budget (€)</label><input type="number" name="wp_budget" class="form-control" value="${wp.budget || ''}" step="0.01" min="0"></div></div>
+            <div class="col-md-4"><div class="form-group"><label>Status</label><select name="status" class="form-control"></select></div></div>
+        </div>
+        <div class="row">
+            <div class="col-md-4"><div class="form-group"><label>Start Date</label><input type="date" name="wp_start_date" class="form-control" value="${wp.start_date || ''}" required></div></div>
+            <div class="col-md-4"><div class="form-group"><label>End Date</label><input type="date" name="wp_end_date" class="form-control" value="${wp.end_date || ''}" required></div></div>
+            <div class="col-md-4"><div class="form-group"><label>Progress (%)</label><input type="number" name="progress" class="form-control" value="${wp.progress || '0'}" min="0" max="100" step="1"></div></div>
+        </div>
+    `;
+    
+    $(modalBodySelector).html(formHtml);
 
-                    // Populate Lead Partner dropdown
-                    selectElement = $(modalBodySelector + ' select[name="lead_partner_id"]');
-                    selectElement.append('<option value="">Select Lead Partner...</option>');
-                    window.projectData.allProjectPartners.forEach(p => {
-                        selectElement.append(`<option value="${p.partner_id}">${p.organization} (${p.country})</option>`);
-                    });
-                    selectElement.val(wp.lead_partner_id);
+    // Populate Lead Partner dropdown
+    selectElement = $(modalBodySelector + ' select[name="lead_partner_id"]');
+    selectElement.append('<option value="">Select Lead Partner...</option>');
+    window.projectData.allProjectPartners.forEach(p => {
+        selectElement.append(`<option value="${p.partner_id}">${p.organization} (${p.country})</option>`);
+    });
+    selectElement.val(wp.lead_partner_id);
 
-                    // Populate Status dropdown
-                    selectElement = $(modalBodySelector + ' select[name="status"]');
-                    const statusOptions = ['not_started', 'in_progress', 'completed', 'delayed'];
-                    statusOptions.forEach(s => {
-                        selectElement.append(`<option value="${s}">${s.replace(/_/g, ' ').charAt(0).toUpperCase() + s.replace(/_/g, ' ').slice(1)}</option>`);
-                    });
-                    selectElement.val(wp.status);
-                    $('#edit_wp_id').val(id); // Set the hidden WP ID
-                }
+    // Populate Status dropdown
+    selectElement = $(modalBodySelector + ' select[name="status"]');
+    const statusOptions = ['not_started', 'in_progress', 'completed', 'delayed'];
+    statusOptions.forEach(s => {
+        selectElement.append(`<option value="${s}">${s.replace(/_/g, ' ').charAt(0).toUpperCase() + s.replace(/_/g, ' ').slice(1)}</option>`);
+    });
+    selectElement.val(wp.status);
+    
+    // IMPORTANTE: Imposta l'ID del work package nel campo hidden
+    $('#edit_wp_id').val(id);
+}
 
                 $(modalSelector).modal('show');
             },
