@@ -167,27 +167,115 @@ case 'delete_partner':
         throw new Exception("Failed to remove partner");
     }
     break;
-case 'add_work_package':
-                $wp_number = sanitizeInput($_POST['wp_number']);
-                $wp_name = sanitizeInput($_POST['wp_name']);
-                $wp_description = sanitizeInput($_POST['wp_description']);
-                $lead_partner_id = (int)$_POST['lead_partner_id'];
-                $wp_start_date = $_POST['wp_start_date'];
-                $wp_end_date = $_POST['wp_end_date'];
-                $wp_budget = (float)$_POST['wp_budget'];
-                
-                $wp_stmt = $conn->prepare("
-                    INSERT INTO work_packages 
-                    (project_id, wp_number, name, description, lead_partner_id, start_date, end_date, budget) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ");
-                
-                if ($wp_stmt->execute([$project_id, $wp_number, $wp_name, $wp_description, $lead_partner_id, $wp_start_date, $wp_end_date, $wp_budget])) {
-                    $_SESSION['success'] = "Work package added successfully!";
-                } else {
-                    throw new Exception("Failed to add work package");
-                }
-                break;
+
+case 'add_work_package_with_budgets':
+    $wp_number = sanitizeInput($_POST['wp_number']);
+    $wp_name = sanitizeInput($_POST['wp_name']);
+    $wp_description = sanitizeInput($_POST['wp_description']);
+    $lead_partner_id = (int)$_POST['lead_partner_id'];
+    $wp_start_date = $_POST['wp_start_date'];
+    $wp_end_date = $_POST['wp_end_date'];
+    $partner_budgets = $_POST['partner_budgets'] ?? [];
+    
+    $conn->beginTransaction();
+    
+    try {
+        // Insert Work Package (without budget - will be calculated)
+        $wp_stmt = $conn->prepare("
+            INSERT INTO work_packages 
+            (project_id, wp_number, name, description, lead_partner_id, start_date, end_date, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'not_started')
+        ");
+        
+        $wp_stmt->execute([$project_id, $wp_number, $wp_name, $wp_description, $lead_partner_id, $wp_start_date, $wp_end_date]);
+        $wp_id = $conn->lastInsertId();
+        
+        // Insert partner budgets
+        $budget_stmt = $conn->prepare("
+            INSERT INTO work_package_partner_budgets (work_package_id, partner_id, project_id, budget_allocated) 
+            VALUES (?, ?, ?, ?)
+        ");
+        
+        $total_budget = 0;
+        foreach ($partner_budgets as $partner_id => $budget) {
+            if ($budget > 0) {
+                $budget_stmt->execute([$wp_id, $partner_id, $project_id, $budget]);
+                $total_budget += $budget;
+            }
+        }
+        
+        // Update WP total budget
+        $update_wp_stmt = $conn->prepare("UPDATE work_packages SET budget = ? WHERE id = ?");
+        $update_wp_stmt->execute([$total_budget, $wp_id]);
+        
+        $conn->commit();
+        $_SESSION['success'] = "Work package with budget allocations added successfully!";
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
+    }
+    break;
+
+case 'update_work_package_with_budgets':
+    $wp_id = (int)$_POST['wp_id'];
+    $wp_number = sanitizeInput($_POST['wp_number']);
+    $wp_name = sanitizeInput($_POST['wp_name']);
+    $wp_description = sanitizeInput($_POST['wp_description']);
+    $lead_partner_id = (int)$_POST['lead_partner_id'];
+    $wp_start_date = $_POST['wp_start_date'];
+    $wp_end_date = $_POST['wp_end_date'];
+    $wp_status = sanitizeInput($_POST['status']);
+    $wp_progress = (float)$_POST['progress'];
+    $partner_budgets = $_POST['partner_budgets'] ?? [];
+    
+    $conn->beginTransaction();
+    
+    try {
+        // Update Work Package basic info
+        $wp_stmt = $conn->prepare("
+            UPDATE work_packages
+            SET wp_number = ?, name = ?, description = ?, lead_partner_id = ?, 
+                start_date = ?, end_date = ?, status = ?, progress = ?
+            WHERE id = ? AND project_id = ?
+        ");
+        
+        $wp_stmt->execute([$wp_number, $wp_name, $wp_description, $lead_partner_id, 
+                          $wp_start_date, $wp_end_date, $wp_status, $wp_progress, $wp_id, $project_id]);
+        
+        // Delete existing partner budgets
+        $delete_budgets_stmt = $conn->prepare("DELETE FROM work_package_partner_budgets WHERE work_package_id = ?");
+        $delete_budgets_stmt->execute([$wp_id]);
+        
+        // Insert new partner budgets
+        $budget_stmt = $conn->prepare("
+            INSERT INTO work_package_partner_budgets (work_package_id, partner_id, project_id, budget_allocated) 
+            VALUES (?, ?, ?, ?)
+        ");
+        
+        $total_budget = 0;
+        foreach ($partner_budgets as $partner_id => $budget) {
+            if ($budget > 0) {
+                $budget_stmt->execute([$wp_id, $partner_id, $project_id, $budget]);
+                $total_budget += $budget;
+            }
+        }
+        
+        // Update WP total budget
+        $update_wp_stmt = $conn->prepare("UPDATE work_packages SET budget = ? WHERE id = ?");
+        $update_wp_stmt->execute([$total_budget, $wp_id]);
+        
+        $conn->commit();
+        $_SESSION['success'] = "Work package updated successfully!";
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
+    }
+    break;
+
+
+
 
             case 'add_activity':
                 $wp_id = (int)$_POST['work_package_id'];
@@ -197,14 +285,13 @@ case 'add_work_package':
                 $responsible_partner_id = (int)$_POST['responsible_partner_id'];
                 $start_date = $_POST['start_date'];
                 $end_date = $_POST['end_date'];
-                $budget = (float)$_POST['budget'];
 
                 $stmt = $conn->prepare("
-                    INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date, budget)
+                    INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
 
-                if ($stmt->execute([$wp_id, $project_id, $activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $budget])) {
+                if ($stmt->execute([$wp_id, $project_id, $activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date])) {
                     $_SESSION['success'] = "Activity added successfully!";
                 } else {
                     throw new Exception("Failed to add activity");
@@ -219,15 +306,14 @@ case 'add_work_package':
                 $responsible_partner_id = (int)$_POST['responsible_partner_id'];
                 $start_date = $_POST['start_date'];
                 $end_date = $_POST['end_date'];
-                $budget = (float)$_POST['budget'];
 
                 $stmt = $conn->prepare("
                     UPDATE activities
-                    SET activity_number = ?, name = ?, description = ?, responsible_partner_id = ?, start_date = ?, end_date = ?, budget = ?
+                    SET activity_number = ?, name = ?, description = ?, responsible_partner_id = ?, start_date = ?, end_date = ?
                     WHERE id = ?
                 ");
 
-                if ($stmt->execute([$activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $budget, $activity_id])) {
+                if ($stmt->execute([$activity_number, $activity_name, $activity_description, $responsible_partner_id, $start_date, $end_date, $activity_id])) {
                     $_SESSION['success'] = "Activity updated successfully!";
                 } else {
                     throw new Exception("Failed to update activity");
@@ -346,18 +432,15 @@ case 'add_work_package':
 }
 // Single comprehensive query for all project partners data
 $partners_stmt = $conn->prepare("
-    SELECT 
+    SELECT DISTINCT
         pp.partner_id, 
         pp.role, 
         pp.budget_allocated, 
         p.name as organization, 
         p.country, 
-        p.organization_type,
-        u.full_name, 
-        u.email
+        p.organization_type
     FROM project_partners pp
     INNER JOIN partners p ON pp.partner_id = p.id
-    LEFT JOIN users u ON u.partner_id = p.id AND u.role IN ('coordinator', 'partner', 'admin')
     WHERE pp.project_id = ?
     ORDER BY 
         CASE WHEN pp.role = 'coordinator' THEN 0 ELSE 1 END,
@@ -419,7 +502,8 @@ if ($user_role === 'super_admin') {
     $coordinators = $coord_stmt->fetchAll();
 }
 
-// Get work packages and their activities
+
+// Get work packages with their partner budgets
 $wp_stmt = $conn->prepare("
     SELECT wp.*, u.full_name as lead_partner_name, p.name as lead_organization
     FROM work_packages wp
@@ -431,7 +515,15 @@ $wp_stmt = $conn->prepare("
 $wp_stmt->execute([$project_id]);
 $work_packages = $wp_stmt->fetchAll();
 
-// For each work package, get its activities
+// For each work package, get its partner budgets and activities
+$partner_budgets_stmt = $conn->prepare("
+    SELECT wpb.*, p.name as partner_name, p.country
+    FROM work_package_partner_budgets wpb
+    JOIN partners p ON wpb.partner_id = p.id
+    WHERE wpb.work_package_id = ?
+    ORDER BY p.name
+");
+
 $activities_stmt = $conn->prepare("
     SELECT a.*, p.name as responsible_partner_name
     FROM activities a
@@ -441,10 +533,14 @@ $activities_stmt = $conn->prepare("
 ");
 
 foreach ($work_packages as $key => $wp) {
+    // Get partner budgets for this WP
+    $partner_budgets_stmt->execute([$wp['id']]);
+    $work_packages[$key]['partner_budgets'] = $partner_budgets_stmt->fetchAll();
+    
+    // Get activities for this WP (NO BUDGET FIELD)
     $activities_stmt->execute([$wp['id']]);
     $work_packages[$key]['activities'] = $activities_stmt->fetchAll();
 }
-
 // Get project milestones
 $milestones_stmt = $conn->prepare("
     SELECT m.*, wp.wp_number, wp.name as wp_name
@@ -491,6 +587,21 @@ $status_options = [
     'suspended' => 'Suspended',
     'completed' => 'Completed'
 ];
+
+// FUNZIONE PHP PER AGGIORNARE BUDGET TOTALE WP
+function updateWorkPackageTotalBudget($conn, $work_package_id) {
+    $stmt = $conn->prepare("
+        UPDATE work_packages 
+        SET budget = (
+            SELECT COALESCE(SUM(budget_allocated), 0) 
+            FROM work_package_partner_budgets 
+            WHERE work_package_id = ?
+        )
+        WHERE id = ?
+    ");
+    return $stmt->execute([$work_package_id, $work_package_id]);
+}
+
 
 ?>
 
@@ -904,176 +1015,202 @@ window.projectData = {
 </div>
                         </div>
                         
-                        <!-- WORK PACKAGES TAB -->
-                        <div class="tab-pane fade" id="workpackages" role="tabpanel">
-                            <div class="form-section">
-                                <h6>
-                                    <span class="section-icon">
-                                        <i class="nc-icon nc-bullet-list-67"></i>
-                                    </span>
-                                    Current Work Packages
-                                </h6>
-                                
-                                <?php if (empty($work_packages)): ?>
-                                    <div class="alert alert-info">
-                                        <i class="nc-icon nc-alert-circle-i"></i>
-                                        No work packages created yet. Add your first work package below.
-                                    </div>
-                                <?php else: ?>
-                                    <?php foreach ($work_packages as $wp): ?>
-                                        <div class="wp-card">
-                                            <div class="wp-header">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span><?= htmlspecialchars($wp['wp_number']) ?>: <?= htmlspecialchars($wp['name']) ?></span>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <span class="badge badge-light">€<?= number_format($wp['budget'], 2) ?></span>
-                                                        <button class="btn btn-sm btn-outline-light btn-edit-wp" data-wp-id="<?= $wp['id'] ?>">Edit</button>
-                                                        <button class="btn btn-sm btn-danger btn-delete-wp" data-wp-id="<?= $wp['id'] ?>" data-wp-name="<?= htmlspecialchars($wp['name']) ?>">Delete</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="wp-body">
-                                                <p class="mb-2"><?= htmlspecialchars($wp['description']) ?></p>
-                                                <!-- Activities Section -->
-                                                <div class="activities-section mt-3">
-                                                    <h6>Activities</h6>
-                                                    <?php if (empty($wp['activities'])) : ?>
-                                                        <p class="text-muted">No activities for this work package yet.</p>
-                                                    <?php else: ?>
-                                                        <table class="table table-sm">
-                                                            <tbody>
-                                                            <?php foreach ($wp['activities'] as $activity): ?>
-                                                                <tr>
-                                                                    <td><?= htmlspecialchars($activity['activity_number']) ?></td>
-                                                                    <td><?= htmlspecialchars($activity['name']) ?></td>
-                                                                    <td><?= htmlspecialchars($activity['responsible_partner_name']) ?></td>
-                                                                    <td>
-                                                                        <button class="btn btn-sm btn-info btn-edit-activity" data-activity-id="<?= $activity['id'] ?>">Edit</button>
-                                                                        <button class="btn btn-sm btn-danger btn-delete-activity" data-activity-id="<?= $activity['id'] ?>">Delete</button>
-                                                                    </td>
-                                                                </tr>
-                                                            <?php endforeach; ?>
-                                                            </tbody>
-                                                        </table>
-                                                    <?php endif; ?>
-                                                    <button class="btn btn-sm btn-primary btn-add-activity" data-wp-id="<?= $wp['id'] ?>">+ Add Activity</button>
-                                                </div>
+                        
+<!-- WORK PACKAGES TAB -->
+<div class="tab-pane fade" id="workpackages" role="tabpanel">
+    <div class="form-section">
+        <h6>
+            <span class="section-icon">
+                <i class="nc-icon nc-bullet-list-67"></i>
+            </span>
+            Current Work Packages
+        </h6>
+        
+        <?php if (empty($work_packages)): ?>
+            <div class="alert alert-info">
+                <i class="nc-icon nc-alert-circle-i"></i>
+                No work packages created yet. Add your first work package below.
+            </div>
+        <?php else: ?>
+            <?php foreach ($work_packages as $wp): ?>
+                <div class="wp-card">
+                    <div class="wp-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><?= htmlspecialchars($wp['wp_number']) ?>: <?= htmlspecialchars($wp['name']) ?></span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge badge-light">€<?= number_format($wp['budget'], 2) ?></span>
+                                <button class="btn btn-sm btn-outline-light btn-edit-wp" data-wp-id="<?= $wp['id'] ?>">Edit</button>
+                                <button class="btn btn-sm btn-danger btn-delete-wp" data-wp-id="<?= $wp['id'] ?>" data-wp-name="<?= htmlspecialchars($wp['name']) ?>">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wp-body">
+                        <p class="mb-2"><?= htmlspecialchars($wp['description']) ?></p>
+                        
+                        <!-- Partner Budgets Section -->
+                        <?php if (!empty($wp['partner_budgets'])): ?>
+                            <div class="partner-budgets-section mt-3">
+                                <h6>Budget Allocation by Partner</h6>
+                                <div class="row">
+                                    <?php foreach ($wp['partner_budgets'] as $budget): ?>
+                                        <div class="col-md-6 col-lg-4 mb-2">
+                                            <div class="budget-item">
+                                                <span class="partner-name"><?= htmlspecialchars($budget['partner_name']) ?></span>
+                                                <span class="budget-amount">€<?= number_format($budget['budget_allocated'], 2) ?></span>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
-                                <?php endif; ?>
+                                </div>
                             </div>
-                            
-                            <div class="form-section">
-                                <h6>
-                                    <span class="section-icon">
-                                        <i class="nc-icon nc-simple-add"></i>
-                                    </span>
-                                    Add New Work Package
-                                </h6>
-                                
-                                <form method="POST" action="" id="workPackageForm">
-                                    <input type="hidden" name="action" value="add_work_package">
-                                    
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label for="wp_number" class="required-field">WP Number</label>
-                                                <input type="text" class="form-control" id="wp_number" name="wp_number" 
-                                                       placeholder="WP1" required>
-                                                <small class="form-text text-muted">e.g., WP1, WP2, etc.</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-9">
-                                            <div class="form-group">
-                                                <label for="wp_name" class="required-field">Work Package Name</label>
-                                                <input type="text" class="form-control" id="wp_name" name="wp_name" 
-                                                       placeholder="Project Management" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="wp_description" class="required-field">Description</label>
-                                        <textarea class="form-control" id="wp_description" name="wp_description" 
-                                                  rows="3" placeholder="Detailed description of work package objectives and activities" required></textarea>
-                                    </div>
-                                    
-                                  <div class="row">
-   <div class="row">
-    <div class="col-md-4">
-        <div class="form-group">
-            <label for="lead_partner_id" class="required-field">Lead Partner</label>
-            <select class="form-control" id="lead_partner_id" name="lead_partner_id" required>
-                <option value="">Select lead partner...</option>
-                <?php if (empty($project_partners)): ?>
-                    <option value="" disabled>No partners found for this project</option>
-                <?php else: ?>
-                    <?php foreach ($project_partners as $partner): ?>
-                        <option value="<?= $partner['partner_id'] ?>" 
-                                <?= ($partner['partner_id'] == $current_coordinator) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($partner['organization']) ?>
-                            (<?= htmlspecialchars($partner['country']) ?>)
-                            <?php if ($partner['role'] === 'coordinator'): ?>
-                                - <span style="color: #51CACF; font-weight: bold;">COORDINATOR</span>
+                        <?php endif; ?>
+                        
+                        <!-- Activities Section -->
+                        <div class="activities-section mt-3">
+                            <h6>Activities</h6>
+                            <?php if (empty($wp['activities'])) : ?>
+                                <p class="text-muted">No activities for this work package yet.</p>
+                            <?php else: ?>
+                                <table class="table table-sm">
+                                    <tbody>
+                                    <?php foreach ($wp['activities'] as $activity): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($activity['activity_number']) ?></td>
+                                            <td><?= htmlspecialchars($activity['name']) ?></td>
+                                            <td><?= htmlspecialchars($activity['responsible_partner_name']) ?></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-info btn-edit-activity" data-activity-id="<?= $activity['id'] ?>">Edit</button>
+                                                <button class="btn btn-sm btn-danger btn-delete-activity" data-activity-id="<?= $activity['id'] ?>">Delete</button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             <?php endif; ?>
-                        </option>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </select>
-            <!-- DEBUG INFO -->
-            <small class="text-muted">
-                Found <?= count($project_partners) ?> partners. 
-                Current coordinator ID: <?= $current_coordinator ?: 'None' ?>
-            </small>
-        </div>
+                            <button class="btn btn-sm btn-primary btn-add-activity" data-wp-id="<?= $wp['id'] ?>">+ Add Activity</button>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
-</div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label for="wp_budget" class="required-field">Budget (€)</label>
-                                                <input type="number" class="form-control" id="wp_budget" name="wp_budget" 
-                                                       step="0.01" min="0" placeholder="0.00" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-group">
-                                                <label>&nbsp;</label>
-                                                <div class="form-control-static">
-                                                    <small class="text-muted">
-                                                        <i class="nc-icon nc-money-coins"></i>
-                                                        Total Budget: €<?= number_format($project['budget'], 2) ?>
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </div>
+    
+    <div class="form-section">
+        <h6>
+            <span class="section-icon">
+                <i class="nc-icon nc-simple-add"></i>
+            </span>
+            Add New Work Package
+        </h6>
+        
+        <form method="POST" action="" id="workPackageForm">
+            <input type="hidden" name="action" value="add_work_package_with_budgets">
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="wp_number" class="required-field">WP Number</label>
+                        <input type="text" class="form-control" id="wp_number" name="wp_number" 
+                               placeholder="WP1" required>
+                        <small class="form-text text-muted">e.g., WP1, WP2, etc.</small>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="form-group">
+                        <label for="wp_name" class="required-field">Work Package Name</label>
+                        <input type="text" class="form-control" id="wp_name" name="wp_name" 
+                               placeholder="Project Management" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="wp_description" class="required-field">Description</label>
+                <textarea class="form-control" id="wp_description" name="wp_description" 
+                          rows="3" placeholder="Detailed description of work package objectives and activities" required></textarea>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="lead_partner_id" class="required-field">Lead Partner</label>
+                        <select class="form-control" id="lead_partner_id" name="lead_partner_id" required>
+                            <option value="">Select lead partner...</option>
+                            <?php foreach ($all_project_partners as $partner): ?>
+                                <option value="<?= $partner['partner_id'] ?>">
+                                    <?= htmlspecialchars($partner['organization']) ?>
+                                    (<?= htmlspecialchars($partner['country']) ?>)
+                                    <?php if ($partner['role'] === 'coordinator'): ?>
+                                        - COORDINATOR
+                                    <?php endif; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="wp_start_date" class="required-field">Start Date</label>
+                        <input type="date" class="form-control" id="wp_start_date" name="wp_start_date" 
+                               min="<?= $project['start_date'] ?>" max="<?= $project['end_date'] ?>" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="wp_end_date" class="required-field">End Date</label>
+                        <input type="date" class="form-control" id="wp_end_date" name="wp_end_date" 
+                               min="<?= $project['start_date'] ?>" max="<?= $project['end_date'] ?>" required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Partner Budgets Section -->
+            <div class="partner-budgets-section">
+                <h6 style="color: #51CACF; margin: 20px 0 15px 0;">
+                    💰 Budget Allocation by Partner
+                </h6>
+                <div class="row partner-budget-grid">
+                    <?php foreach ($all_project_partners as $partner): ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="form-group">
+                                <label>
+                                    <strong><?= htmlspecialchars($partner['organization']) ?></strong>
+                                    <small class="text-muted">(<?= htmlspecialchars($partner['country']) ?>)</small>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">€</span>
                                     </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="wp_start_date" class="required-field">Start Date</label>
-                                                <input type="date" class="form-control" id="wp_start_date" name="wp_start_date" 
-                                                       min="<?= $project['start_date'] ?>" max="<?= $project['end_date'] ?>" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="wp_end_date" class="required-field">End Date</label>
-                                                <input type="date" class="form-control" id="wp_end_date" name="wp_end_date" 
-                                                       min="<?= $project['start_date'] ?>" max="<?= $project['end_date'] ?>" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group text-right">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="nc-icon nc-simple-add"></i> Add Work Package
-                                        </button>
-                                    </div>
-                                </form>
+                                    <input type="number" 
+                                           name="partner_budgets[<?= $partner['partner_id'] ?>]" 
+                                           class="form-control partner-budget-input" 
+                                           step="0.01" 
+                                           min="0" 
+                                           placeholder="0.00"
+                                           data-partner-id="<?= $partner['partner_id'] ?>">
+                                </div>
                             </div>
                         </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="alert alert-info" style="background-color: #e3f2fd; border: 1px solid #2196f3;">
+                            <strong>Total WP Budget: €<span class="wp-total-budget">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group text-right">
+                <button type="submit" class="btn btn-primary">
+                    <i class="nc-icon nc-simple-add"></i> Add Work Package
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
                         
                         <!-- DOCUMENTS TAB -->
                         <div class="tab-pane fade" id="files" role="tabpanel">
@@ -1297,12 +1434,7 @@ window.projectData = {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Budget (€)</label>
-                                <input type="number" name="budget" class="form-control" step="0.01" min="0">
-                            </div>
-                        </div>
+                        
                     </div>
                     <div class="row">
                         <div class="col-md-4"><label>Start Date</label><input type="date" name="start_date" class="form-control"></div>
@@ -1374,7 +1506,7 @@ window.projectData = {
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form method="POST" action="">
-                <input type="hidden" name="action" value="update_work_package">
+                <input type="hidden" name="action" value="update_work_package_with_budget">
                 <input type="hidden" id="edit_wp_id" name="wp_id">
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Work Package</h5>

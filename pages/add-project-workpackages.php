@@ -1,10 +1,10 @@
 <?php
 // ===================================================================
-//  ADD PROJECT WORK PACKAGES & ACTIVITIES PAGE
+//  ADD PROJECT WORK PACKAGES & ACTIVITIES PAGE (UPDATED)
 // ===================================================================
 // This page is part of the project creation wizard (Step 3).
 // It allows a project coordinator to define Work Packages (WPs) and their
-// associated Activities.
+// associated Activities with partner-specific budgets.
 // ===================================================================
 
 // ===================================================================
@@ -80,15 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $conn->beginTransaction();
 
-        // Prepare statements for insertion to be used in the loop
+        // Prepare statements for insertion
         $wp_stmt = $conn->prepare("
-            INSERT INTO work_packages (project_id, wp_number, name, description, lead_partner_id, start_date, end_date, budget, status) 
-            VALUES (:project_id, :wp_number, :name, :description, :lead_partner_id, :start_date, :end_date, :budget, 'not_started')
+            INSERT INTO work_packages (project_id, wp_number, name, description, lead_partner_id, start_date, end_date, status) 
+            VALUES (:project_id, :wp_number, :name, :description, :lead_partner_id, :start_date, :end_date, 'not_started')
+        ");
+
+        $wp_budget_stmt = $conn->prepare("
+            INSERT INTO work_package_partner_budgets (work_package_id, partner_id, project_id, budget_allocated) 
+            VALUES (:work_package_id, :partner_id, :project_id, :budget_allocated)
         ");
 
         $activity_stmt = $conn->prepare("
-            INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date, end_date, budget, status) 
-            VALUES (:work_package_id, :project_id, :activity_number, :name, :description, :responsible_partner_id, :start_date, :end_date, :end_date, :budget, 'not_started')
+            INSERT INTO activities (work_package_id, project_id, activity_number, name, description, responsible_partner_id, start_date, end_date, status) 
+            VALUES (:work_package_id, :project_id, :activity_number, :name, :description, :responsible_partner_id, :start_date, :end_date, 'not_started')
         ");
 
         foreach ($work_packages_data as $wp_data) {
@@ -97,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 continue;
             }
             
-            // Insert the Work Package
+            // Insert the Work Package (without budget - will be calculated by trigger)
             $wp_stmt->execute([
                 ':project_id' => $project_id,
                 ':wp_number' => sanitizeInput($wp_data['wp_number']),
@@ -105,13 +110,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':description' => sanitizeInput($wp_data['description'] ?? ''),
                 ':lead_partner_id' => !empty($wp_data['lead_partner_id']) ? (int)$wp_data['lead_partner_id'] : null,
                 ':start_date' => !empty($wp_data['start_date']) ? $wp_data['start_date'] : null,
-                ':end_date' => !empty($wp_data['end_date']) ? $wp_data['end_date'] : null,
-                ':budget' => !empty($wp_data['budget']) ? (float)$wp_data['budget'] : null
+                ':end_date' => !empty($wp_data['end_date']) ? $wp_data['end_date'] : null
             ]);
             
             $wp_id = $conn->lastInsertId();
             
-            // Insert associated activities for this Work Package
+            // Insert partner budgets for this Work Package
+            if (!empty($wp_data['partner_budgets'])) {
+                foreach ($wp_data['partner_budgets'] as $partner_id => $budget) {
+                    if ($budget > 0) {
+                        $wp_budget_stmt->execute([
+                            ':work_package_id' => $wp_id,
+                            ':partner_id' => (int)$partner_id,
+                            ':project_id' => $project_id,
+                            ':budget_allocated' => (float)$budget
+                        ]);
+                    }
+                }
+            }
+            
+            // Insert associated activities for this Work Package (NO BUDGET)
             if (!empty($wp_data['activities'])) {
                 foreach ($wp_data['activities'] as $activity_data) {
                     // Skip empty/incomplete activities
@@ -127,9 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':description' => sanitizeInput($activity_data['description'] ?? ''),
                         ':responsible_partner_id' => !empty($activity_data['responsible_partner_id']) ? (int)$activity_data['responsible_partner_id'] : null,
                         ':start_date' => !empty($activity_data['start_date']) ? $activity_data['start_date'] : null,
-                        ':end_date' => !empty($activity_data['end_date']) ? $activity_data['end_date'] : null,
-                        ':end_date' => !empty($activity_data['end_date']) ? $activity_data['end_date'] : null,
-                        ':budget' => !empty($activity_data['budget']) ? (float)$activity_data['budget'] : null
+                        ':end_date' => !empty($activity_data['end_date']) ? $activity_data['end_date'] : null
                     ]);
                 }
             }
@@ -151,129 +167,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ===================================================================
 
 $page_title = 'Add Work Packages - ' . htmlspecialchars($project['name']);
-$page_css_path = '../assets/css/pages/add-project-workpackages.css';
-$page_js_path = '../assets/js/pages/add-project-workpackages.js';
-// Page-specific styles
-$page_styles = '
-    .required { 
-        color: #e74c3c; 
-    }
-    .form-section {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border-left: 4px solid #51CACF;
-    }
-    .form-section h6 {
-        color: #51CACF;
-        font-weight: 600;
-        margin-bottom: 15px;
-    }
-    .content {
-        min-height: 100vh !important;
-        padding: 30px 15px;
-        background: white !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    .main-panel {
-        width: 90% !important;
-    }
-    .card {
-        background: white !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-        visibility: visible !important;
-        display: block !important;
-        
-    }
-';
+$page_description = 'Define work packages and activities for your project';
 
-
-// ===================================================================
-//  START HTML LAYOUT
-// ===================================================================
-
-include '../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Add Work Packages - EU Project Manager</title>
-    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
-    <meta name="viewport" content="width=device-width" />
-    <!-- CSS Files -->
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="../assets/css/paper-dashboard.css?v=2.0.1" rel="stylesheet" />
-    <link href="../assets/css/demo.css" rel="stylesheet" />
-    <link href="../assets/css/custom.css" rel="stylesheet" />
-</head>
-<?php include '../includes/sidebar.php'; ?>
-        <div class="main-panel">
-            <?php include '../includes/navbar.php'; ?>
-        
-        <div class="content">
-            <!-- Success/Error Messages -->
-            <?php if(isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show">
-                <i class="nc-icon nc-check-2"></i> <?= $_SESSION['success']; unset($_SESSION['success']); ?>
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-            </div>
-            <?php endif; ?>
 
-            <?php if(isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="nc-icon nc-simple-remove"></i> <?= $_SESSION['error']; unset($_SESSION['error']); ?>
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-            </div>
-            <?php endif; ?>
-            
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="row align-items-center">
-                                <div class="col">
-                                    <h5 class="card-title mb-0">
-                                        <i class="nc-icon nc-settings-gear-65 text-primary"></i> 
-                                        Add Work Packages & Activities
-                                    </h5>
-                                    <p class="card-category mb-0">
-                                        Step 3: Define work packages and activities for 
-                                        "<strong><?= htmlspecialchars($project['name']) ?></strong>"
-                                    </p>
-                                </div>
-                                <div class="col-auto">
-                                    <span class="badge badge-info">Step 3 of 3</span>
-                                </div>
+<?php include '../includes/header.php'; ?>
+<?php include '../includes/sidebar.php'; ?>
+<script src="../assets/js/pages/add-project-workpackages.js"></script>
+
+
+<div class="main-panel">
+    <?php 
+    $navbar_page_title = 'Add Work Packages & Activities';
+    include '../includes/navbar.php'; 
+    ?>
+    
+    <div class="content">
+        <!-- Progress Indicator -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="wizard-progress">
+                            <div class="wizard-step completed">
+                                <span class="step-number">1</span>
+                                <span class="step-title">Project Details</span>
+                            </div>
+                            <div class="wizard-step completed">
+                                <span class="step-number">2</span>
+                                <span class="step-title">Partners</span>
+                            </div>
+                            <div class="wizard-step active">
+                                <span class="step-number">3</span>
+                                <span class="step-title">Work Packages</span>
+                            </div>
+                            <div class="wizard-step">
+                                <span class="step-number">4</span>
+                                <span class="step-title">Milestones</span>
                             </div>
                         </div>
-                        
-                        <div class="card-body">
-                            <form method="POST" action="" id="workPackagesForm">
-                                
-                                <div id="workPackagesContainer">
-                                    <!-- Work Package Template (will be cloned by JavaScript) -->
-                                    <div class="wp-container" data-wp-index="0">
-                                        <div class="row mb-3">
-                                            <div class="col-md-8">
-                                                <h6 style="color: #51CACF; margin-bottom: 15px;">
-                                                    📋 Work Package #<span class="wp-number">1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="title">
+                            <i class="nc-icon nc-bullet-list-67"></i> 
+                            Work Packages & Activities for: <strong><?= htmlspecialchars($project['name']) ?></strong>
+                        </h5>
+                        <p class="category">Define the work packages and their activities. Each work package will have budget allocations per partner.</p>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="" id="workPackagesForm">
+                            <div id="work-packages-container">
+                                <!-- Work Package Template -->
+                                <div class="work-package-item" data-wp-index="0">
+                                    <div class="wp-header">
+                                        <div class="row">
+                                            <div class="col-md-10">
+                                                <h6 style="color: #333; margin-bottom: 0;">
+                                                    📦 Work Package #<span class="wp-number">1</span>
                                                 </h6>
                                             </div>
-                                            <div class="col-md-4 text-right">
-                                                <button type="button" class="remove-btn remove-wp" onclick="removeWorkPackage(this)" style="display: none;">
-                                                    ❌ Remove WP
+                                            <div class="col-md-2 text-right">
+                                                <button type="button" class="btn btn-sm btn-danger remove-wp-btn" onclick="removeWorkPackage(this)" style="display: none;">
+                                                    <i class="nc-icon nc-simple-remove"></i> Remove
                                                 </button>
                                             </div>
                                         </div>
-                                        
+                                    </div>
+                                    
+                                    <div class="wp-basic-info">
                                         <div class="row">
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <div class="form-group">
-                                                    <label><strong>WP Number</strong> <span class="text-danger">*</span></label>
+                                                    <label><strong>WP Number *</strong></label>
                                                     <input type="text" 
                                                            name="work_packages[0][wp_number]" 
                                                            class="form-control" 
@@ -281,32 +254,36 @@ include '../includes/header.php';
                                                            required>
                                                 </div>
                                             </div>
-                                            <div class="col-md-9">
+                                            <div class="col-md-10">
                                                 <div class="form-group">
-                                                    <label><strong>Work Package Name</strong> <span class="text-danger">*</span></label>
+                                                    <label><strong>Work Package Name *</strong></label>
                                                     <input type="text" 
                                                            name="work_packages[0][name]" 
                                                            class="form-control" 
-                                                           placeholder="e.g., Project Management" 
+                                                           placeholder="Enter work package name" 
                                                            required>
                                                 </div>
                                             </div>
                                         </div>
                                         
-                                        <div class="form-group">
-                                            <label><strong>Description</strong></label>
-                                            <textarea name="work_packages[0][description]" 
-                                                      class="form-control" 
-                                                      rows="3" 
-                                                      placeholder="Describe the work package objectives and scope..."></textarea>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label><strong>Description</strong></label>
+                                                    <textarea name="work_packages[0][description]" 
+                                                              class="form-control" 
+                                                              rows="3" 
+                                                              placeholder="Describe the work package objectives and main activities"></textarea>
+                                                </div>
+                                            </div>
                                         </div>
                                         
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-group">
-                                                    <label><strong>Lead Partner Organization</strong></label>
+                                                    <label><strong>Lead Partner</strong></label>
                                                     <select name="work_packages[0][lead_partner_id]" class="form-control">
-                                                        <option value="">Select Lead Partner Organization</option>
+                                                        <option value="">Select Lead Partner</option>
                                                         <?php foreach ($available_partners as $partner): ?>
                                                             <option value="<?= $partner['id'] ?>">
                                                                 <?= htmlspecialchars($partner['name']) ?> 
@@ -316,7 +293,7 @@ include '../includes/header.php';
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label><strong>Start Date</strong></label>
                                                     <input type="date" 
@@ -324,7 +301,7 @@ include '../includes/header.php';
                                                            class="form-control">
                                                 </div>
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label><strong>End Date</strong></label>
                                                     <input type="date" 
@@ -332,21 +309,51 @@ include '../includes/header.php';
                                                            class="form-control">
                                                 </div>
                                             </div>
-                                            <div class="col-md-2">
-                                                <div class="form-group">
-                                                    <label><strong>Budget (€)</strong></label>
-                                                    <input type="number" 
-                                                           name="work_packages[0][budget]" 
-                                                           class="form-control" 
-                                                           step="0.01" 
-                                                           min="0" 
-                                                           placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Partner Budgets Section -->
+                                    <div class="partner-budgets-section">
+                                        <h6 style="color: #51CACF; margin: 20px 0 15px 0;">
+                                            💰 Budget Allocation by Partner
+                                        </h6>
+                                        <div class="row partner-budget-grid">
+                                            <?php foreach ($available_partners as $partner): ?>
+                                                <div class="col-md-6 col-lg-4">
+                                                    <div class="form-group">
+                                                        <label>
+                                                            <strong><?= htmlspecialchars($partner['name']) ?></strong>
+                                                            <small class="text-muted">(<?= htmlspecialchars($partner['country']) ?>)</small>
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text">€</span>
+                                                            </div>
+                                                            <input type="number" 
+                                                                   name="work_packages[0][partner_budgets][<?= $partner['id'] ?>]" 
+                                                                   class="form-control partner-budget-input" 
+                                                                   step="0.01" 
+                                                                   min="0" 
+                                                                   placeholder="0.00"
+                                                                   data-partner-id="<?= $partner['id'] ?>">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-info" style="background-color: #e3f2fd; border: 1px solid #2196f3;">
+                                                    <strong>Total WP Budget: €<span class="wp-total-budget">0.00</span></strong>
                                                 </div>
                                             </div>
                                         </div>
-                                        
-                                        <hr style="border-color: #51CACF;">
-                                        
+                                    </div>
+                                    
+                                    <hr style="border-color: #51CACF;">
+                                    
+                                    <!-- Activities Section -->
+                                    <div class="activities-section">
                                         <h6 style="color: #333; margin-bottom: 15px;">
                                             🎯 Activities for this Work Package
                                         </h6>
@@ -359,8 +366,8 @@ include '../includes/header.php';
                                                         <strong>Activity #<span class="activity-number">1</span></strong>
                                                     </div>
                                                     <div class="col-md-2 text-right">
-                                                        <button type="button" class="remove-btn" onclick="removeActivity(this)" style="display: none;">
-                                                            ❌ Remove
+                                                        <button type="button" class="btn btn-sm btn-danger remove-activity-btn" onclick="removeActivity(this)" style="display: none;">
+                                                            <i class="nc-icon nc-simple-remove"></i>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -372,44 +379,48 @@ include '../includes/header.php';
                                                             <input type="text" 
                                                                    name="work_packages[0][activities][0][activity_number]" 
                                                                    class="form-control" 
-                                                                   placeholder="1.1">
+                                                                   placeholder="A1.1">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-9">
                                                         <div class="form-group">
-                                                            <label>Activity Name <span class="text-danger">*</span></label>
+                                                            <label>Activity Name *</label>
                                                             <input type="text" 
                                                                    name="work_packages[0][activities][0][name]" 
                                                                    class="form-control" 
-                                                                   placeholder="e.g., Kick-off Meeting">
+                                                                   placeholder="Enter activity name" 
+                                                                   required>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 
-                                                <div class="form-group">
-                                                    <label>Description</label>
-                                                    <textarea name="work_packages[0][activities][0][description]" 
-                                                              class="form-control" 
-                                                              rows="2" 
-                                                              placeholder="Describe the activity..."></textarea>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group">
+                                                            <label>Description</label>
+                                                            <textarea name="work_packages[0][activities][0][description]" 
+                                                                      class="form-control" 
+                                                                      rows="2" 
+                                                                      placeholder="Describe the activity"></textarea>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 
                                                 <div class="row">
-                                                    <div class="col-md-3">
+                                                    <div class="col-md-4">
                                                         <div class="form-group">
-                                                            <label>Responsible Partner Organization</label>
+                                                            <label>Responsible Partner</label>
                                                             <select name="work_packages[0][activities][0][responsible_partner_id]" class="form-control">
-                                                                <option value="">Select Responsible Organization</option>
+                                                                <option value="">Select Partner</option>
                                                                 <?php foreach ($available_partners as $partner): ?>
                                                                     <option value="<?= $partner['id'] ?>">
                                                                         <?= htmlspecialchars($partner['name']) ?>
-                                                                        (<?= htmlspecialchars($partner['country']) ?>)
                                                                     </option>
                                                                 <?php endforeach; ?>
                                                             </select>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-2">
+                                                    <div class="col-md-4">
                                                         <div class="form-group">
                                                             <label>Start Date</label>
                                                             <input type="date" 
@@ -417,7 +428,7 @@ include '../includes/header.php';
                                                                    class="form-control">
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-2">
+                                                    <div class="col-md-4">
                                                         <div class="form-group">
                                                             <label>End Date</label>
                                                             <input type="date" 
@@ -425,59 +436,71 @@ include '../includes/header.php';
                                                                    class="form-control">
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-3">
-                                                        <div class="form-group">
-                                                            <label>Due Date</label>
-                                                            <input type="date" 
-                                                                   name="work_packages[0][activities][0][end_date]" 
-                                                                   class="form-control">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <div class="form-group">
-                                                            <label>Budget (€)</label>
-                                                            <input type="number" 
-                                                                   name="work_packages[0][activities][0][budget]" 
-                                                                   class="form-control" 
-                                                                   step="0.01" 
-                                                                   min="0" 
-                                                                   placeholder="0.00">
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                         
-                                        <div class="add-activity-btn" onclick="addActivity(this)">
-                                            ➕ Add Another Activity
+                                        <div class="text-center mt-3">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addActivity(this)">
+                                                <i class="nc-icon nc-simple-add"></i> Add Activity
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="text-center mb-3">
-                                    <button type="button" class="btn btn-outline-primary" onclick="addWorkPackage()">
-                                        ➕ Add Another Work Package
-                                    </button>
-                                </div>
-
-                                <hr>
-
-                                <div class="text-right">
-                                    <a href="add-project-partners.php?project_id=<?= $project_id ?>" class="btn btn-secondary">
-                                        <i class="nc-icon nc-minimal-left"></i> Back to Partners
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <button type="button" class="btn btn-outline-primary" onclick="addWorkPackage()">
+                                    <i class="nc-icon nc-simple-add"></i> Add Work Package
+                                </button>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="add-project-partners.php?project_id=<?= $project_id ?>" class="btn btn-secondary">
+                                    <i class="nc-icon nc-minimal-left"></i> Back
+                                </a>
+                                <div>
+                                    <a href="add-project-milestones.php?project_id=<?= $project_id ?>" class="btn btn-outline-primary">
+                                        Skip & Continue <i class="nc-icon nc-minimal-right"></i>
                                     </a>
-                                    <button type="button" class="btn btn-outline-primary" onclick="skipStep()">
-                                        Skip for Now
-                                    </button>
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="nc-icon nc-check-2"></i> Save Wps & Go to Milestones
+                                        <i class="nc-icon nc-check-2"></i> Save Work Packages & Continue
                                     </button>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <?php include '../includes/footer.php'; ?>
+    </div>
+    
+    <?php include '../includes/footer.php'; ?>
+</div>
+
+<script>
+// JavaScript per gestire l'aggiunta/rimozione di WP e attività
+// E per calcolare automaticamente i budget totali
+
+let workPackageIndex = 0;
+
+function addWorkPackage() {
+    workPackageIndex++;
+    
+    const container = document.getElementById('work-packages-container');
+    const template = container.querySelector('.work-package-item').cloneNode(true);
+    
+    // Aggiorna gli indici nel nuovo template
+    updateWorkPackageIndices(template, workPackageIndex);
+    
+    // Pulisci i valori
+    clearFormValues(template);
+    
+    // Mostra il pulsante remove
+    template.querySelector('.remove-wp-btn').style.display = 'inline-block';
+    
+    container.appendChild(template);
+    updateWorkPackageNumbers();
+}
