@@ -2,38 +2,6 @@
  *  PAGE-SPECIFIC SCRIPTS FOR: Project Detail Page
  * =================================================================== */
 
-// Gestione hover bordeaux per i titoli WP - Intercetta hover della CARD
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('JavaScript WP hover caricato'); // Debug
-    
-    // Seleziona tutte le WP cards
-    const wpCards = document.querySelectorAll('.wp-card');
-    console.log('Trovate WP cards:', wpCards.length); // Debug
-    
-    wpCards.forEach(function(card, index) {
-        const title = card.querySelector('.wp-header h5');
-        if (title) {
-            console.log('Configurando hover per card', index + 1);
-            
-            const originalColor = '#333';
-            
-            // Hover sulla CARD - titolo bordeaux
-            card.addEventListener('mouseenter', function() {
-                console.log('Hover IN su card', index + 1);
-                title.style.color = '#8B0000 !important';
-                title.style.cursor = 'pointer';
-            });
-            
-            // Mouse leave dalla CARD - ripristina colore
-            card.addEventListener('mouseleave', function() {
-                console.log('Hover OUT da card', index + 1);
-                title.style.color = originalColor + ' !important';
-                title.style.cursor = 'default';
-            });
-        }
-    });
-});
-
 $(document).ready(function() {
     // Initialize Bootstrap tooltips for progress circles
     $('.progress-circle').tooltip({
@@ -43,27 +11,7 @@ $(document).ready(function() {
         placement: 'top'
     });
 
-    // --- Hover Animations for UI elements ---
-    $('.wp-card').hover(
-        function() {
-            $(this).find('.wp-header').css('background', 'linear-gradient(135deg, #51CACF 0%, #667eea 100%)');
-            $(this).find('.wp-header h5, .wp-header p, .wp-header small').css('color', 'white');
-        },
-        function() {
-            $(this).find('.wp-header').css('background', '#f8f9fa');
-            $(this).find('.wp-header h5, .wp-header p, .wp-header small').css('color', '');
-        }
-    );
-
-    $('.partner-card:not(.coordinator-card)').hover(
-        function() {
-            $(this).css('background', 'linear-gradient(135deg, rgba(81, 202, 207, 0.1) 0%, rgba(255, 255, 255, 1) 100%)');
-        },
-        function() {
-            $(this).css('background', '');
-        }
-    );
-
+    
     // --- Tab functionality ---
     // Logic to remember the last active tab using localStorage
     $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
@@ -122,4 +70,187 @@ function confirmDeleteProject(projectId, projectName, csrfToken) {
             alert('Deletion cancelled. The confirmation text did not match.');
         }
     }
+}
+
+function openWPDetailsModal(wpId, wpNumber) {
+    console.log('Apertura modale per WP ID:', wpId);
+    
+    $('#wpDetailsModal').modal('show');
+    $('#wpDetailsModalLabel').html('<i class="nc-icon nc-layers-3 text-info"></i> ' + wpNumber + ' Details');
+    
+    // Mostra loading nel body della modale
+    const modalBody = document.getElementById('wpDetailsModalBody');
+    modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <i class="nc-icon nc-refresh-02"></i>
+            <p class="mt-2">Loading work package details...</p>
+        </div>
+    `;
+    
+    // Chiamata API
+    $.ajax({
+        url: '../api/get_work_package_details.php?id=' + wpId,
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            console.log('Dati ricevuti:', response);
+            
+            if (response.error) {
+                modalBody.innerHTML = '<div class="alert alert-danger">' + response.error + '</div>';
+            } else {
+                populateWPDetailsModal(response, modalBody);
+            }
+        },
+        error: function() {
+            modalBody.innerHTML = '<div class="alert alert-danger">Errore di connessione</div>';
+        }
+    });
+}
+
+function populateWPDetailsModal(data, modalBody) {
+    const wp = data.work_package;
+    const activities = data.activities || [];
+    const partnerBudgets = data.partner_budgets || [];
+    
+    modalBody.innerHTML = `
+        <!-- WP Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h4 class="mb-2">${wp.wp_number} - ${wp.name}</h4>
+                <p class="text-muted">${wp.description || 'Nessuna descrizione disponibile'}</p>
+            </div>
+        </div>
+        
+        <!-- WP Basic Info -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="info-card p-3 border rounded">
+                    <h6><i class="nc-icon nc-single-02"></i> Lead Partner</h6>
+                    <p class="mb-0">${wp.lead_partner_name || 'Non assegnato'}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card p-3 border rounded">
+                    <h6><i class="nc-icon nc-badge"></i> Status</h6>
+                    <p class="mb-0">${getStatusDisplay(wp.status)}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card p-3 border rounded">
+                    <h6><i class="nc-icon nc-calendar-60"></i> Timeline</h6>
+                    <p class="mb-0">${formatDateRange(wp.start_date, wp.end_date)}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Budget Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h6 style="color: #51CACF; margin-bottom: 15px;">
+                    <i class="nc-icon nc-money-coins"></i> Budget Information
+                </h6>
+                                ${generateBudgetBreakdown(partnerBudgets)}
+            </div>
+        </div>
+        
+        <!-- Activities Section -->
+        <div class="row">
+            <div class="col-12">
+                <h6 style="color: #51CACF; margin-bottom: 15px;">
+                    <i class="nc-icon nc-paper"></i> Activities (${activities.length})
+                </h6>
+                <div class="activities-list">
+                    ${generateActivitiesList(activities)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Aggiorna link "View All Activities"
+    $('#wpDetailViewActivities').attr('href', 'activities.php?wp=' + wp.id);
+}
+
+// FUNZIONI HELPER
+function getStatusDisplay(status) {
+    const statusMap = {
+        'not_started': '<span class="badge badge-secondary">Non Iniziato</span>',
+        'in_progress': '<span class="badge badge-primary">In Corso</span>',
+        'completed': '<span class="badge badge-success">Completato</span>',
+        'delayed': '<span class="badge badge-warning">In Ritardo</span>'
+    };
+    return statusMap[status] || status;
+}
+
+function formatDateRange(startDate, endDate) {
+    const start = startDate ? new Date(startDate).toLocaleDateString('it-IT') : 'N/A';
+    const end = endDate ? new Date(endDate).toLocaleDateString('it-IT') : 'N/A';
+    return start + ' - ' + end;
+}
+
+function formatNumber(number) {
+    return new Intl.NumberFormat('it-IT').format(number || 0);
+}
+
+function generateBudgetBreakdown(partnerBudgets) {
+    if (partnerBudgets.length === 0) {
+        return '<p class="text-muted">Nessun budget specifico allocato per questo Work Package</p>';
+    }
+    
+    let totalAllocated = 0;
+    const budgetRows = partnerBudgets.map(partner => {
+        const amount = parseFloat(partner.budget_allocated) || 0;
+        totalAllocated += amount;
+        
+        const roleTag = partner.role === 'coordinator' ? 
+            '<span class="badge badge-primary ml-2">Coordinator</span>' : '';
+        
+        return `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="partner-budget-item p-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${partner.partner_name}</strong>${roleTag}
+                            <br><small class="text-muted">${partner.country}</small>
+                        </div>
+                        <div class="text-right">
+                            <span class="h6 text-success">€${formatNumber(amount)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return `
+        <div class="row">
+            ${budgetRows}
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="mt-3">
+                    <strong>WP TOTAL Budget: €${formatNumber(totalAllocated)}</strong>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateActivitiesList(activities) {
+    if (activities.length === 0) {
+        return '<p class="text-muted">Nessuna attività associata</p>';
+    }
+    
+    return activities.map(activity => `
+        <div class="activity-item border-bottom py-2">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${activity.activity_number || ''} - ${activity.name}</strong><br>
+                    <small class="text-muted">Responsabile: ${activity.responsible_partner_name || 'Non assegnato'}</small>
+                </div>
+                <div>
+                    ${getStatusDisplay(activity.status)}
+                </div>
+            </div>
+        </div>
+    `).join('');
 }

@@ -553,14 +553,22 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                             <?= getStatusBadge($wp['status']) ?>
                         </div>
                     </div>
+
                     
-                    <div class="text-center mt-3">
-                        <a href="activities.php?wp=<?= $wp['id'] ?>" 
-                           class="btn btn-primary btn-sm">
-                            <i class="nc-icon nc-paper"></i>
-                            View Activities
-                        </a>
-                    </div>
+                    
+<div class="text-center mt-3">
+                            <a href="activities.php?wp=<?= $wp['id'] ?>" 
+                               class="btn btn-primary btn-sm me-2">
+                                <i class="nc-icon nc-paper"></i>
+                                View Activities
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-info btn-sm" 
+                                    onclick="openWPDetailsModal(<?= $wp['id'] ?>, '<?= addslashes($wp['wp_number']) ?>')">
+                                <i class="nc-icon nc-zoom-split"></i>
+                                Details
+                            </button>
+                        </div>
                 </div>
             </div>
         </div>
@@ -672,4 +680,30 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                 </div>
             </div>
 
+<!-- WP DETAILS MODAL -->
+<div class="modal fade" id="wpDetailsModal" tabindex="-1" role="dialog" aria-labelledby="wpDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="wpDetailsModalLabel">
+                    <i class="nc-icon nc-layers-3 text-info"></i>
+                    Work Package Details
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="wpDetailsModalBody">
+                <!-- Contenuto generato dinamicamente dal JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a id="wpDetailViewActivities" href="#" class="btn btn-primary">
+                    <i class="nc-icon nc-paper"></i>
+                    View All Activities
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
        <?php include '../includes/footer.php'; ?>

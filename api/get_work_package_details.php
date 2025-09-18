@@ -17,14 +17,54 @@ if (!$wp_id) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT * FROM work_packages WHERE id = ?");
-$stmt->execute([$wp_id]);
-$wp = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    // Work Package details con lead partner
+    $stmt = $conn->prepare("
+        SELECT wp.*, p.name as lead_partner_name, proj.name as project_name
+        FROM work_packages wp
+        LEFT JOIN partners p ON wp.lead_partner_id = p.id  
+        LEFT JOIN projects proj ON wp.project_id = proj.id
+        WHERE wp.id = ?
+    ");
+    $stmt->execute([$wp_id]);
+    $wp = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$wp) {
-    echo json_encode(['error' => 'Work Package not found']);
-    exit;
+    if (!$wp) {
+        echo json_encode(['error' => 'Work Package not found']);
+        exit;
+    }
+
+    // Attività associate
+    $activities_stmt = $conn->prepare("
+        SELECT a.*, p.name as responsible_partner_name
+        FROM activities a
+        LEFT JOIN partners p ON a.responsible_partner_id = p.id
+        WHERE a.work_package_id = ?
+        ORDER BY a.activity_number ASC, a.name ASC
+    ");
+    $activities_stmt->execute([$wp_id]);
+    $activities = $activities_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Budget specifici del Work Package per ogni partner
+    $wp_budgets_stmt = $conn->prepare("
+        SELECT wpb.budget_allocated, p.name as partner_name, p.country, pp.role
+        FROM work_package_partner_budgets wpb
+        JOIN partners p ON wpb.partner_id = p.id
+        JOIN project_partners pp ON wpb.partner_id = pp.partner_id AND wpb.project_id = pp.project_id
+        WHERE wpb.work_package_id = ?
+        ORDER BY pp.role DESC, p.name ASC
+    ");
+    $wp_budgets_stmt->execute([$wp_id]);
+    $wp_partner_budgets = $wp_budgets_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Risposta con WP, attività e budget specifici del WP
+    echo json_encode([
+        'work_package' => $wp,
+        'activities' => $activities,
+        'partner_budgets' => $wp_partner_budgets
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 }
-
-echo json_encode($wp);
 ?>
