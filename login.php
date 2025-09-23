@@ -6,7 +6,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once 'config/auth.php';
+
+// Include environment to get DB config and error reporting
+require_once 'config/environment.php'; 
+// Auth class definition
+require_once 'config/auth.php'; 
 
 // If already logged in, redirect to dashboard
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
@@ -16,10 +20,15 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
 
 $error_message = '';
 
+// Establish database connection
+$database = new Database();
+$conn = $database->connect();
+
 // Handle login form
 if ($_POST) {
     if (isset($_POST['username']) && isset($_POST['password'])) {
-        $auth = new Auth();
+        // Instantiate Auth with the database connection
+        $auth = new Auth($conn); 
         $result = $auth->login($_POST['username'], $_POST['password']);
         
         if ($result['success']) {

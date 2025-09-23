@@ -512,6 +512,7 @@
     color: #6c757d !important;
 }
 
+
 /* Responsive generale */
 @media (max-width: 576px) {
     .content .project-title-optimized {
@@ -531,4 +532,80 @@
     .content .card-body {
         padding: 15px !important;
     }
+}
+
+.stat-item {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.stat-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.budget-completion .progress {
+    width: 100px;
+}
+
+.quick-actions-budget {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.btn-xs {
+    padding: 2px 6px;
+    font-size: 0.75rem;
+}
+
+.budget-partners-table {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .stat-item {
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+    
+    .quick-actions-budget {
+        padding: 10px;
+    }
+    
+    .btn-sm, .btn-xs {
+        margin-bottom: 5px;
+    }
+    
+    .table-responsive {
+        font-size: 0.85rem;
+    }  }
+
+/* Custom styles for WP Card stats */
+.wp-card-stats .col-4 small {
+    font-size: 14px !important; /* Increased font size by 2px from 12px */
+}
+
+/* Custom styles for WP Card buttons */
+.wp-card-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Added gap between buttons */
+}
+
+.wp-budget-amount {
+    color: #00008B !important; /* Dark Blue */
+    font-weight: bold !important;
 }

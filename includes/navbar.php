@@ -31,8 +31,9 @@ $page_titles = [
     'project-gantt.php' => 'Project Gantt',
     'add-report.php' => 'Add a Report',
     'edit-report.php' => 'Edit a Report',
-    'create-report.php' => 'Create a Report'
-
+    'create-report.php' => 'Create a Report',
+    'partner-budget.php' => 'Partner Budget',
+    'manage-partners-budget.php' => 'Manage Partners Budget'
     
 ];
 

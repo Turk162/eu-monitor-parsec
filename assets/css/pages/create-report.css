@@ -1,0 +1,7 @@
+.form-group .btn.btn-info { /* Target the label that acts as a button */
+    display: inline-block; /* Make it behave like a block element for padding/margin */
+    padding: 8px 12px; /* Adjust padding to look like a button */
+    margin-bottom: 5px; /* Space between label and input */
+    border-radius: 4px; /* Rounded corners */
+    /* Inherits other btn-info styles like background, color, border */
+}

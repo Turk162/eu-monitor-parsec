@@ -175,7 +175,6 @@ case 'add_work_package_with_budgets':
     $lead_partner_id = (int)$_POST['lead_partner_id'];
     $wp_start_date = $_POST['wp_start_date'];
     $wp_end_date = $_POST['wp_end_date'];
-    $partner_budgets = $_POST['partner_budgets'] ?? [];
     
     $conn->beginTransaction();
     
@@ -190,19 +189,9 @@ case 'add_work_package_with_budgets':
         $wp_stmt->execute([$project_id, $wp_number, $wp_name, $wp_description, $lead_partner_id, $wp_start_date, $wp_end_date]);
         $wp_id = $conn->lastInsertId();
         
-        // Insert partner budgets
-        $budget_stmt = $conn->prepare("
-            INSERT INTO work_package_partner_budgets (work_package_id, partner_id, project_id, budget_allocated) 
-            VALUES (?, ?, ?, ?)
-        ");
-        
+        // Partner budgets are no longer allocated at this stage.
+        // This is now handled in the detailed budget management page.
         $total_budget = 0;
-        foreach ($partner_budgets as $partner_id => $budget) {
-            if ($budget > 0) {
-                $budget_stmt->execute([$wp_id, $partner_id, $project_id, $budget]);
-                $total_budget += $budget;
-            }
-        }
         
         // Update WP total budget
         $update_wp_stmt = $conn->prepare("UPDATE work_packages SET budget = ? WHERE id = ?");
@@ -217,7 +206,7 @@ case 'add_work_package_with_budgets':
     }
     break;
 
-case 'update_work_package_with_budgets':
+case 'update_work_package':
     $wp_id = (int)$_POST['wp_id'];
     $wp_number = sanitizeInput($_POST['wp_number']);
     $wp_name = sanitizeInput($_POST['wp_name']);
@@ -227,50 +216,20 @@ case 'update_work_package_with_budgets':
     $wp_end_date = $_POST['wp_end_date'];
     $wp_status = sanitizeInput($_POST['status']);
     $wp_progress = (float)$_POST['progress'];
-    $partner_budgets = $_POST['partner_budgets'] ?? [];
     
-    $conn->beginTransaction();
+    // Update SOLO le informazioni base del Work Package
+    $wp_stmt = $conn->prepare("
+        UPDATE work_packages
+        SET wp_number = ?, name = ?, description = ?, lead_partner_id = ?, 
+            start_date = ?, end_date = ?, status = ?, progress = ?
+        WHERE id = ? AND project_id = ?
+    ");
     
-    try {
-        // Update Work Package basic info
-        $wp_stmt = $conn->prepare("
-            UPDATE work_packages
-            SET wp_number = ?, name = ?, description = ?, lead_partner_id = ?, 
-                start_date = ?, end_date = ?, status = ?, progress = ?
-            WHERE id = ? AND project_id = ?
-        ");
-        
-        $wp_stmt->execute([$wp_number, $wp_name, $wp_description, $lead_partner_id, 
-                          $wp_start_date, $wp_end_date, $wp_status, $wp_progress, $wp_id, $project_id]);
-        
-        // Delete existing partner budgets
-        $delete_budgets_stmt = $conn->prepare("DELETE FROM work_package_partner_budgets WHERE work_package_id = ?");
-        $delete_budgets_stmt->execute([$wp_id]);
-        
-        // Insert new partner budgets
-        $budget_stmt = $conn->prepare("
-            INSERT INTO work_package_partner_budgets (work_package_id, partner_id, project_id, budget_allocated) 
-            VALUES (?, ?, ?, ?)
-        ");
-        
-        $total_budget = 0;
-        foreach ($partner_budgets as $partner_id => $budget) {
-            if ($budget > 0) {
-                $budget_stmt->execute([$wp_id, $partner_id, $project_id, $budget]);
-                $total_budget += $budget;
-            }
-        }
-        
-        // Update WP total budget
-        $update_wp_stmt = $conn->prepare("UPDATE work_packages SET budget = ? WHERE id = ?");
-        $update_wp_stmt->execute([$total_budget, $wp_id]);
-        
-        $conn->commit();
+    if ($wp_stmt->execute([$wp_number, $wp_name, $wp_description, $lead_partner_id, 
+                          $wp_start_date, $wp_end_date, $wp_status, $wp_progress, $wp_id, $project_id])) {
         $_SESSION['success'] = "Work package updated successfully!";
-        
-    } catch (Exception $e) {
-        $conn->rollback();
-        throw $e;
+    } else {
+        throw new Exception("Failed to update Work Package");
     }
     break;
 
@@ -406,6 +365,51 @@ case 'update_work_package_with_budgets':
                     $_SESSION['success'] = "Work Package updated successfully!";
                 } else {
                     throw new Exception("Failed to update Work Package");
+                }
+                break;
+                
+            case 'delete_file':
+                $file_id = (int)$_POST['file_id'];
+
+                // Fetch file details and verify ownership
+                $file_stmt = $conn->prepare("SELECT file_path, project_id FROM uploaded_files WHERE id = ?");
+                $file_stmt->execute([$file_id]);
+                $file_data = $file_stmt->fetch();
+
+                if (!$file_data) {
+                    $_SESSION['error'] = "File not found.";
+                    break;
+                }
+
+                // Security check: Ensure file belongs to this project and user has permission
+                if ($file_data['project_id'] != $project_id) {
+                    $_SESSION['error'] = "Unauthorized attempt to delete file from another project.";
+                    break;
+                }
+                // Additional authorization check (already done at top of page, but good to re-verify for specific actions)
+                if ($user_role !== 'super_admin' && $project['coordinator_id'] !== $user_id) {
+                    $_SESSION['error'] = "Access denied. You do not have permission to delete files for this project.";
+                    break;
+                }
+
+                $full_file_path = '../' . $file_data['file_path']; // Prepend ../ to get correct relative path
+
+                // Delete physical file
+                if (file_exists($full_file_path)) {
+                    if (!unlink($full_file_path)) {
+                        throw new Exception("Failed to delete physical file.");
+                    }
+                } else {
+                    // File not found on disk, but proceed to delete DB record
+                    error_log("Warning: Physical file not found for ID {$file_id} at {$full_file_path}");
+                }
+
+                // Delete record from database
+                $delete_stmt = $conn->prepare("DELETE FROM uploaded_files WHERE id = ?");
+                if ($delete_stmt->execute([$file_id])) {
+                    $_SESSION['success'] = "File deleted successfully!";
+                } else {
+                    throw new Exception("Failed to delete file record from database.");
                 }
                 break;
                 
@@ -554,16 +558,12 @@ $milestones_stmt = $conn->prepare("
 $milestones_stmt->execute([$project_id]);
 $milestones = $milestones_stmt->fetchAll();
 
-// Get project files
+// Get project files (general documents)
 $files_stmt = $conn->prepare("
     SELECT uf.*, u.full_name as uploaded_by_name
     FROM uploaded_files uf
-    LEFT JOIN activity_reports ar ON uf.report_id = ar.id
-    LEFT JOIN activities a ON ar.activity_id = a.id
     LEFT JOIN users u ON uf.uploaded_by = u.id
-    WHERE a.work_package_id IN (
-        SELECT id FROM work_packages WHERE project_id = ?
-    )
+    WHERE uf.project_id = ? AND uf.report_id IS NULL
     ORDER BY uf.uploaded_at DESC
 ");
 $files_stmt->execute([$project_id]);
@@ -594,14 +594,10 @@ $status_options = [
 function updateWorkPackageTotalBudget($conn, $work_package_id) {
     $stmt = $conn->prepare("
         UPDATE work_packages 
-        SET budget = (
-            SELECT COALESCE(SUM(budget_allocated), 0) 
-            FROM work_package_partner_budgets 
-            WHERE work_package_id = ?
-        )
+        SET budget = 0
         WHERE id = ?
     ");
-    return $stmt->execute([$work_package_id, $work_package_id]);
+    return $stmt->execute([$work_package_id]);
 }
 
 
@@ -1058,7 +1054,6 @@ window.projectData = {
                                         <div class="col-md-6 col-lg-4 mb-2">
                                             <div class="budget-item">
                                                 <span class="partner-name"><?= htmlspecialchars($budget['partner_name']) ?></span>
-                                                <span class="budget-amount">€<?= number_format($budget['budget_allocated'], 2) ?></span>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -1165,43 +1160,7 @@ window.projectData = {
                 </div>
             </div>
             
-            <!-- Partner Budgets Section -->
-            <div class="partner-budgets-section">
-                <h6 style="color: #51CACF; margin: 20px 0 15px 0;">
-                    💰 Budget Allocation by Partner
-                </h6>
-                <div class="row partner-budget-grid">
-                    <?php foreach ($all_project_partners as $partner): ?>
-                        <div class="col-md-6 col-lg-4">
-                            <div class="form-group">
-                                <label>
-                                    <strong><?= htmlspecialchars($partner['organization']) ?></strong>
-                                    <small class="text-muted">(<?= htmlspecialchars($partner['country']) ?>)</small>
-                                </label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">€</span>
-                                    </div>
-                                    <input type="number" 
-                                           name="partner_budgets[<?= $partner['partner_id'] ?>]" 
-                                           class="form-control partner-budget-input" 
-                                           step="0.01" 
-                                           min="0" 
-                                           placeholder="0.00"
-                                           data-partner-id="<?= $partner['partner_id'] ?>">
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info" style="background-color: #e3f2fd; border: 1px solid #2196f3;">
-                            <strong>Total WP Budget: €<span class="wp-total-budget">0.00</span></strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
+           
             
             <div class="form-group text-right">
                 <button type="submit" class="btn btn-primary">
@@ -1276,12 +1235,15 @@ window.projectData = {
                                                         <td><?= htmlspecialchars($file['uploaded_by_name'] ?? 'Unknown') ?></td>
                                                         <td><?= date('M j, Y', strtotime($file['uploaded_at'])) ?></td>
                                                         <td class="text-center">
-                                                            <a href="<?= $file['file_path'] ?>" target="_blank" 
-                                                               class="btn btn-sm btn-info" title="View/Download">
-                                                                <i class="nc-icon nc-zoom-split"></i>
+                                                            <a href="../<?= $file['file_path'] ?>" 
+                                                               download="<?= htmlspecialchars($file['original_filename']) ?>"
+                                                               class="btn btn-sm btn-success" title="Download">
+                                                                <i class="nc-icon nc-minimal-down"></i>
                                                             </a>
                                                             <button class="btn btn-sm btn-danger btn-delete-file" 
-                                                                    data-file-id="<?= $file['id'] ?>" title="Delete">
+                                                                    data-file-id="<?= $file['id'] ?>" 
+                                                                    data-file-name="<?= htmlspecialchars($file['original_filename']) ?>" 
+                                                                    title="Delete">
                                                                 <i class="nc-icon nc-simple-remove"></i>
                                                             </button>
                                                         </td>

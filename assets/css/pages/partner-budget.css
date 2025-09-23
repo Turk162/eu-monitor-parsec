@@ -1,0 +1,427 @@
+/* ===================================================================
+   PARTNER BUDGET PAGE STYLES
+   Styles for the partner budget detail view page
+   =================================================================== */
+
+/* Page Layout - Compact spacing */
+.content {
+    background-color: #f4f3ef;
+    padding: 15px 20px; /* Reduced from default */
+}
+
+.main-panel {
+    width: calc(100vw - 260px); /* Ensure proper width calculation */
+}
+
+.row {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.col-md-12 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Budget Summary */
+.budget-summary {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #51cbce;
+}
+
+.budget-summary h6 {
+    margin-bottom: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.budget-summary h4 {
+    margin-bottom: 0;
+    font-weight: 700;
+    font-size: 1.8rem;
+}
+
+/* Work Package Cards - Compact spacing */
+.wp-budget-card {
+    margin-bottom: 1rem; /* Reduced from 1.5rem */
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.wp-budget-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.wp-budget-card[data-wp-type="project_management"] {
+    border-left: 4px solid #e74c3c;
+}
+
+.wp-budget-card[data-wp-type="standard"] {
+    border-left: 4px solid #51cbce;
+}
+
+.wp-budget-card .card-header {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px 20px 12px; /* Reduced padding */
+}
+
+.wp-budget-card .card-body {
+    padding: 15px 20px; /* Reduced from default 25px */
+}
+
+.wp-budget-card .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+.wp-total {
+    font-size: 1.2rem; /* Slightly reduced */
+    font-weight: 700;
+    color: #27ae60;
+    background-color: #d5f5e3;
+    padding: 4px 10px; /* Reduced padding */
+    border-radius: 12px;
+    border: 2px solid #a3e4d7;
+}
+
+.card-category {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+
+/* Budget Sections - Tighter spacing */
+.budget-section {
+    margin-bottom: 15px; /* Reduced from 20px */
+    padding: 10px 0; /* Reduced from 15px */
+}
+
+.budget-section:not(:last-child) {
+    border-bottom: 1px solid #f1f2f6;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 10px; /* Reduced from 12px */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+/* Budget Lines - Compact */
+.budget-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px; /* Reduced from 10px */
+    padding: 6px 0; /* Reduced from 8px */
+}
+
+.budget-line:last-child {
+    margin-bottom: 0;
+}
+
+.budget-item {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.budget-amount {
+    font-weight: 600;
+    color: #27ae60;
+    white-space: nowrap;
+    margin-left: 15px;
+    font-size: 1.05rem;
+}
+
+/* Travel & Subsistence Specific */
+.travel-line {
+    flex-direction: column;
+    align-items: stretch;
+    background-color: #f8fffe;
+    border-radius: 6px;
+    padding: 10px; /* Reduced from 12px */
+    margin-bottom: 10px; /* Reduced from 12px */
+    border-left: 3px solid #51cbce;
+}
+
+.travel-header {
+    margin-bottom: 6px; /* Reduced from 8px */
+}
+
+.travel-details {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+.travel-details .budget-amount {
+    color: #e67e22;
+    font-weight: 700;
+    margin-left: 0;
+    margin-top: 4px; /* Reduced from 5px */
+    display: inline-block;
+}
+
+/* WP Subtotal - Compact */
+.wp-subtotal {
+    background-color: #f1f2f6;
+    margin: 15px -20px -15px; /* Adjusted for new padding */
+    padding: 12px 20px; /* Reduced padding */
+    border-top: 2px solid #ddd;
+}
+
+.wp-subtotal .budget-line {
+    margin-bottom: 0;
+}
+
+.wp-subtotal .budget-amount {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* Total Summary Card */
+.budget-total-card {
+    border: 2px solid #27ae60;
+    background: linear-gradient(135deg, #d5f5e3 0%, #ffffff 100%);
+    margin-top: 1.5rem; /* Reduced from 2rem */
+}
+
+.budget-total-card .card-body {
+    padding: 20px; /* Reduced from 25px */
+}
+
+.budget-total-card h4 {
+    font-size: 1.8rem; /* Slightly reduced */
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.budget-total-card h5 {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+/* Organization Info Card - Compact */
+.card:first-of-type .card-body {
+    padding: 15px 20px; /* Reduced from 20px 25px */
+}
+
+.card .card-header {
+    padding: 15px 20px 10px; /* Reduced padding */
+}
+
+/* Action Buttons */
+.card .card-body.text-center {
+    padding: 15px; /* Reduced from 20px */
+}
+
+.card .card-body.text-center .btn {
+    margin: 0 6px 6px 0; /* Reduced margins */
+    min-width: 130px; /* Slightly reduced */
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-panel {
+        width: calc(100vw - 230px); /* Adjust for smaller screens */
+    }
+    
+    .content {
+        padding: 10px 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-panel {
+        width: 100vw;
+        margin-left: 0 !important;
+    }
+    
+    .content {
+        padding: 10px;
+    }
+    
+    .wp-total {
+        float: none !important;
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+        font-size: 1.1rem;
+    }
+    
+    .budget-line {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .budget-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .budget-amount {
+        margin-left: 0;
+        margin-top: 5px;
+        text-align: right;
+        font-size: 1.1rem;
+    }
+    
+    .budget-summary {
+        text-align: center;
+        margin-top: 15px;
+    }
+    
+    .travel-line {
+        padding: 12px;
+    }
+    
+    .wp-subtotal {
+        margin: 15px -15px -15px;
+        padding: 12px 15px;
+    }
+    
+    .budget-total-card h4 {
+        font-size: 1.6rem;
+    }
+    
+    .card .card-body.text-center .btn {
+        width: 100%;
+        margin: 5px 0;
+        min-width: auto;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar-wrapper,
+    .navbar,
+    .card .card-body.text-center,
+    .btn {
+        display: none !important;
+    }
+    
+    .main-panel {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+    
+    .content {
+        background-color: white !important;
+        padding: 0 !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        margin-bottom: 0.8rem !important;
+        page-break-inside: avoid;
+    }
+    
+    .wp-budget-card {
+        page-break-inside: avoid;
+    }
+    
+    .budget-total-card {
+        background: white !important;
+        border: 2px solid #27ae60 !important;
+    }
+    
+    .wp-total {
+        background-color: #f0f0f0 !important;
+        border: 1px solid #ccc !important;
+        color: #333 !important;
+    }
+    
+    .travel-line {
+        background-color: #f9f9f9 !important;
+        border-left: 2px solid #666 !important;
+    }
+    
+    .wp-subtotal {
+        background-color: #f5f5f5 !important;
+    }
+}
+
+/* Loading States */
+.budget-loading {
+    text-align: center;
+    padding: 30px; /* Reduced from 40px */
+    color: #666;
+}
+
+.budget-loading i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #51cbce;
+}
+
+/* Error States */
+.budget-error {
+    background-color: #fdf2f2;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 12px; /* Reduced from 15px */
+    color: #721c24;
+    margin: 12px 0; /* Reduced from 15px */
+}
+
+.budget-error i {
+    color: #e74c3c;
+    margin-right: 8px;
+}
+
+/* Success States */
+.budget-success {
+    background-color: #f0f9f0;
+    border: 1px solid #c3e6c3;
+    border-radius: 6px;
+    padding: 12px; /* Reduced from 15px */
+    color: #155724;
+    margin: 12px 0; /* Reduced from 15px */
+}
+
+.budget-success i {
+    color: #27ae60;
+    margin-right: 8px;
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); } /* Reduced from 20px */
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(8px); opacity: 0; } /* Reduced from 10px */
+    to { transform: translateY(0); opacity: 1; }
+}

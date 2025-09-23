@@ -46,7 +46,6 @@ $stmt = $conn->prepare("
         description, 
         start_date, 
         end_date, 
-        budget, 
         status, 
         progress,
         lead_partner_id

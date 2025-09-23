@@ -20,15 +20,7 @@ if (empty($_SESSION['csrf_token'])) {
 }
 $csrf_token = $_SESSION['csrf_token'];
 
-// ===================================================================
-//  AUTHENTICATION & AUTHORIZATION
-// ===================================================================
 
-$auth = new Auth();
-$auth->requireLogin();
-
-$user_id = getUserId();
-$user_role = getUserRole();
 
 // ===================================================================
 //  FUNZIONI HELPER PER L'HEADER OTTIMIZZATO
@@ -187,6 +179,17 @@ $activities_stmt = $conn->prepare("
 $activities_stmt->execute([$project_id]);
 $recent_activities = $activities_stmt->fetchAll();
 
+// Get project files (general documents)
+$files_stmt = $conn->prepare("
+    SELECT uf.*, u.full_name as uploaded_by_name
+    FROM uploaded_files uf
+    LEFT JOIN users u ON uf.uploaded_by = u.id
+    WHERE uf.project_id = ? AND uf.report_id IS NULL
+    ORDER BY uf.uploaded_at DESC
+");
+$files_stmt->execute([$project_id]);
+$project_files = $files_stmt->fetchAll();
+
 // Calculate Overall Project Progress
 // Set Overall Project Progress to 0 since progress field was removed
 $overall_progress = 0;
@@ -198,10 +201,85 @@ $overall_progress = 0;
 $page_title = htmlspecialchars($project['name']) . ' - Project Details';
 $page_css_path = '../assets/css/pages/project-detail.css';
 $page_js_path = '../assets/js/pages/project-detail.js';
+// ===================================================================
+// BUDGET MANAGEMENT SECTION - CODICE CORRETTO
+// ===================================================================
+
+// Query corretta per Budget Summary con calcoli reali
+$budget_summary_stmt = $conn->prepare("
+    SELECT 
+        p.id as partner_id,
+        p.name as partner_name,
+        p.country,
+        p.organization_type,
+        pp.budget_allocated as allocated_budget,
+        COUNT(DISTINCT wpb.work_package_id) as wp_count,
+        
+        -- Calcolo Personnel Total
+        SUM(CASE 
+            WHEN wpb.wp_type = 'project_management' THEN COALESCE(wpb.project_management_cost, 0)
+            ELSE COALESCE(wpb.working_days_total, 0)
+        END) as total_personnel,
+        
+        -- Calcolo Travel Total (dalla tabella budget_travel_subsistence)
+        COALESCE(travel_totals.total_travel, 0) as total_travel,
+        
+        -- Other costs
+        SUM(COALESCE(wpb.other_costs, 0)) as total_other,
+        
+        -- Grand total
+        (SUM(CASE 
+            WHEN wpb.wp_type = 'project_management' THEN COALESCE(wpb.project_management_cost, 0)
+            ELSE COALESCE(wpb.working_days_total, 0)
+        END) + COALESCE(travel_totals.total_travel, 0) + SUM(COALESCE(wpb.other_costs, 0))) as total_detailed
+        
+    FROM project_partners pp
+    INNER JOIN partners p ON pp.partner_id = p.id
+    LEFT JOIN work_package_partner_budgets wpb ON p.id = wpb.partner_id AND wpb.project_id = ?
+    LEFT JOIN (
+        SELECT 
+            wpb2.partner_id,
+            SUM(bts.travel_cost) as total_travel
+        FROM work_package_partner_budgets wpb2
+        LEFT JOIN budget_travel_subsistence bts ON wpb2.id = bts.wp_partner_budget_id
+        WHERE wpb2.project_id = ?
+        GROUP BY wpb2.partner_id
+    ) travel_totals ON p.id = travel_totals.partner_id
+    
+    WHERE pp.project_id = ?
+    GROUP BY p.id, p.name, p.country, p.organization_type, pp.budget_allocated
+    ORDER BY p.name
+");
+
+$budget_summary_stmt->execute([$project_id, $project_id, $project_id]);
+$budget_summary = $budget_summary_stmt->fetchAll();
+
+// Calcolo delle statistiche
+$total_project_budget = 0;
+$detailed_budget_count = 0;
+$budget_completion_percentage = 0;
+
+foreach ($budget_summary as $partner) {
+    $total_project_budget += $partner['allocated_budget'] ?: 0;
+    
+    // Considera "dettagliato" se ha personnel, travel o other costs > 0
+    if ($partner['total_personnel'] > 0 || $partner['total_travel'] > 0 || $partner['total_other'] > 0) {
+        $detailed_budget_count++;
+    }
+}
+
+// Calcola percentuale completamento
+if (count($budget_summary) > 0) {
+    $budget_completion_percentage = round(($detailed_budget_count / count($budget_summary)) * 100);
+}
 
 // ===================================================================
 //  START HTML LAYOUT
 // ===================================================================
+
+
+
+
 
 include '../includes/header.php';
 ?>
@@ -334,6 +412,18 @@ include '../includes/header.php';
                                         <a class="nav-link" id="milestones-tab" data-toggle="tab" href="#milestones" role="tab">
                                             <i class="nc-icon nc-trophy"></i>
                                             Milestones (<?= count($milestones) ?>)
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab">
+                                            <i class="nc-icon nc-cloud-upload-94"></i>
+                                            Documents (<?= count($project_files) ?>)
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="budget-tab" data-toggle="tab" href="#budget" role="tab">
+                                            <i class="nc-icon nc-money-coins"></i>
+                                            Budget
                                         </a>
                                     </li>
                                 </ul>
@@ -532,7 +622,7 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                     </p>
                     
                                        <!-- NUOVO LAYOUT A 3 COLONNE: Activities - Budget - Status -->
-                    <div class="row text-center">
+                    <div class="row text-center wp-card-stats">
                         <div class="col-4">
                             <small class="text-muted">Activities</small><br>
                             <strong><?= $wp['activity_count'] ?></strong>
@@ -540,7 +630,7 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                         <div class="col-4">
                             <small class="text-muted">Budget</small><br>
                             <?php if ($wp['budget']): ?>
-                            <small class="text-success">
+                            <small class="wp-budget-amount">
                                 <i class="nc-icon nc-money-coins"></i>
                                 €<?= number_format($wp['budget'], 0, ',', '.') ?>
                             </small>
@@ -556,18 +646,20 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
 
                     
                     
-<div class="text-center mt-3">
-                            <a href="activities.php?wp=<?= $wp['id'] ?>" 
-                               class="btn btn-primary btn-sm me-2">
-                                <i class="nc-icon nc-paper"></i>
-                                View Activities
-                            </a>
+<div class="text-center mt-3 wp-card-buttons">
                             <button type="button" 
                                     class="btn btn-info btn-sm" 
                                     onclick="openWPDetailsModal(<?= $wp['id'] ?>, '<?= addslashes($wp['wp_number']) ?>')">
                                 <i class="nc-icon nc-zoom-split"></i>
-                                Details
-                            </button>
+                                WP Details
+                            </button>         
+                            
+<a href="activities.php?wp=<?= $wp['id'] ?>" 
+                               class="btn btn-primary btn-sm">
+                                <i class="nc-icon nc-paper"></i>
+                                View Activities
+                            </a>
+
                         </div>
                 </div>
             </div>
@@ -616,7 +708,12 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                                             </div>
                                             <?php endforeach; ?>
                                         </div>
+
+
                                     </div>
+
+                                    
+
                                     
                                     <!-- MILESTONES TAB -->
                                     <div class="tab-pane fade" id="milestones" role="tabpanel">
@@ -673,6 +770,278 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                                         
                                         <?php endif; ?>
                                     </div>
+
+                                    <!-- DOCUMENTS TAB -->
+                                    <div class="tab-pane fade" id="documents" role="tabpanel">
+                                        <div class="form-section">
+                                            <h6>
+                                                <span class="section-icon">
+                                                    <i class="nc-icon nc-folder-17"></i>
+                                                </span>
+                                                Project Documents
+                                            </h6>
+
+                                            <?php if (empty($project_files)): ?>
+                                                <div class="alert alert-info">
+                                                    <i class="nc-icon nc-alert-circle-i"></i>
+                                                    No documents uploaded yet for this project.
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead class="text-primary">
+                                                            <tr>
+                                                                <th><i class="nc-icon nc-paper"></i> File Name</th>
+                                                                <th><i class="nc-icon nc-ruler-pencil"></i> Size</th>
+                                                                <th><i class="nc-icon nc-single-02"></i> Uploaded By</th>
+                                                                <th><i class="nc-icon nc-calendar-60"></i> Date</th>
+                                                                <th class="text-center">Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <?php foreach ($project_files as $file): ?>
+                                                                <tr>
+                                                                    <td>
+                                                                        <i class="nc-icon nc-paper"></i>
+                                                                        <?= htmlspecialchars($file['original_filename']) ?>
+                                                                    </td>
+                                                                    <td><?= formatFileSize($file['file_size'] ?? 0) ?></td>
+                                                                    <td><?= htmlspecialchars($file['uploaded_by_name'] ?? 'Unknown') ?></td>
+                                                                    <td><?= date('M j, Y', strtotime($file['uploaded_at'])) ?></td>
+                                                                    <td class="text-center">
+                                                                        <a href="../<?= $file['file_path'] ?>"
+                                                                           download="<?= htmlspecialchars($file['original_filename']) ?>"
+                                                                           class="btn btn-sm btn-info" title="Download">
+                                                                            <i class="nc-icon nc-minimal-down"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                                    <!-- BUDGET TAB -->
+                                    <div class="tab-pane fade" id="budget" role="tabpanel">
+<!-- BUDGET MANAGEMENT SECTION -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="card-title mb-1">
+                            <i class="nc-icon nc-money-coins"></i>
+                            Budget Management
+                        </h5>
+                        <p class="card-category mb-0">Partner budget allocation and details</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <div class="budget-completion">
+                            <small class="text-muted">Budget Details Completion</small>
+                            <div class="progress mt-1" style="height: 6px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: <?php echo $budget_completion_percentage; ?>%"></div>
+                            </div>
+                            <small class="text-success"><?php echo $budget_completion_percentage; ?>% Complete</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Budget Overview Stats -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-item text-center">
+                            <div class="stat-icon">
+                                <i class="nc-icon nc-bank text-primary"></i>
+                            </div>
+                            <h4 class="text-primary mb-1">€<?php echo number_format($total_project_budget, 0); ?></h4>
+                            <p class="text-muted mb-0">Total Budget</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item text-center">
+                            <div class="stat-icon">
+                                <i class="nc-icon nc-badge text-info"></i>
+                            </div>
+                            <h4 class="text-info mb-1"><?php echo count($budget_summary); ?></h4>
+                            <p class="text-muted mb-0">Partner Organizations</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item text-center">
+                            <div class="stat-icon">
+                                <i class="nc-icon nc-bullet-list-67 text-warning"></i>
+                            </div>
+                            <h4 class="text-warning mb-1"><?php echo count($work_packages); ?></h4>
+                            <p class="text-muted mb-0">Work Packages</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item text-center">
+                            <div class="stat-icon">
+                                <i class="nc-icon nc-chart-bar-32 text-success"></i>
+                            </div>
+                            <h4 class="text-success mb-1"><?php echo $detailed_budget_count; ?>/<?php echo count($budget_summary); ?></h4>
+                            <p class="text-muted mb-0">Detailed Budgets</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="quick-actions-budget">
+                            <h6 class="mb-3">Quick Actions:</h6>
+                            
+                            <?php if ($user_role === 'super_admin' || $user_role === 'coordinator'): ?>
+                            <!-- Coordinator Actions -->
+                            <a href="manage-partners-budget.php?project_id=<?php echo $project_id; ?>" 
+                               class="btn btn-primary btn-sm mr-2 mb-2">
+                                <i class="nc-icon nc-settings-gear-65"></i> Manage All Partner Budgets
+                            </a>
+                            
+                            <button class="btn btn-info btn-sm mr-2 mb-2" onclick="exportBudgetSummary()">
+                                <i class="nc-icon nc-single-copy-04"></i> Export Budget Summary
+                            </button>
+                            
+                            <?php if ($budget_completion_percentage < 100): ?>
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <strong>Notice:</strong> Some partner budgets are missing detailed breakdown. 
+                                <a href="manage-partners-budget.php?project_id=<?php echo $project_id; ?>">Complete them now</a> 
+                                to get accurate financial reporting.
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php else: ?>
+                            <!-- Partner Actions -->
+                            <a href="partner-budget.php?project_id=<?php echo $project_id; ?>" 
+                               class="btn btn-primary btn-sm mr-2 mb-2">
+                                <i class="nc-icon nc-money-coins"></i> Your Organization Budget
+                            </a>
+                            
+                            <button class="btn btn-secondary btn-sm mr-2 mb-2" onclick="printBudgetView()">
+                                <i class="nc-icon nc-tap-01"></i> Print Budget
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partner Budget Summary Table -->
+                <?php if (!empty($budget_summary)): ?>
+                <div class="budget-partners-table">
+                    <h6 class="mb-3">Partner Budget Overview:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Partner Organization</th>
+                                    <th>Country</th>
+                                    <th>Work Packages</th>
+                                    <th class="text-right">Budget</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($budget_summary as $partner): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($partner['partner_name']); ?></strong>
+                                        <br><small class="text-muted"><?php echo htmlspecialchars($partner['organization_type']); ?></small>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-light"><?php echo htmlspecialchars($partner['country']); ?></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info"><?php echo $partner['wp_count']; ?> WPs</span>
+                                    </td>
+                                    <td class="text-right">
+                                        <strong>€<?php echo number_format($partner['allocated_budget'] ?: 0, 2); ?></strong>
+                                        <?php if ($partner['total_detailed'] > 0): ?>
+                                            <br><strong>Detailed: €<?php echo number_format($partner['total_detailed'], 2); ?></strong>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php 
+                                        // Calcolo corretto dello status - include anche travel
+                                        $has_details = ($partner['total_personnel'] > 0 || $partner['total_travel'] > 0 || $partner['total_other'] > 0);
+                                        if ($has_details): ?>
+                                            <span class="badge badge-success">
+                                                <i class="nc-icon nc-check-2"></i> Detailed
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-warning">
+                                                <i class="nc-icon nc-time-alarm"></i> Basic Only
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if ($user_role === 'super_admin' || $user_role === 'coordinator'): ?>
+                                        <div class="btn-group" role="group">
+                                            <!-- Link View Budget - CORRETTO con partner_id specifico -->
+                                            <a href="partner-budget.php?project_id=<?php echo $project_id; ?>&partner_id=<?php echo $partner['partner_id']; ?>" 
+                                               class="btn btn-outline-info btn-xs" title="View Partner Budget">
+                                                <i class="nc-icon nc-zoom-split"></i>
+                                            </a>
+                                            <!-- Link Edit Budget - va alla pagina generale manage-partner-budgets -->
+                                            <a href="manage-partners-budget.php?project_id=<?php echo $project_id; ?>" 
+                                               class="btn btn-outline-primary btn-xs" title="Edit All Budgets">
+                                                <i class="nc-icon nc-ruler-pencil"></i>
+                                            </a>
+                                        </div>
+                                        <?php else: ?>
+                                        <!-- Link per partner - mostra solo il proprio budget -->
+                                        <a href="partner-budget.php?project_id=<?php echo $project_id; ?>" 
+                                           class="btn btn-outline-primary btn-xs">
+                                            <i class="nc-icon nc-zoom-split"></i> View
+                                        </a>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                
+                                <?php if ($user_role === 'super_admin'): ?>
+                                <!-- DEBUG INFO - rimuovere dopo test -->
+                                <tr style="background: #f8f9fa; font-size: 11px;">
+                                    <td colspan="6">
+                                        <small class="text-muted">
+                                            DEBUG - Partner ID: <?php echo $partner['partner_id']; ?> | 
+                                            Personnel: €<?php echo number_format($partner['total_personnel'], 2); ?> | 
+                                            Travel: €<?php echo number_format($partner['total_travel'], 2); ?> | 
+                                            Other: €<?php echo number_format($partner['total_other'], 2); ?> | 
+                                            Total Detailed: €<?php echo number_format($partner['total_detailed'], 2); ?>
+                                        </small>
+                                    </td>
+                                </tr>
+                                <?php endif; ?>
+                                
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div class="text-center py-4">
+                    <i class="nc-icon nc-money-coins" style="font-size: 48px; color: #ccc;"></i>
+                    <p class="text-muted">No budget allocations defined yet.</p>
+                    <?php if ($user_role === 'super_admin' || $user_role === 'coordinator'): ?>
+                    <a href="add-project-workpackages.php?project_id=<?php echo $project_id; ?>" class="btn btn-primary">
+                        <i class="nc-icon nc-simple-add"></i> Add Work Packages & Budgets
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -706,4 +1075,37 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
         </div>
     </div>
 </div>
+
+<script>
+function exportBudgetSummary() {
+    // Implement budget export functionality
+    window.location.href = 'api/budget-operations.php?action=export_summary&project_id=<?php echo $project_id; ?>';
+}
+
+function printBudgetView() {
+    window.open('partner-budget.php?project_id=<?php echo $project_id; ?>&print=1', '_blank');
+}
+
+// Add notification for incomplete budgets
+$(document).ready(function() {
+    const completionPercentage = <?php echo $budget_completion_percentage; ?>;
+    
+    if (completionPercentage < 100 && ('<?php echo $user_role; ?>' === 'coordinator' || '<?php echo $user_role; ?>' === 'super_admin')) {
+        // Show reminder after 3 seconds
+        setTimeout(function() {
+            $.notify({
+                icon: 'nc-icon nc-money-coins',
+                message: 'Some partner budgets need detailed breakdown. <a href="manage-partners-budget.php?project_id=<?php echo $project_id; ?>">Complete them now</a>'
+            }, {
+                type: 'info',
+                timer: 8000,
+                placement: {
+                    from: 'top',
+                    align: 'right'
+                }
+            });
+        }, 3000);
+    }
+});
+</script>
        <?php include '../includes/footer.php'; ?>

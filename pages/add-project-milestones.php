@@ -80,23 +80,25 @@ $wp_stmt->execute([$project_id]);
 $work_packages = $wp_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // ===================================================================
-//  FORM SUBMISSION HANDLER
+//  FORM SUBMISSION HANDLER - DUAL BUTTON VERSION
 // ===================================================================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $milestones_data = $_POST['milestones'] ?? [];
+    $action_type = $_POST['action_type'] ?? 'add_milestone'; // Default action
     
     try {
         $conn->beginTransaction();
 
         $stmt = $conn->prepare(
-            "INSERT INTO milestones (project_id, work_package_id, name, description, end_date, status) 
-             VALUES (:project_id, :work_package_id, :name, :description, :end_date, 'pending')"
+            "INSERT INTO milestones (project_id, work_package_id, name, description, due_date, status) 
+             VALUES (:project_id, :work_package_id, :name, :description, :due_date, 'pending')"
         );
 
+        $milestone_count = 0;
         foreach ($milestones_data as $ms_data) {
             // Skip any empty milestone forms that might have been submitted
-            if (empty($ms_data['name']) || empty($ms_data['end_date'])) {
+            if (empty($ms_data['name']) || empty($ms_data['due_date'])) {
                 continue;
             }
             
@@ -105,21 +107,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':work_package_id' => !empty($ms_data['work_package_id']) ? (int)$ms_data['work_package_id'] : null,
                 ':name' => sanitizeInput($ms_data['name']),
                 ':description' => sanitizeInput($ms_data['description'] ?? ''),
-                ':end_date' => $ms_data['end_date']
+                ':due_date' => $ms_data['due_date']
             ]);
+            $milestone_count++;
         }
 
         $conn->commit();
-        setSuccessMessage('Project milestones have been saved successfully!');
-        header('Location: project-detail.php?id=' . $project_id);
-        exit;
+        
+        // Different behavior based on button clicked
+        if ($action_type === 'add_milestone') {
+            // User clicked "Add Milestone" - stay on page
+            setSuccessMessage("Milestone saved successfully! You can add more milestones below.");
+            // NO redirect - stay on current page
+        } else {
+            // User clicked "Save & Continue" - go to budget management
+            setSuccessMessage('Project milestones have been saved successfully!');
+            header('Location: manage-partners-budget.php?project_id=' . $project_id);
+            exit;
+        }
 
     } catch (PDOException $e) {
         $conn->rollback();
         setErrorMessage('An error occurred while saving the milestones. Please try again.');
     }
 }
-
 // ===================================================================
 //  START HTML LAYOUT
 // ===================================================================
@@ -198,12 +209,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </button>
                             </div>
 
-                            <hr>
+                           <hr>
 
-                            <div class="text-right">
-                                <a href="add-project-workpackages.php?project_id=<?= $project_id ?>" class="btn btn-secondary"><i class="nc-icon nc-minimal-left"></i> Back</a>
-                                <button type="submit" class="btn btn-primary"><i class="nc-icon nc-check-2"></i> Save Milestones & Finish</button>
-                            </div>
+<div class="d-flex justify-content-between">
+    <a href="add-project-workpackages.php?project_id=<?= $project_id ?>" class="btn btn-secondary">
+        <i class="nc-icon nc-minimal-left"></i> Back
+    </a>
+    
+    <div>
+        <!-- Pulsante per aggiungere milestone e rimanere nella pagina -->
+        <button type="submit" name="action_type" value="add_milestone" class="btn btn-outline-primary">
+            <i class="nc-icon nc-simple-add"></i> Add Milestone
+        </button>
+        
+        <!-- Pulsante per salvare e continuare al budget -->
+        <button type="submit" name="action_type" value="continue" class="btn btn-primary">
+            <i class="nc-icon nc-check-2"></i> Save & Continue to Budget
+        </button>
+    </div>
+</div>
                         </form>
                     </div>
                 </div>

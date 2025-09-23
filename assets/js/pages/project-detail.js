@@ -13,15 +13,7 @@ $(document).ready(function() {
 
     
     // --- Tab functionality ---
-    // Logic to remember the last active tab using localStorage
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
-        localStorage.setItem('lastProjectDetailTab', $(e.target).attr('href'));
-    });
-
-    const lastTab = localStorage.getItem('lastProjectDetailTab');
-    if (lastTab) {
-        $('#projectTabs a[href="' + lastTab + '"]').tab('show');
-    }
+    // The logic to remember the last tab has been removed to always default to Overview.
 });
 
 /**
@@ -111,6 +103,7 @@ function populateWPDetailsModal(data, modalBody) {
     const wp = data.work_package;
     const activities = data.activities || [];
     const partnerBudgets = data.partner_budgets || [];
+    const wp_total_budget = data.wp_total_budget || 0;
     
     modalBody.innerHTML = `
         <!-- WP Header -->
@@ -147,9 +140,12 @@ function populateWPDetailsModal(data, modalBody) {
         <div class="row mb-4">
             <div class="col-12">
                 <h6 style="color: #51CACF; margin-bottom: 15px;">
-                    <i class="nc-icon nc-money-coins"></i> Budget Information
+                    <i class="nc-icon nc-group-students"></i> Involved Partners
                 </h6>
-                                ${generateBudgetBreakdown(partnerBudgets)}
+                ${generateBudgetBreakdown(partnerBudgets)}
+                <div class="mt-3">
+                    <strong>WP TOTAL Budget: €${formatNumber(wp_total_budget)}</strong>
+                </div>
             </div>
         </div>
         
@@ -193,28 +189,19 @@ function formatNumber(number) {
 
 function generateBudgetBreakdown(partnerBudgets) {
     if (partnerBudgets.length === 0) {
-        return '<p class="text-muted">Nessun budget specifico allocato per questo Work Package</p>';
+        return '<p class="text-muted">No partners are assigned to this Work Package.</p>';
     }
     
-    let totalAllocated = 0;
     const budgetRows = partnerBudgets.map(partner => {
-        const amount = parseFloat(partner.budget_allocated) || 0;
-        totalAllocated += amount;
-        
         const roleTag = partner.role === 'coordinator' ? 
             '<span class="badge badge-primary ml-2">Coordinator</span>' : '';
         
         return `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="partner-budget-item p-3 border rounded">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <strong>${partner.partner_name}</strong>${roleTag}
-                            <br><small class="text-muted">${partner.country}</small>
-                        </div>
-                        <div class="text-right">
-                            <span class="h6 text-success">€${formatNumber(amount)}</span>
-                        </div>
+                    <div>
+                        <strong>${partner.partner_name}</strong>${roleTag}
+                        <br><small class="text-muted">${partner.country}</small>
                     </div>
                 </div>
             </div>
@@ -224,13 +211,6 @@ function generateBudgetBreakdown(partnerBudgets) {
     return `
         <div class="row">
             ${budgetRows}
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="mt-3">
-                    <strong>WP TOTAL Budget: €${formatNumber(totalAllocated)}</strong>
-                </div>
-            </div>
         </div>
     `;
 }

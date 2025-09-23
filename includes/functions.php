@@ -394,4 +394,126 @@ class Flash {
         return $message;
     }
 }
+
+/**
+ * Recalculates the total budget for a given Work Package and updates the database.
+ * The total is the sum of all detailed costs (personnel, travel, other).
+ *
+ * @param PDO $conn The database connection object.
+ * @param int $work_package_id The ID of the Work Package to recalculate.
+ * @return bool True on success, false on failure.
+ */
+function recalculateWorkPackageBudget($conn, $work_package_id) {
+    if (empty($work_package_id)) {
+        return false;
+    }
+
+    try {
+        // Query to calculate the sum of all detailed costs for the WP
+        $calc_stmt = $conn->prepare("
+            SELECT 
+                -- Sum of Personnel Costs
+                SUM(
+                    CASE 
+                        WHEN wpb.wp_type = 'project_management' THEN COALESCE(wpb.project_management_cost, 0)
+                        ELSE COALESCE(wpb.working_days_total, 0)
+                    END
+                ) as total_personnel,
+                
+                -- Sum of Other Costs
+                SUM(COALESCE(wpb.other_costs, 0)) as total_other,
+
+                -- Sum of Travel Costs from the related table
+                (SELECT SUM(COALESCE(bts.total, 0)) 
+                 FROM budget_travel_subsistence bts
+                 JOIN work_package_partner_budgets wpb_inner ON bts.wp_partner_budget_id = wpb_inner.id
+                 WHERE wpb_inner.work_package_id = :wp_id_travel) as total_travel
+
+            FROM work_package_partner_budgets wpb
+            WHERE wpb.work_package_id = :wp_id_main
+        ");
+
+        $calc_stmt->execute([
+            ':wp_id_travel' => $work_package_id,
+            ':wp_id_main' => $work_package_id
+        ]);
+        
+        $totals = $calc_stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Calculate the grand total
+        $grand_total = ($totals['total_personnel'] ?? 0) + 
+                       ($totals['total_other'] ?? 0) + 
+                       ($totals['total_travel'] ?? 0);
+
+        // Update the budget field in the work_packages table
+        $update_stmt = $conn->prepare(
+            "UPDATE work_packages SET budget = :grand_total WHERE id = :wp_id"
+        );
+        
+        return $update_stmt->execute([
+            ':grand_total' => $grand_total,
+            ':wp_id' => $work_package_id
+        ]);
+
+    } catch (Exception $e) {
+        // In case of an error, log it or handle it as needed
+        // For now, we just return false
+        return false;
+    }
+}
+
+/**
+ * Handles the upload of files associated with a report.
+ *
+ * @param PDO $conn The database connection object.
+ * @param array $files The $_FILES array for the uploaded files.
+ * @param int $report_id The ID of the report the files belong to.
+ * @param int $user_id The ID of the user uploading the files.
+ */
+function handleFileUploads($conn, $files, $report_id, $user_id) {
+    $upload_dir = '../uploads/reports/'; // Specific directory for report files
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+
+    $allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png'];
+    $max_size = 10 * 1024 * 1024; // 10 MB
+
+    foreach ($files['name'] as $key => $name) {
+        $file_tmp = $files['tmp_name'][$key];
+        $file_size = $files['size'][$key];
+        $file_type = $files['type'][$key];
+        $file_error = $files['error'][$key];
+
+        if ($file_error === UPLOAD_ERR_OK) {
+            if (!in_array($file_type, $allowed_types)) {
+                error_log("File '$name': Invalid file type.");
+                continue;
+            }
+            if ($file_size > $max_size) {
+                error_log("File '$name': Exceeds maximum size of 10MB.");
+                continue;
+            }
+
+            $file_extension = pathinfo($name, PATHINFO_EXTENSION);
+            $unique_filename = uniqid('report_' . $report_id . '_', true) . '.' . $file_extension;
+            $destination = $upload_dir . $unique_filename;
+
+            if (move_uploaded_file($file_tmp, $destination)) {
+                $stmt = $conn->prepare("
+                    INSERT INTO uploaded_files (report_id, uploaded_by, filename, original_filename, file_path, file_size, file_type)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                if (!$stmt->execute([$report_id, $user_id, $unique_filename, $name, 'uploads/reports/' . $unique_filename, $file_size, $file_type])) {
+                    error_log("File '$name': Failed to save to database. " . $stmt->errorInfo()[2]);
+                    unlink($destination); // Clean up uploaded file
+                }
+            } else {
+                error_log("File '$name': Failed to move to destination. Check permissions.");
+            }
+        } else {
+            error_log("File '$name': Upload error code: $file_error.");
+        }
+    }
+}
 ?>

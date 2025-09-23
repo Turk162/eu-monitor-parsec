@@ -5,6 +5,8 @@
 // ===================================================================
 
 $page_title = 'Create New Report - EU Project Manager';
+$page_css_path = '../assets/css/pages/create-report.css'; // New CSS path
+$page_js_path = '../assets/js/pages/create-report.js';   // New JS path
 require_once '../includes/header.php';
 
 // ===================================================================
@@ -18,10 +20,9 @@ $user_role = getUserRole();
 $session_partner_id = $_SESSION['partner_id'] ?? 0;
 
 // ===================================================================
-//  DATABASE CONNECTION
+//  DATABASE CONNECTION (already handled by header.php)
 // ===================================================================
-$database = new Database();
-$conn = $database->connect();
+// $conn is already available from header.php
 
 // ===================================================================
 //  FORM SUBMISSION HANDLER
@@ -149,6 +150,27 @@ if ($user_role === 'super_admin') {
 //  START HTML LAYOUT
 // ===================================================================
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title><?= htmlspecialchars($page_title) ?></title>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
+    
+    <!-- Fonts and icons -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link href="../assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="../assets/css/paper-dashboard.css?v=2.0.1" rel="stylesheet" />
+    <link href="../assets/css/pages/partner-budget.css" rel="stylesheet" />
+    <link href="<?= htmlspecialchars($page_css_path) ?>" rel="stylesheet" /> <!-- Page-specific CSS -->
+</head>
+
 <body class="">
     <div class="wrapper">
         <?php include '../includes/sidebar.php'; ?>
@@ -186,7 +208,7 @@ if ($user_role === 'super_admin') {
                                         <?php foreach ($available_activities as $activity):
                                             $display_text = !empty($activity['activity_number']) ? $activity['activity_number'] . ' - ' . $activity['name'] : $activity['name'];
                                         ?>
-                                            <option value="<?= $activity['id'] ?>" <?= ($activity['id'] == $selected_activity_id) ? 'selected' : '' ?>><?= htmlspecialchars($display_text) ?></option>
+                                            <option value="<?= $activity['id'] ?>"><?= htmlspecialchars($display_text) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
@@ -208,9 +230,10 @@ if ($user_role === 'super_admin') {
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Attach Files (Optional)</label>
-                                    <input type="file" name="report_files[]" class="form-control-file" multiple>
+                                    <label class="btn btn-info">Attach Files (Optional)</label>
+                                    <input type="file" name="report_files[]" class="form-control-file" multiple id="reportFilesInput">
                                     <small class="form-text text-muted">You can select multiple files.</small>
+                                    <div id="selectedFiles" class="mt-2"></div>
                                 </div>
 
                                 <hr>
@@ -223,7 +246,7 @@ if ($user_role === 'super_admin') {
                                         <div class="col-md-6"><div class="form-group"><label>Recruitment Difficulty (1-5)</label><select name="risk_recruitment_difficulty" class="form-control"><option value="0" selected>N/A (Not Applicable)</option><option value="5">5 - Very Easy</option><option value="4">4 - Easy</option><option value="3">3 - As Expected</option><option value="2">2 - Difficult</option><option value="1">1 - Very Difficult</option></select><small class="form-text text-muted">How difficult was it to involve the target group?</small></div></div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6"><div class="form-group"><label>Deliverable Quality (1-5)</label><select name="risk_quality_check" class="form-control"><option value="0" selected>N/A (Not Applicable)</option><option value="5">5 - Exceeds Expectations</option><option value="4">4 - Meets Expectations</option><option value="3">3 - Needs Minor Revisions</option><option value="2">2 - Needs Major Revisions</option><option value="1">1 - Not Acceptable</option></select><small class="form-text text-muted">Internal check on the quality of the output produced.</small></div></div>
+                                        <div class="col-md-6"><div class="form-group"><label>Deliverable Quality (1-5)</label><select name="risk_quality_check" class="form-control"><option value="0" selected>N/A (Not Applicable)</option><option value="5">5 - Exceeds Expectations</option><option value="4">4 - Meets Expectations</option><option value="3">3 - Needs Minor Revisions</option><option value="2">2 - Difficult</option><option value="1">1 - Not Acceptable</option></select><small class="form-text text-muted">Internal check on the quality of the output produced.</small></div></div>
                                         <div class="col-md-6"><div class="form-group"><label>Budget Status</label><select name="risk_budget_status" class="form-control"><option value="na" selected>N/A (Not Applicable)</option><option value="green">Green - On Track</option><option value="yellow">Yellow - Minor Deviation</option><option value="red">Red - Significant Deviation</option></select><small class="form-text text-muted">Is the activity aligned with the allocated budget?</small></div></div>
                                     </div>
                                 </div>

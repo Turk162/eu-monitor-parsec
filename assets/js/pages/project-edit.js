@@ -6,8 +6,8 @@
  *  - Auto-save dei campi
  *  - Calcolo durata progetto
  *  - Gestione partners
- *  - Work packages con budget per partner
- *  - Activities (senza budget)
+ *  - Work packages
+ *  - Activities
  *  - Milestones
  *  - Upload file
  *  - Validazione form
@@ -122,11 +122,11 @@ $(document).ready(function() {
 
     // ===================================================================
     // GESTIONE WORK PACKAGES
-    // Work packages con budget per partner
+    // Work packages
     // ===================================================================
     
     /**
-     * Apre modal per modifica work package con gestione budget partner
+     * Apre modal per modifica work package
      */
     $(document).on('click', '.btn-edit-wp', function() {
         const wpId = $(this).data('wp-id');
@@ -146,7 +146,7 @@ $(document).ready(function() {
     });
 
     // ===================================================================
-    // GESTIONE ACTIVITIES (SENZA BUDGET)
+    // GESTIONE ACTIVITIES
     // Activities collegate ai work packages
     // ===================================================================
     
@@ -160,7 +160,7 @@ $(document).ready(function() {
     });
 
     /**
-     * Apre modal per modificare activity (SENZA BUDGET)
+     * Apre modal per modificare activity
      */
     $(document).on('click', '.btn-edit-activity', function() {
         const activityId = $(this).data('activity-id');
@@ -175,7 +175,7 @@ $(document).ready(function() {
                     return;
                 }
                 
-                // Form HTML senza campo budget
+                // Form HTML
                 let formHtml = `
                     <div class="row">
                         <div class="col-md-4">
@@ -325,8 +325,8 @@ $(document).ready(function() {
                         <label>Completed Date</label>
                         <input type="date" name="completed_date" class="form-control" 
                                value="${milestone.completed_date || ''}">
-                    </div>
-                `;
+                        </div>
+                    `;
                 
                 $('#editMilestoneModalBody').html(formHtml);
                 $('#edit_milestone_id').val(milestoneId);
@@ -348,6 +348,20 @@ $(document).ready(function() {
         const milestoneId = $(this).data('milestone-id');
         if (confirm('Are you sure you want to delete this milestone?')) {
             submitPostAction('delete_milestone', { milestone_id: milestoneId });
+        }
+    });
+
+    // ===================================================================
+    // GESTIONE FILE
+    // Eliminazione file
+    // ===================================================================
+    
+    $(document).on('click', '.btn-delete-file', function() {
+        const fileId = $(this).data('file-id');
+        const fileName = $(this).data('file-name');
+        
+        if (confirm(`Are you sure you want to delete the file "${fileName}"? This action cannot be undone.`)) {
+            submitPostAction('delete_file', { file_id: fileId });
         }
     });
 
@@ -383,7 +397,8 @@ $(document).ready(function() {
     function uploadFiles(files) {
         const formData = new FormData();
         formData.append('action', 'upload_files');
-        
+        formData.append('project_id', window.projectData.projectId); // Add project_id
+
         for (let i = 0; i < files.length; i++) { 
             formData.append('files[]', files[i]); 
         }
@@ -391,11 +406,12 @@ $(document).ready(function() {
         $('#uploadProgress').show();
         
         $.ajax({
-            url: 'upload-project-files.php',
+            url: 'upload-project-files.php', // This file needs to be created
             method: 'POST',
             data: formData,
             processData: false,
             contentType: false,
+            dataType: 'json',
             xhr: function() {
                 const xhr = new window.XMLHttpRequest();
                 xhr.upload.addEventListener('progress', e => {
@@ -406,10 +422,17 @@ $(document).ready(function() {
                 });
                 return xhr;
             },
-            success: () => location.reload(),
+            success: (response) => {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Upload failed: ' + (response.message || 'Unknown error'));
+                    $('#uploadProgress').hide();
+                }
+            },
             error: () => { 
                 $('#uploadProgress').hide(); 
-                alert('Upload failed.'); 
+                alert('Upload failed. A server error occurred.'); 
             }
         });
     }
@@ -482,30 +505,7 @@ $(document).ready(function() {
         $('#google_groups_url').trigger('blur');
     }
 
-    // ===================================================================
-    // GESTIONE BUDGET WORK PACKAGES
-    // Listeners per calcolo automatico budget partner
-    // ===================================================================
-    
-    // Aggiungi listeners per il calcolo dei budget nei form WP esistenti
-    const workPackageForm = document.getElementById('workPackageForm');
-    if (workPackageForm) {
-        addBudgetCalculationListeners(workPackageForm);
-        calculateWorkPackageBudget(workPackageForm);
-    }
-    
-    // Formattazione automatica dei campi budget
-    $(document).on('input', '.partner-budget-input', function() {
-        let value = this.value.replace(/[^0-9.,]/g, '');
-        value = value.replace(',', '.');
-        this.value = value;
-        
-        // Calcola il budget totale del WP
-        const container = this.closest('.partner-budgets-section') || this.closest('form');
-        if (container) {
-            calculateWorkPackageBudget(container);
-        }
-    });
+ 
 
     // ===================================================================
     // UTILITY FUNCTIONS
@@ -525,19 +525,12 @@ $(document).ready(function() {
     }
 
     /**
-     * Prepara modal per aggiungere activity (verifica assenza campi budget)
+     * Prepara modal per aggiungere activity
      */
     function loadAddActivityModal(wpId) {
         document.getElementById('add_work_package_id').value = wpId;
         
-        // Rimuovi eventuali campi budget rimasti
-        const modalBody = document.querySelector('#addActivityModal .modal-body');
-        const budgetFields = modalBody.querySelectorAll('input[name="budget"]');
-        budgetFields.forEach(field => {
-            const group = field.closest('.form-group') || field.closest('.col-md-6');
-            if (group) group.remove();
-        });
-    }
+            }
 
     /**
      * Gestione modal generica con AJAX (per milestone e activity legacy)
@@ -558,7 +551,7 @@ $(document).ready(function() {
 
                 if (apiAction === 'get_activity_details') {
                     const activity = data;
-                    // Form senza budget
+                    // Form
                     formHtml = `
                         <div class="row">
                             <div class="col-md-4">
@@ -714,11 +707,11 @@ $(document).ready(function() {
 
 // ===================================================================
 // FUNZIONI SPECIALIZZATE WORK PACKAGES
-// Gestione work packages con budget per partner
+// Gestione work packages
 // ===================================================================
 
 /**
- * Carica e visualizza modal per modifica work package con budget partner
+ * Carica e visualizza modal per modifica work package
  */
 function loadEditWorkPackageModal(wpId) {
     const wp = window.projectData.workPackages.find(w => w.id == wpId);
@@ -728,64 +721,9 @@ function loadEditWorkPackageModal(wpId) {
     }
     
     const modalBody = document.getElementById('editWorkPackageModalBody');
-    
-    // Genera HTML per budget partner
-    let partnerBudgetsHtml = '';
     const allPartners = window.projectData.allProjectPartners;
     
-    if (allPartners && allPartners.length > 0) {
-        partnerBudgetsHtml = `
-            <div class="partner-budgets-section">
-                <h6 style="color: #51CACF; margin: 20px 0 15px 0;">
-                    💰 Budget Allocation by Partner
-                </h6>
-                <div class="row partner-budget-grid">
-        `;
-        
-        allPartners.forEach(partner => {
-            // Trova budget esistente per questo partner
-            const existingBudget = wp.partner_budgets ? 
-                wp.partner_budgets.find(pb => pb.partner_id == partner.partner_id) : null;
-            const budgetValue = existingBudget ? existingBudget.budget_allocated : '0.00';
-            
-            partnerBudgetsHtml += `
-                <div class="col-md-6 col-lg-4">
-                    <div class="form-group">
-                        <label>
-                            <strong>${escapeHtml(partner.organization)}</strong>
-                            <small class="text-muted">(${escapeHtml(partner.country)})</small>
-                        </label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">€</span>
-                            </div>
-                            <input type="number" 
-                                   name="partner_budgets[${partner.partner_id}]" 
-                                   class="form-control partner-budget-input" 
-                                   step="0.01" 
-                                   min="0" 
-                                   value="${budgetValue}"
-                                   data-partner-id="${partner.partner_id}">
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-                                partnerBudgetsHtml += `
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="alert alert-info" style="background-color: #e3f2fd; border: 1px solid #2196f3;">
-                            <strong>Total WP Budget: €<span class="wp-total-budget">0.00</span></strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Genera HTML completo del modal
+    // Genera HTML del modal
     modalBody.innerHTML = `
         <div class="row">
             <div class="col-md-3">
@@ -862,71 +800,19 @@ function loadEditWorkPackageModal(wpId) {
                 </div>
             </div>
         </div>
-        
-        ${partnerBudgetsHtml}
     `;
     
     // Imposta ID work package nel form
     document.getElementById('edit_wp_id').value = wpId;
     
-    // Cambia action per usare nuova gestione con budget
+    // IMPORTANTE: Usa action standard
     const form = modalBody.closest('form');
     const actionInput = form.querySelector('input[name="action"]');
     if (actionInput) {
-        actionInput.value = 'update_work_package_with_budgets';
+        actionInput.value = 'update_work_package';  // Action semplificato
     }
-    
-    // Aggiungi listeners per calcolo budget con delay
-    setTimeout(() => {
-        addBudgetCalculationListeners(modalBody);
-        calculateWorkPackageBudget(modalBody);
-    }, 100);
 }
-
-// ===================================================================
-// FUNZIONI CALCOLO BUDGET PARTNER
-// ===================================================================
-
-/**
- * Calcola il budget totale del work package sommando i budget dei partner
- */
-function calculateWorkPackageBudget(container) {
-    const budgetInputs = container.querySelectorAll('.partner-budget-input');
-    let totalBudget = 0;
     
-    budgetInputs.forEach(input => {
-        const value = parseFloat(input.value) || 0;
-        totalBudget += value;
-    });
-    
-    const totalBudgetSpan = container.querySelector('.wp-total-budget');
-    if (totalBudgetSpan) {
-        totalBudgetSpan.textContent = totalBudget.toLocaleString('it-IT', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-    
-    return totalBudget;
-}
-
-/**
- * Aggiunge event listeners per calcolo automatico budget
- */
-function addBudgetCalculationListeners(container) {
-    const budgetInputs = container.querySelectorAll('.partner-budget-input');
-    
-    budgetInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            calculateWorkPackageBudget(container);
-        });
-        
-        input.addEventListener('blur', function() {
-            const value = parseFloat(this.value) || 0;
-            this.value = value.toFixed(2);
-        });
-    });
-}
 
 // ===================================================================
 // FUNZIONI CARICAMENTO DATI AJAX

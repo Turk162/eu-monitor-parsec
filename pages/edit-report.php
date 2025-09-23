@@ -17,13 +17,12 @@ require_once '../includes/header.php';
 $auth->requireLogin();
 $current_user_id = getUserId();
 $current_user_role = getUserRole();
+$user_partner_id = $_SESSION['partner_id'] ?? 0; // Define user_partner_id
 
 // ===================================================================
-//  DATABASE CONNECTION
+//  DATABASE CONNECTION (already handled by header.php)
 // ===================================================================
-
-$database = new Database();
-$conn = $database->connect();
+// $conn is already available from header.php
 
 // ===================================================================
 //  GET REPORT DATA & PERMISSION CHECK
@@ -54,6 +53,17 @@ if (!$can_edit) {
     header('Location: reports.php');
     exit;
 }
+
+// Fetch files associated with this report
+$report_files_stmt = $conn->prepare("
+    SELECT uf.*, u.full_name as uploaded_by_name
+    FROM uploaded_files uf
+    LEFT JOIN users u ON uf.uploaded_by = u.id
+    WHERE uf.report_id = ?
+    ORDER BY uf.uploaded_at DESC
+");
+$report_files_stmt->execute([$report_id]);
+$report_files = $report_files_stmt->fetchAll();
 
 // ===================================================================
 //  FORM SUBMISSION HANDLER (UPDATE LOGIC)
@@ -188,7 +198,37 @@ $available_activities = $activities_stmt->fetchAll();
                             <small class="form-text text-muted">Optional: Describe the participants of the activity.</small>
                         </div>
 
-                        
+                        <div class="form-group">
+                            <label>Attach New Files (Optional)</label>
+                            <input type="file" name="report_files[]" class="form-control-file" multiple id="editReportFilesInput">
+                            <small class="form-text text-muted">You can select multiple files to add to this report.</small>
+                            <div id="editSelectedFiles" class="mt-2"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Existing Files</label>
+                            <div id="existingFilesList">
+                                <?php if (!empty($report_files)): ?>
+                                    <ul class="list-group">
+                                        <?php foreach ($report_files as $file): ?>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span><i class="nc-icon nc-paper"></i> <?= htmlspecialchars($file['original_filename']) ?></span>
+                                                <div>
+                                                    <a href="../<?= $file['file_path'] ?>" download="<?= htmlspecialchars($file['original_filename']) ?>" class="btn btn-sm btn-info" title="Download">
+                                                        <i class="nc-icon nc-minimal-down"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger btn-delete-report-file" data-file-id="<?= $file['id'] ?>" data-file-name="<?= htmlspecialchars($file['original_filename']) ?>">
+                                                        <i class="nc-icon nc-simple-remove"></i>
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php else: ?>
+                                    <p class="text-muted">No files attached to this report yet.</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
 
                         <hr>
 

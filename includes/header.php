@@ -6,12 +6,18 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once __DIR__ . '/../config/database.php';
+
+// Use environment to load correct DB config
+require_once __DIR__ . '/../config/environment.php';
 require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/functions.php';
 
-// Verify login
-$auth = new Auth();
+// Establish database connection
+$database = new Database();
+$conn = $database->connect();
+
+// Verify login, passing DB connection to Auth class
+$auth = new Auth($conn);
 $auth->requireLogin();
 
 // Get user data (available in all pages)

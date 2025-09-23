@@ -6,17 +6,7 @@ $page_styles = '<link rel="stylesheet" href="../assets/css/pages/reports.css">';
 // Include header (handles session, auth, database, user variables)
 require_once '../includes/header.php';
 
-// Verify login
-$auth = new Auth();
-$auth->requireLogin();
-
-// DB Connection
-$database = new Database();
-$conn = $database->connect();
-
-// Get user info
-$user_id = getUserId();
-$user_role = getUserRole();
+// $auth, $conn, $user_id, $user_role are all available from header.php
 
 // Handle form submissions
 if ($_POST) {

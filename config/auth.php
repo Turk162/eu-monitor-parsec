@@ -3,14 +3,11 @@
 // AUTHENTICATION SYSTEM - ENGLISH VERSION
 // ===================================================================
 
-require_once 'database.php';
-
 class Auth {
     private $db;
     
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->connect();
+    public function __construct($db_connection) {
+        $this->db = $db_connection;
     }
     
     public function login($username, $password) {
