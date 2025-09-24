@@ -92,8 +92,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ]);
             $report_id = $conn->lastInsertId();
 
+          // NUOVO CODICE (DA INSERIRE IN create-report.php):
             if (!empty($_FILES['report_files']['name'][0])) {
-                handleFileUploads($conn, $_FILES['report_files'], $report_id, $user_id);
+                require_once __DIR__ . '/../includes/classes/FileUploadHandler.php';
+                
+                // Get file titles from form (may be empty array)
+                $file_titles = $_POST['file_titles'] ?? [];
+                
+                $fileUploadHandler = new FileUploadHandler($conn);
+                $upload_result = $fileUploadHandler->handleReportFiles($_FILES['report_files'], $file_titles, $report_id, $user_id);
+                
+                // Handle upload result
+                if (!$upload_result['success']) {
+                    // Log the error but don't fail the entire report creation
+                    error_log("File upload warning for report #{$report_id}: " . $upload_result['message']);
+                    
+                    // Optional: Add warning message to user (not blocking)
+                    Flash::set('warning', 'Report created successfully, but some files could not be uploaded: ' . $upload_result['message']);
+                } else {
+                    // Files uploaded successfully - could log success or add to success message
+                    error_log("Files uploaded successfully for report #{$report_id}: " . $upload_result['message']);
+                }
             }
 
             $conn->commit();
@@ -116,6 +135,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         Flash::set('error', implode("<br>", $errors));
     }
 }
+
+ // NUOVO CODICE (DA INSERIRE):
+            if (!empty($_FILES['report_files']['name'][0])) {
+                require_once __DIR__ . '/../includes/classes/FileUploadHandler.php';
+                
+                // Get file titles from form (may be empty array)
+                $file_titles = $_POST['file_titles'] ?? [];
+                
+                $fileUploadHandler = new FileUploadHandler($conn);
+                $upload_result = $fileUploadHandler->handleReportFiles($_FILES['report_files'], $file_titles, $report_id, $user_id);
+                
+                // Handle upload result
+                if (!$upload_result['success']) {
+                    // Log the error but don't fail the entire report creation
+                    error_log("File upload warning for report #{$report_id}: " . $upload_result['message']);
+                    
+                    // Optional: Add warning message to user (not blocking)
+                    Flash::set('warning', 'Report created successfully, but some files could not be uploaded: ' . $upload_result['message']);
+                } else {
+                    // Files uploaded successfully - could log success or add to success message
+                    error_log("Files uploaded successfully for report #{$report_id}: " . $upload_result['message']);
+                }
+            }
+        
 
 // ===================================================================
 //  DATA FOR FORM DROPDOWNS
@@ -229,12 +272,68 @@ if ($user_role === 'super_admin') {
                                     <small class="form-text text-muted">Optional: Describe the participants of the activity.</small>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="btn btn-info">Attach Files (Optional)</label>
-                                    <input type="file" name="report_files[]" class="form-control-file" multiple id="reportFilesInput">
-                                    <small class="form-text text-muted">You can select multiple files.</small>
-                                    <div id="selectedFiles" class="mt-2"></div>
-                                </div>
+                               <!-- SOSTITUIRE la sezione file upload in create-report.php -->
+
+<div class="form-group">
+    <label>Attach Files with Titles (Optional)</label>
+    
+    <div class="file-upload-section">
+        <!-- Container per i file dinamici -->
+        <div id="fileUploadsContainer">
+            <!-- Template per un singolo file -->
+            <div class="file-upload-item" id="fileUpload1">
+                <div class="row">
+                    <div class="col-md-5">
+                        <label>File Title</label>
+                        <input type="text" name="file_titles[]" class="form-control" placeholder="e.g., Progress Report Q1, Meeting Minutes..." />
+                    </div>
+                    <div class="col-md-6">
+    <label>Select File</label>
+    
+    <!-- Pulsante file ben visibile -->
+    <div class="file-upload-wrapper">
+        <input type="file" name="report_files[]" class="file-input" data-file-index="1" id="fileInput1" />
+        <label for="fileInput1" class="btn btn-outline-info btn-block file-select-btn">
+            <i class="nc-icon nc-cloud-upload-94 mr-2"></i>
+            <span class="btn-text">Choose File</span>
+        </label>
+    </div>
+    
+    <!-- Feedback file selezionato -->
+    <div class="selected-file-display" id="fileName1" style="display: none;">
+        <div class="alert alert-success mb-0 mt-2 py-2">
+            <i class="nc-icon nc-check-2 mr-2"></i>
+            <span class="file-name-text">No file selected</span>
+        </div>
+    </div>
+    
+    <!-- Stato nessun file -->
+    <div class="no-file-display" id="noFile1">
+        <small class="text-muted mt-1 d-block">
+            <i class="nc-icon nc-bullet-list-67 mr-1"></i>
+            No file chosen
+        </small>
+    </div>
+</div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm btn-remove-file" data-file-id="fileUpload1" style="display:none;">
+                            <i class="nc-icon nc-simple-remove"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottone per aggiungere più file -->
+        <button type="button" class="btn btn-sm btn-info" id="addFileButton">
+            <i class="nc-icon nc-simple-add"></i> Add Another File
+        </button>
+        
+        <small class="form-text text-muted mt-3">
+            You can add multiple files with descriptive titles. Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)
+        </small>
+    </div>
+</div>
 
                                 <hr>
 

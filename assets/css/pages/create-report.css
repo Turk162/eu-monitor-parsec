@@ -5,3 +5,187 @@
     border-radius: 4px; /* Rounded corners */
     /* Inherits other btn-info styles like background, color, border */
 }
+/* AGGIUNGERE a create-report.css */
+
+.file-upload-section {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: #f8f9fa;
+}
+
+.file-upload-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.custom-file-input {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: 38px;
+    margin: 0;
+}
+
+.custom-file-input input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.custom-file-button {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #51CACF;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.custom-file-button:hover {
+    background: #45b7bd;
+}
+
+.selected-file-name {
+    margin-top: 5px;
+    padding: 5px 10px;
+    background: #e7f3ff;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #0066cc;
+    border-left: 3px solid #51CACF;
+}
+
+.selected-file-name i {
+    margin-right: 5px;
+}
+
+.no-file-selected {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 12px;
+    margin-top: 3px;
+}
+/* AGGIUNGERE a assets/css/pages/create-report.css */
+
+/* Wrapper per upload file */
+.file-upload-wrapper {
+    position: relative;
+    margin-bottom: 0;
+}
+
+/* Nasconde completamente l'input file originale */
+.file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Stile per il pulsante personalizzato */
+.file-select-btn {
+    position: relative;
+    cursor: pointer !important;
+    border: 2px dashed #51CACF !important;
+    background: #f8fdfe !important;
+    color: #51CACF !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    text-align: center !important;
+    min-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Effetto hover per il pulsante */
+.file-select-btn:hover {
+    background: #51CACF !important;
+    color: white !important;
+    border-color: #45b7bd !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(81, 202, 207, 0.3) !important;
+}
+
+/* Stile quando il file è selezionato */
+.file-selected .file-select-btn {
+    border-color: #28a745 !important;
+    background: #f8fff9 !important;
+    color: #28a745 !important;
+}
+
+.file-selected .file-select-btn:hover {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+/* Icona nel pulsante */
+.file-select-btn i {
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+/* Display per file selezionato */
+.selected-file-display .alert {
+    border-left: 4px solid #51CACF;
+    background: linear-gradient(90deg, #e7f3ff 0%, #f0fdff 100%);
+    border: 1px solid #b8e6ea;
+    font-size: 13px;
+}
+
+/* Display per nessun file */
+.no-file-display {
+    margin-top: 5px;
+}
+
+.no-file-display small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* Stile responsivo per mobile */
+@media (max-width: 768px) {
+    .file-select-btn {
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+        min-height: 45px !important;
+    }
+    
+    .file-select-btn i {
+        font-size: 14px;
+    }
+}
+
+/* Animazione per il feedback */
+.selected-file-display {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

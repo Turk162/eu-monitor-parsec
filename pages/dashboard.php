@@ -143,15 +143,15 @@ $recent_reports = $stmt->fetchAll();
 
                     foreach ($critical_risks as $risk) {
                         // MIGLIORATO: Check più specifico per evitare duplicati
-                        $existing_alert_stmt = $conn->prepare("
-                            SELECT id FROM alerts 
-                            WHERE user_id = ? 
-                            AND project_id = ? 
-                            AND type = 'risk_persistent' 
-                            AND message LIKE ? 
-                            AND is_read = 0
-                            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOURS)  -- Solo alert delle ultime 24h
-                        ");
+                       $existing_alert_stmt = $conn->prepare("
+    SELECT id FROM alerts 
+    WHERE user_id = ? 
+    AND project_id = ? 
+    AND type = 'risk_persistent' 
+    AND message LIKE ? 
+    AND is_read = 0
+    AND created_at > DATE_ADD(NOW(), INTERVAL -24 HOUR)
+");
                         
                         // Pattern più preciso per evitare false positive
                         $search_message = "%Risk '" . $risk['risk_description'] . "' (Score: " . $risk['current_score'] . ",%"; 
