@@ -153,7 +153,7 @@ $work_packages = $wp_stmt->fetchAll();
 
 // Partners
 $partners_stmt = $conn->prepare("
-    SELECT p.name, p.organization_type, p.country, pp.role, pp.budget_allocated
+    SELECT p.id as partner_id, p.name, p.organization_type, p.country, pp.role, pp.budget_allocated
     FROM project_partners pp JOIN partners p ON pp.partner_id = p.id
     WHERE pp.project_id = ? ORDER BY pp.role DESC, p.name ASC
 ");
@@ -239,7 +239,7 @@ $budget_summary_stmt = $conn->prepare("
     LEFT JOIN (
         SELECT 
             wpb2.partner_id,
-            SUM(bts.travel_cost) as total_travel
+            SUM(bts.total) as total_travel
         FROM work_package_partner_budgets wpb2
         LEFT JOIN budget_travel_subsistence bts ON wpb2.id = bts.wp_partner_budget_id
         WHERE wpb2.project_id = ?
@@ -1002,6 +1002,11 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                                            class="btn btn-outline-primary btn-xs">
                                             <i class="nc-icon nc-zoom-split"></i> View
                                         </a>
+                                        <?php if(isset($_SESSION['partner_id']) && $_SESSION['partner_id'] == $partner['partner_id']): ?>
+                                        <a href="admin_reports.php?project_id=<?= $project['id'] ?>&partner_id=<?= $partner['partner_id'] ?>" class="btn btn-outline-info btn-xs" title="Admin Reports">
+                                            <i class="nc-icon nc-single-copy-04"></i>
+                                        </a>
+                                        <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                 </tr>

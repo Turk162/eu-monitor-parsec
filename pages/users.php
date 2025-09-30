@@ -6,9 +6,9 @@ $page_title = 'User Management - EU Project Manager';
 require_once '../includes/header.php';
 
 // Auth and DB
-$auth = new Auth();
 $database = new Database();
 $conn = $database->connect();
+$auth = new Auth($conn);
 
 // User permissions check
 $auth->requireLogin();

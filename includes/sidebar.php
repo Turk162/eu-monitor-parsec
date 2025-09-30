@@ -36,18 +36,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <p>My Projects</p>
                 </a>
             </li>
-          <!--   <li <?php echo ($current_page == 'activities.php') ? 'class="active"' : ''; ?>>
-                <a href="activities.php">
-                    <i class="nc-icon nc-paper"></i>
-                    <p>Activities</p>
-                </a>
-            </li>
             <li <?php echo ($current_page == 'reports.php') ? 'class="active"' : ''; ?>>
                 <a href="reports.php">
                     <i class="nc-icon nc-chart-bar-32"></i>
                     <p>Reports</p>
                 </a>
-            </li>-->
+            </li>
             <li <?php echo ($current_page == 'calendar.php') ? 'class="active"' : ''; ?>>
                 <a href="calendar.php">
                     <i class="nc-icon nc-calendar-60"></i>
@@ -67,6 +61,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             <p>Partners</p>
                         </a>
                     </li>
+            <?php endif; ?>
+            <?php if($user_role === 'super_admin'): ?>
+            <li <?php echo ($current_page == 'admin_reports.php') ? 'class="active"' : ''; ?>>
+                <a href="admin_reports.php">
+                    <i class="nc-icon nc-paper"></i>
+                    <p>Admin Reports</p>
+                </a>
+            </li>
             <?php endif; ?>
         </ul>
     </div>
