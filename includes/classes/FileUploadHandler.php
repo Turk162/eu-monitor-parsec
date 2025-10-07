@@ -62,7 +62,7 @@ class FileUploadHandler {
             error_log("FileUploadHandler: Upload directory created: $project_upload_dir");
             
             // Process all uploaded files
-            return $this->processFiles($files, $titles, $project_upload_dir, $report_id, $user_id);
+            return $this->processFiles($files, $titles, $project_upload_dir, $report_id, $user_id, $project['id']);
             
         } catch (Exception $e) {
             error_log("FileUploadHandler Error: " . $e->getMessage());
@@ -124,7 +124,7 @@ class FileUploadHandler {
      * @param int $user_id User ID
      * @return array Response array
      */
-    private function processFiles($files, $titles, $upload_dir, $report_id, $user_id) {
+    private function processFiles($files, $titles, $upload_dir, $report_id, $user_id, $project_id) {
         $uploaded_files = [];
         $errors = [];
         
@@ -147,7 +147,8 @@ class FileUploadHandler {
                     $file_title,
                     $upload_dir,
                     $report_id,
-                    $user_id
+                    $user_id,
+                    $project_id // Pass project_id down
                 );
                 
                 if ($result['success']) {
@@ -179,7 +180,7 @@ class FileUploadHandler {
      * @param int $user_id User ID
      * @return array Result array
      */
-    private function processSingleFile($filename, $tmp_name, $file_size, $title, $upload_dir, $report_id, $user_id) {
+    private function processSingleFile($filename, $tmp_name, $file_size, $title, $upload_dir, $report_id, $user_id, $project_id) {
         // Security validations
         if (!$this->isAllowedFileType($filename)) {
             return ['success' => false, 'error' => "File type not allowed: {$filename}"];
@@ -203,7 +204,7 @@ class FileUploadHandler {
         error_log("FileUploadHandler: File moved successfully, saving to database");
         
         // Save to database
-        if (!$this->saveFileToDatabase($report_id, $safe_filename, $filename, $title, $full_file_path, $file_size, $user_id)) {
+        if (!$this->saveFileToDatabase($report_id, $project_id, $safe_filename, $filename, $title, $full_file_path, $file_size, $user_id)) {
             // Clean up file if database insert failed
             if (file_exists($full_file_path)) {
                 unlink($full_file_path);
@@ -289,19 +290,20 @@ class FileUploadHandler {
      * @param int $user_id User ID
      * @return bool Success status
      */
-    private function saveFileToDatabase($report_id, $safe_filename, $original_filename, $title, $file_path, $file_size, $user_id) {
+    private function saveFileToDatabase($report_id, $project_id, $safe_filename, $original_filename, $title, $file_path, $file_size, $user_id) {
         $file_extension = pathinfo($original_filename, PATHINFO_EXTENSION);
         
         // Prima verifichiamo se esiste il campo title nella tabella
         try {
             $stmt = $this->conn->prepare("
                 INSERT INTO uploaded_files 
-                (report_id, filename, original_filename, title, file_path, file_size, file_type, uploaded_by, uploaded_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                (report_id, project_id, filename, original_filename, title, file_path, file_size, file_type, uploaded_by, uploaded_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             
             $result = $stmt->execute([
                 $report_id,
+                $project_id,
                 $safe_filename,
                 $original_filename,
                 $title,
@@ -327,12 +329,13 @@ class FileUploadHandler {
                 error_log("FileUploadHandler: Trying without title field");
                 $stmt = $this->conn->prepare("
                     INSERT INTO uploaded_files 
-                    (report_id, filename, original_filename, file_path, file_size, file_type, uploaded_by, uploaded_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+                    (report_id, project_id, filename, original_filename, file_path, file_size, file_type, uploaded_by, uploaded_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ");
                 
                 return $stmt->execute([
                     $report_id,
+                    $project_id,
                     $safe_filename,
                     $original_filename,
                     $file_path,

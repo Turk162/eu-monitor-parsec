@@ -520,6 +520,11 @@ include '../includes/header.php';
                                                         <i class="nc-icon nc-paper text-primary"></i>
                                                         View All Activities
                                                     </a>
+                                                    <a href="project-documents.php?id=<?= $project['id'] ?>" 
+                                                       class="list-group-item list-group-item-action">
+                                                        <i class="nc-icon nc-folder-15 text-primary"></i>
+                                                        Manage Project Documents
+                                                    </a>
                                                     
                                                     <a href="reports.php?project=<?= $project['id'] ?>" 
                                                        class="list-group-item list-group-item-action">

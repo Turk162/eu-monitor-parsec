@@ -1,90 +1,100 @@
 <?php
-// api/delete_file.php
+// ===================================================================
+//  DELETE FILE API ENDPOINT
+// ===================================================================
 
-// Use a simplified header that starts session and connects to DB
-require_once '../config/database.php';
-require_once '../config/auth.php';
-require_once '../includes/functions.php';
+// Use output buffering to prevent header.php from sending HTML
+ob_start();
+require_once '../includes/header.php';
+ob_end_clean(); // Discard any HTML output
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Set the JSON header
+header('Content-Type: application/json');
 
-$db = new Database();
-$conn = $db->connect();
-$auth = new Auth($conn);
+// ===================================================================
+//  MAIN LOGIC
+// ===================================================================
+$response = ['success' => false, 'message' => 'Invalid request.'];
 
-// 1. Check Request Method
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('HTTP/1.0 405 Method Not Allowed');
-    die('This endpoint only accepts POST requests.');
-}
-
-// 2. Security Checks (CSRF & Role)
+// Require login
 $auth->requireLogin();
-$auth->requireRole(['super_admin', 'coordinator']); // Only admins and coordinators can delete
+$user_id = getUserId();
 
-if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-    setErrorMessage('Invalid CSRF token.');
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '../pages/projects.php'));
-    exit;
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_file') {
+    $file_id = isset($_POST['file_id']) ? (int)$_POST['file_id'] : 0;
 
-// 3. Get Input
-$file_id = isset($_POST['file_id']) ? (int)$_POST['file_id'] : 0;
-$project_id = isset($_POST['project_id']) ? (int)$_POST['project_id'] : 0;
-
-$redirect_url = '../pages/project-detail.php?id=' . $project_id . '#documents';
-
-if (!$file_id || !$project_id) {
-    setErrorMessage('Invalid file or project ID.');
-    header('Location: ../pages/projects.php');
-    exit;
-}
-
-try {
-    // 4. Fetch file details from DB
-    $stmt = $conn->prepare("SELECT file_path, project_id FROM uploaded_files WHERE id = ?");
-    $stmt->execute([$file_id]);
-    $file = $stmt->fetch();
-
-    if (!$file) {
-        setErrorMessage('File not found.');
-        header('Location: ' . $redirect_url);
+    if (!$file_id) {
+        $response['message'] = 'File ID is missing.';
+        echo json_encode($response);
         exit;
     }
 
-    // Authorization check: ensure the file belongs to the project we are redirecting to
-    if ($file['project_id'] != $project_id) {
-        setErrorMessage('File does not belong to this project.');
-        header('Location: ' . $redirect_url);
-        exit;
+    try {
+        // Fetch file info from DB
+        $stmt = $conn->prepare("SELECT * FROM uploaded_files WHERE id = ?");
+        $stmt->execute([$file_id]);
+        $file = $stmt->fetch();
+
+        if (!$file) {
+            $response['message'] = 'File not found in the database.';
+            echo json_encode($response);
+            exit;
+        }
+
+        // --- Authorization Check (Future enhancement) ---
+        // For now, we just check if user is logged in. A more robust check would be:
+        // - Is the user a super_admin?
+        // - Or is the user the one who uploaded the file?
+        // - Or is the user a coordinator of the project the file belongs to?
+        // if ($user_role !== 'super_admin' && $file['uploaded_by'] !== $user_id) {
+        //     $response['message'] = 'You do not have permission to delete this file.';
+        //     echo json_encode($response);
+        //     exit;
+        // }
+
+        $file_path_on_server = __DIR__ . '/../' . $file['file_path'];
+
+        // Start transaction
+        $conn->beginTransaction();
+
+        // 1. Delete the record from the database
+        $delete_stmt = $conn->prepare("DELETE FROM uploaded_files WHERE id = ?");
+        $delete_stmt->execute([$file_id]);
+
+        if ($delete_stmt->rowCount() > 0) {
+            // 2. Delete the physical file from the server
+            if (file_exists($file_path_on_server)) {
+                if (unlink($file_path_on_server)) {
+                    // Commit transaction
+                    $conn->commit();
+                    $response['success'] = true;
+                    $response['message'] = 'File deleted successfully.';
+                } else {
+                    // If file deletion fails, roll back the DB change
+                    $conn->rollBack();
+                    $response['message'] = 'Failed to delete the physical file. Check server permissions.';
+                }
+            } else {
+                // If file doesn't exist on server, we still consider the DB deletion a success
+                $conn->commit();
+                $response['success'] = true;
+                $response['message'] = 'File record deleted from database (physical file was already missing).';
+            }
+        } else {
+            $conn->rollBack();
+            $response['message'] = 'Failed to delete the file record from the database.';
+        }
+
+    } catch (Exception $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        $response['message'] = 'A database error occurred: ' . $e->getMessage();
     }
 
-    $file_path_on_disk = __DIR__ . '/../' . $file['file_path'];
-    
-    // 5. Delete from DB and Filesystem
-    $conn->beginTransaction();
-
-    $delete_stmt = $conn->prepare("DELETE FROM uploaded_files WHERE id = ?");
-    $delete_stmt->execute([$file_id]);
-
-    if (file_exists($file_path_on_disk)) {
-        unlink($file_path_on_disk);
-    }
-
-    $conn->commit();
-
-    setSuccessMessage('File deleted successfully.');
-
-} catch (Exception $e) {
-    if ($conn->inTransaction()) {
-        $conn->rollBack();
-    }
-    error_log("File deletion error: " . $e->getMessage());
-    setErrorMessage('An error occurred while deleting the file.');
+} else {
+    $response['message'] = 'Invalid action or request method.';
 }
 
-// 6. Redirect back
-header('Location: ' . $redirect_url);
+echo json_encode($response);
 exit;

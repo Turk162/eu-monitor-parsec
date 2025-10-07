@@ -73,9 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     // --- 3. Process the data ---
     if (empty($errors)) {
         try {
-            $transaction_active = false; // Add this flag
             $conn->beginTransaction();
-            $transaction_active = true; // Set flag after successful beginTransaction
 
             $proj_stmt = $conn->prepare("SELECT project_id FROM activities WHERE id = ?");
             $proj_stmt->execute([$activity_id]);
@@ -130,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             exit;
 
         } catch (Exception $e) {
-            if ($transaction_active) { // Check flag before rolling back
+            if ($conn->inTransaction()) { // Check if a transaction is active before rolling back
                 $conn->rollBack();
             }
             Flash::set('error', "An error occurred: " . $e->getMessage());
