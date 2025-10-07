@@ -289,8 +289,10 @@ function isInMonth($start_date, $end_date, $year, $month) {
                 <div class="col-12">
                     <div class="card gantt-table-card">
                         <div class="card-body p-0">
-                            <div class="gantt-table-container">
-                                <table class="table gantt-table mb-0">
+                            <div class="gantt-wrapper">
+                                <div id="gantt-scroll-left" class="gantt-scroll-arrow left">&lt;</div>
+                                <div class="gantt-table-container">
+                                    <table class="table gantt-table mb-0">
                                     <thead>
                                         <tr>
                                             <th class="gantt-task-column">
@@ -315,6 +317,28 @@ function isInMonth($start_date, $end_date, $year, $month) {
                                     </thead>
                                     <tbody>
                                         <?php foreach ($work_packages as $wp_index => $wp): ?>
+                                        <?php if ($wp_index > 0): ?>
+                                        <tr class="gantt-repeated-header">
+                                            <th class="gantt-task-column">
+                                                <div class="task-header">
+                                                    <strong>Work Packages & Activities</strong>
+                                                </div>
+                                            </th>
+                                            <th class="gantt-dates-column">
+                                                <div class="dates-header">
+                                                    <strong>Start - End</strong>
+                                                </div>
+                                            </th>
+                                            <?php foreach ($timeline_months as $month): ?>
+                                            <th class="gantt-month-column" data-month="<?= $month['date_key'] ?>">
+                                                <div class="month-header">
+                                                    <div class="month-name"><?= $month['month_name'] ?></div>
+                                                    <div class="month-year"><?= $month['year'] ?></div>
+                                                </div>
+                                            </th>
+                                            <?php endforeach; ?>
+                                        </tr>
+                                        <?php endif; ?>
                                         <!-- WORK PACKAGE ROW -->
                                         <tr class="gantt-wp-row" data-wp-id="<?= $wp['id'] ?>">
                                             <td class="gantt-task-cell wp-task">
@@ -429,6 +453,8 @@ function isInMonth($start_date, $end_date, $year, $month) {
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
+                            </div>
+                            <div id="gantt-scroll-right" class="gantt-scroll-arrow right">&gt;</div>
                             </div>
                         </div>
                     </div>

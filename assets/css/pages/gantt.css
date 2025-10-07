@@ -114,6 +114,15 @@
     z-index: 10;
 }
 
+/* Style for repeated headers in the body */
+.gantt-repeated-header th {
+    background: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0;
+    vertical-align: top;
+}
+
 .gantt-task-column {
     width: 300px;
     min-width: 300px;
@@ -670,4 +679,65 @@
 
 .gantt-fullwidth .dropdown-item:hover {
     background: #f8f9fa;
+}
+
+/* ===================================================================
+   GANTT SCROLLER STYLES
+   ================================================================= */
+
+.gantt-wrapper {
+    position: relative;
+}
+
+.gantt-table-container {
+    /* Hide scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
+}
+
+.gantt-table-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.gantt-scroll-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: rgba(81, 202, 207, 0.8);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    display: none; /* Hidden by default */
+}
+
+.gantt-scroll-arrow.visible {
+    display: flex;
+}
+
+.gantt-scroll-arrow:hover {
+    background-color: #459ca1;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.gantt-scroll-arrow:active {
+    background-color: #3a8a8e;
+    transform: translateY(-50%) scale(1.05);
+}
+
+.gantt-scroll-arrow.left {
+    left: 10px;
+}
+
+.gantt-scroll-arrow.right {
+    right: 10px;
 }

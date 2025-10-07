@@ -25,8 +25,62 @@ $(document).ready(function() {
     initializeTooltips();
     initializeClickHandlers();
     initializeTableEnhancements();
+    initializeGanttScrollers(); // Add this call
     
     console.log('Gantt table fully loaded');
+    
+    // ===============================================================
+    // GANTT SCROLLERS
+    // ===============================================================
+
+    function initializeGanttScrollers() {
+        const container = $('.gantt-table-container');
+        const scrollLeftBtn = $('#gantt-scroll-left');
+        const scrollRightBtn = $('#gantt-scroll-right');
+        const scrollAmount = 400; // Amount to scroll on each click
+
+        if (container.length === 0) {
+            return;
+        }
+
+        function updateScrollButtons() {
+            const scrollLeft = container.scrollLeft();
+            const scrollWidth = container[0].scrollWidth;
+            const containerWidth = container[0].clientWidth;
+
+            // Show/hide left button
+            if (scrollLeft > 0) {
+                scrollLeftBtn.addClass('visible');
+            } else {
+                scrollLeftBtn.removeClass('visible');
+            }
+
+            // Show/hide right button
+            if (scrollLeft < scrollWidth - containerWidth - 1) {
+                scrollRightBtn.addClass('visible');
+            } else {
+                scrollRightBtn.removeClass('visible');
+            }
+        }
+
+        // Initial check
+        updateScrollButtons();
+
+        // Update on scroll
+        container.on('scroll', updateScrollButtons);
+
+        // Handle clicks
+        scrollLeftBtn.on('click', function() {
+            container.animate({ scrollLeft: '-=' + scrollAmount }, 300);
+        });
+
+        scrollRightBtn.on('click', function() {
+            container.animate({ scrollLeft: '+=' + scrollAmount }, 300);
+        });
+        
+        console.log('Gantt scrollers initialized');
+    }
+
     
     // ===============================================================
     // TOOLTIP INITIALIZATION

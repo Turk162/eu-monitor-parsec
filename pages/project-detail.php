@@ -809,11 +809,19 @@ if (empty($project['google_groups_url']) && in_array($_SESSION['role'], ['super_
                                                                     <td><?= htmlspecialchars($file['uploaded_by_name'] ?? 'Unknown') ?></td>
                                                                     <td><?= date('M j, Y', strtotime($file['uploaded_at'])) ?></td>
                                                                     <td class="text-center">
-                                                                        <a href="../<?= $file['file_path'] ?>"
+                                                                        <a href="../<?= htmlspecialchars($file['file_path']) ?>"
                                                                            download="<?= htmlspecialchars($file['original_filename']) ?>"
                                                                            class="btn btn-sm btn-info" title="Download">
                                                                             <i class="nc-icon nc-minimal-down"></i>
                                                                         </a>
+                                                                        <?php if (in_array($user_role, ['super_admin', 'coordinator'])): ?>
+                                                                        <a href="javascript:void(0)"
+                                                                           class="btn btn-sm btn-danger"
+                                                                           title="Delete"
+                                                                           onclick="confirmDeleteFile(<?= $file['id'] ?>, '<?= addslashes(htmlspecialchars($file['original_filename'])) ?>', '<?= $csrf_token ?>')">
+                                                                            <i class="nc-icon nc-simple-remove"></i>
+                                                                        </a>
+                                                                        <?php endif; ?>
                                                                     </td>
                                                                 </tr>
                                                             <?php endforeach; ?>
@@ -1112,5 +1120,36 @@ $(document).ready(function() {
         }, 3000);
     }
 });
+</script>
+
+<script>
+function confirmDeleteFile(fileId, fileName, csrfToken) {
+    if (confirm(`Are you sure you want to delete the file "${fileName}"? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '../api/delete_file.php';
+
+        const fileIdInput = document.createElement('input');
+        fileIdInput.type = 'hidden';
+        fileIdInput.name = 'file_id';
+        fileIdInput.value = fileId;
+        form.appendChild(fileIdInput);
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        const projectIdInput = document.createElement('input');
+        projectIdInput.type = 'hidden';
+        projectIdInput.name = 'project_id';
+        projectIdInput.value = '<?= $project_id ?>';
+        form.appendChild(projectIdInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
        <?php include '../includes/footer.php'; ?>
