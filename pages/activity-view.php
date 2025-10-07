@@ -153,10 +153,7 @@ if (!$activity) {
                                     <strong>End Date:</strong>
                                     <span class="ml-2"><?= $activity['end_date'] ? formatDate($activity['end_date']) : 'N/A' ?></span>
                                 </li>
-                                <li class="mb-2">
-                                    <strong>Budget:</strong>
-                                    <span class="ml-2"><?= $activity['budget'] ? '&euro;' . number_format($activity['budget'], 2) : 'N/A' ?></span>
-                                </li>
+                                
                             </ul>
                         </div>
                     </div>

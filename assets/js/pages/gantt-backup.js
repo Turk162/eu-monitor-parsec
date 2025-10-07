@@ -542,7 +542,7 @@ $(document).ready(function() {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <a href="activity-detail.php?id=${activity.id}" class="btn btn-primary">View Details</a>
+                            <a href="activity-view.php?id=${activity.id}" class="btn btn-primary">View Details</a>
                         </div>
                     </div>
                 </div>
