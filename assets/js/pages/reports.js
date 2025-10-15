@@ -179,3 +179,22 @@ $(document).ready(function() {
         }
     });
 });
+
+/**
+ * Handles the delete confirmation process with detailed logging.
+ * @param {Event} event The click event.
+ * @param {string} deleteUrl The URL to redirect to for deletion.
+ */
+function confirmDelete(event, deleteUrl) {
+    event.preventDefault(); // Stop the link from navigating immediately
+
+    console.log('confirmDelete function called.');
+    console.log('Delete URL:', deleteUrl);
+
+    if (confirm('Are you sure you want to permanently delete this report? This action cannot be undone.')) {
+        console.log('User confirmed deletion. Redirecting...');
+        window.location.href = deleteUrl;
+    } else {
+        console.log('User cancelled deletion.');
+    }
+}

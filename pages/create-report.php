@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 $selected_activity_id = (int)($_GET['activity_id'] ?? 0);
 
 // Get activities
-$activities_sql = "SELECT a.id, a.name, a.activity_number, p.name as project_name FROM activities a JOIN work_packages wp ON a.work_package_id = wp.id JOIN projects p ON wp.project_id = p.id";
+$activities_sql = "SELECT a.id, a.name, a.activity_number, wp.wp_number, p.name as project_name FROM activities a JOIN work_packages wp ON a.work_package_id = wp.id JOIN projects p ON wp.project_id = p.id";
 $params = [];
 
 if ($user_role !== 'super_admin') {
@@ -179,7 +179,7 @@ if ($user_role !== 'super_admin') {
     $params['partner_id'] = $session_partner_id;
 }
 
-$activities_sql .= " ORDER BY p.name, a.name";
+$activities_sql .= " ORDER BY p.name, wp.wp_number, a.activity_number";
 $activities_stmt = $conn->prepare($activities_sql);
 $activities_stmt->execute($params);
 $available_activities = $activities_stmt->fetchAll();
@@ -250,11 +250,27 @@ if ($user_role === 'super_admin') {
                                     <label>Activity <span class="text-danger">*</span></label>
                                     <select class="form-control" name="activity_id" required>
                                         <option value="">-- Select an Activity --</option>
-                                        <?php foreach ($available_activities as $activity):
-                                            $display_text = !empty($activity['activity_number']) ? $activity['activity_number'] . ' - ' . $activity['name'] : $activity['name'];
+                                        <?php 
+                                        $last_project = null;
+                                        foreach ($available_activities as $activity):
+                                            // Add project name as a group label if it changes
+                                            if ($activity['project_name'] !== $last_project) {
+                                                if ($last_project !== null) {
+                                                    echo '</optgroup>';
+                                                }
+                                                echo '<optgroup label="' . htmlspecialchars($activity['project_name']) . '">';
+                                                $last_project = $activity['project_name'];
+                                            }
+                                            $display_text = !empty($activity['activity_number']) ? $activity['activity_number'] . ' - ' . htmlspecialchars($activity['name']) : htmlspecialchars($activity['name']);
                                         ?>
-                                            <option value="<?= $activity['id'] ?>"><?= htmlspecialchars($display_text) ?></option>
-                                        <?php endforeach; ?>
+                                            <option value="<?= $activity['id'] ?>" <?= ($selected_activity_id == $activity['id']) ? 'selected' : '' ?>>
+                                                <?= $display_text ?>
+                                            </option>
+                                        <?php endforeach; 
+                                        if ($last_project !== null) {
+                                            echo '</optgroup>';
+                                        }
+                                        ?>
                                     </select>
                                 </div>
 
@@ -274,68 +290,25 @@ if ($user_role === 'super_admin') {
                                     <small class="form-text text-muted">Optional: Describe the participants of the activity.</small>
                                 </div>
 
-                               <!-- SOSTITUIRE la sezione file upload in create-report.php -->
-
-<div class="form-group">
-    <label>Attach Files with Titles (Optional)</label>
-    
-    <div class="file-upload-section">
-        <!-- Container per i file dinamici -->
-        <div id="fileUploadsContainer">
-            <!-- Template per un singolo file -->
-            <div class="file-upload-item" id="fileUpload1">
-                <div class="row">
-                    <div class="col-md-5">
-                        <label>File Title</label>
-                        <input type="text" name="file_titles[]" class="form-control" placeholder="e.g., Progress Report Q1, Meeting Minutes..." />
-                    </div>
-                    <div class="col-md-6">
-    <label>Select File</label>
-    
-    <!-- Pulsante file ben visibile -->
-    <div class="file-upload-wrapper">
-        <input type="file" name="report_files[]" class="file-input" data-file-index="1" id="fileInput1" />
-        <label for="fileInput1" class="btn btn-outline-info btn-block file-select-btn">
-            <i class="nc-icon nc-cloud-upload-94 mr-2"></i>
-            <span class="btn-text">Choose File</span>
-        </label>
-    </div>
-    
-    <!-- Feedback file selezionato -->
-    <div class="selected-file-display" id="fileName1" style="display: none;">
-        <div class="alert alert-success mb-0 mt-2 py-2">
-            <i class="nc-icon nc-check-2 mr-2"></i>
-            <span class="file-name-text">No file selected</span>
-        </div>
-    </div>
-    
-    <!-- Stato nessun file -->
-    <div class="no-file-display" id="noFile1">
-        <small class="text-muted mt-1 d-block">
-            <i class="nc-icon nc-bullet-list-67 mr-1"></i>
-            No file chosen
-        </small>
-    </div>
-</div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-danger btn-sm btn-remove-file" data-file-id="fileUpload1" style="display:none;">
-                            <i class="nc-icon nc-simple-remove"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Bottone per aggiungere più file -->
-        <button type="button" class="btn btn-sm btn-info" id="addFileButton">
-            <i class="nc-icon nc-simple-add"></i> Add Another File
-        </button>
-        
-        <small class="form-text text-muted mt-3">
-            You can add multiple files with descriptive titles. Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each)
-        </small>
-    </div>
-</div>
+                               <div class="form-group">
+                                    <label>Attach Files (Optional)</label>
+                                    <div class="file-upload-section">
+                                        <div class="file-upload-wrapper">
+                                            <input type="file" name="report_files[]" class="file-input" id="fileInput" multiple />
+                                            <label for="fileInput" class="btn btn-outline-info btn-block file-select-btn">
+                                                <i class="nc-icon nc-cloud-upload-94 mr-2"></i>
+                                                <span class="btn-text">Choose Files</span>
+                                            </label>
+                                        </div>
+                                        <div id="file-list-wrapper" class="mt-2" style="display: none;">
+                                            <ul id="file-list" class="list-group"></ul>
+                                            <button type="button" id="clear-files-btn" class="btn btn-sm btn-danger mt-2">Clear Selection</button>
+                                        </div>
+                                        <small class="form-text text-muted mt-3">
+                                            You can select multiple files at once. Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB each).
+                                        </small>
+                                    </div>
+                                </div>
 
                                 <hr>
 

@@ -1,0 +1,214 @@
+/* Project Files Page Styles */
+
+/* Header e breadcrumb */
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 15px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #9A9A9A;
+}
+
+.breadcrumb-item a {
+    color: #51CBCE;
+}
+
+.breadcrumb-item.active {
+    color: #9A9A9A;
+}
+
+/* Card statistiche */
+.card-stats {
+    transition: all 0.3s ease;
+}
+
+.card-stats:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.card-stats .icon-big {
+    font-size: 3em;
+}
+
+.card-stats .numbers {
+    text-align: right;
+}
+
+.card-stats .card-category {
+    font-size: 12px;
+    color: #9A9A9A;
+    margin-bottom: 5px;
+}
+
+.card-stats .card-title {
+    font-size: 24px;
+    font-weight: 300;
+    margin: 0;
+}
+
+/* Search e filtri */
+#searchInput {
+    border-radius: 20px;
+    padding-left: 15px;
+}
+
+#searchInput:focus {
+    border-color: #51CBCE;
+    box-shadow: 0 0 0 0.2rem rgba(81, 203, 206, 0.25);
+}
+
+#categoryFilter,
+#wpFilter {
+    cursor: pointer;
+}
+
+/* Tabella files */
+#filesTable {
+    margin-top: 10px;
+}
+
+#filesTable thead th {
+    border-bottom: 2px solid #51CBCE;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#filesTable tbody tr {
+    transition: all 0.3s ease;
+}
+
+#filesTable tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+#filesTable tbody td {
+    vertical-align: middle;
+    padding: 15px 10px;
+}
+
+#filesTable .nc-icon {
+    margin-right: 5px;
+    color: #51CBCE;
+}
+
+/* Badge categorie */
+.badge {
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 12px;
+}
+
+.badge-primary {
+    background-color: #51CBCE;
+    color: white;
+}
+
+.badge-info {
+    background-color: #6BD098;
+    color: white;
+}
+
+.badge-success {
+    background-color: #FBC658;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #EF8157;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #9A9A9A;
+    color: white;
+}
+
+/* Pulsanti azioni */
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.btn-sm .nc-icon {
+    font-size: 14px;
+}
+
+#addNewFileBtn {
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-weight: 500;
+}
+
+#addNewFileBtn:hover {
+    background-color: #45b7bd;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(81, 203, 206, 0.3);
+}
+
+/* Row nascosta (per filtri) */
+.file-row.hidden {
+    display: none;
+}
+
+/* Empty state */
+.text-muted {
+    color: #9A9A9A !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-stats .numbers {
+        text-align: left;
+        margin-top: 10px;
+    }
+    
+    #filesTable {
+        font-size: 12px;
+    }
+    
+    #filesTable .btn-sm {
+        padding: 3px 6px;
+        margin: 2px;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
+
+/* Loading state */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #51CBCE;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

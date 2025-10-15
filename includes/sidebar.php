@@ -48,6 +48,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <p>Calendar</p>
                 </a>
             </li>
+            <li <?php echo ($current_page == 'change-password.php') ? 'class="active"' : ''; ?>>
+                <a href="change-password.php">
+                    <i class="nc-icon nc-key-25"></i>
+                    <p>Change Password</p>
+                </a>
+            </li>
             <?php if($user_role === 'super_admin' || $user_role === 'coordinator'): ?>
             <li <?php echo ($current_page == 'users.php') ? 'class="active"' : ''; ?>>
                 <a href="users.php">

@@ -520,12 +520,7 @@ include '../includes/header.php';
                                                         <i class="nc-icon nc-paper text-primary"></i>
                                                         View All Activities
                                                     </a>
-                                                    <a href="project-documents.php?id=<?= $project['id'] ?>" 
-                                                       class="list-group-item list-group-item-action">
-                                                        <i class="nc-icon nc-folder-15 text-primary"></i>
-                                                        Manage Project Documents
-                                                    </a>
-                                                    
+                                                                                                 
                                                     <a href="reports.php?project=<?= $project['id'] ?>" 
                                                        class="list-group-item list-group-item-action">
                                                         <i class="nc-icon nc-chart-bar-32 text-success"></i>
@@ -536,6 +531,12 @@ include '../includes/header.php';
                                                        class="list-group-item list-group-item-action">
                                                         <i class="nc-icon nc-calendar-60 text-warning"></i>
                                                         Project Timeline
+                                                    </a>
+
+                                                    <a href="project-files.php?project_id=<?php echo $project_id; ?>" 
+       class="list-group-item list-group-item-action">
+                                                        <i class="nc-icon nc-box text-primary"></i>
+                                                        Project Files
                                                     </a>
 <!-- Google groups link -->
 

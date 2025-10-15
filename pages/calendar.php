@@ -158,6 +158,16 @@ if (!empty($selected_projects)) {
     $stmt->execute($params);
     $events = $stmt->fetchAll();
 
+    // BUG FIX: Process events into a date-keyed array for the calendar grid
+    $events_by_date = [];
+    foreach ($events as $event) {
+        $day = date('j', strtotime($event['event_date'])); // 'j' gives the day of the month without leading zeros
+        if (!isset($events_by_date[$day])) {
+            $events_by_date[$day] = [];
+        }
+        $events_by_date[$day][] = $event;
+    }
+
     // Fetch upcoming events for the next 30 days
     $upcoming_activity_select = str_replace("a.end_date as event_date", "a.end_date as event_date, DATEDIFF(a.end_date, CURDATE()) as days_until", $activity_select);
     $upcoming_milestone_select = str_replace("m.due_date as event_date", "m.due_date as event_date, DATEDIFF(m.due_date, CURDATE()) as days_until", $milestone_select);

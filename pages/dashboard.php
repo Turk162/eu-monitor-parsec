@@ -37,30 +37,68 @@ $conn = $database->connect();
 $projects = getMyProjects($conn, $user_id, $user_role);
 $stats = getDashboardStats($conn, $user_id, $user_role);
 
-// Upcoming deadlines
-if ($user_role === 'super_admin') {
-    $stmt = $conn->prepare("SELECT a.name as activity_name, a.end_date, p.name as project_name, p.id as project_id
-                           FROM activities a 
-                           JOIN work_packages wp ON a.work_package_id = wp.id
-                           JOIN projects p ON wp.project_id = p.id
-                           WHERE a.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 14 DAY)
-                           AND a.status != 'completed'
-                           ORDER BY a.end_date ASC LIMIT 5");
+// Upcoming deadlines - REVISED AND FIXED (v2)
+$upcoming_deadlines = [];
+
+$base_activity_sql = "
+    SELECT 'activity' as type, a.name, a.end_date as due_date, p.name as project_name, p.id as project_id
+    FROM activities a
+    JOIN work_packages wp ON a.work_package_id = wp.id
+    JOIN projects p ON wp.project_id = p.id";
+
+$base_milestone_sql = "
+    SELECT 'milestone' as type, m.name, m.due_date, p.name as project_name, p.id as project_id
+    FROM milestones m
+    JOIN projects p ON m.project_id = p.id";
+
+$base_project_sql = "
+    SELECT 'project' as type, CONCAT('End of Project: ', p.name) as name, p.end_date as due_date, p.name as project_name, p.id as project_id
+    FROM projects p";
+
+// DEBUG: Temporarily expanded date range and removed status filter
+$activity_date_condition = "WHERE (a.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND a.status != 'completed'*/";
+$milestone_date_condition = "WHERE (m.due_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND m.status != 'completed'*/";
+$project_date_condition = "WHERE (p.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND p.status != 'completed'*/";
+
+if ($user_role === 'super_admin' || $user_role === 'admin') {
+    $final_sql = "($base_activity_sql $activity_date_condition) UNION ALL ($base_milestone_sql $milestone_date_condition) UNION ALL ($base_project_sql $project_date_condition) ORDER BY due_date ASC LIMIT 5";
+    $stmt = $conn->prepare($final_sql);
     $stmt->execute();
-} else {
+    $upcoming_deadlines = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} elseif ($user_role === 'coordinator') {
+    $activity_sql = "$base_activity_sql WHERE p.coordinator_id = ? AND (a.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND a.status != 'completed'*/";
+    $milestone_sql = "$base_milestone_sql WHERE p.coordinator_id = ? AND (m.due_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND m.status != 'completed'*/";
+    $project_sql = "$base_project_sql WHERE p.coordinator_id = ? AND (p.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND p.status != 'completed'*/";
+    $final_sql = "($activity_sql) UNION ALL ($milestone_sql) UNION ALL ($project_sql) ORDER BY due_date ASC LIMIT 5";
+    $stmt = $conn->prepare($final_sql);
+    $stmt->execute([$user_id, $user_id, $user_id]);
+    $upcoming_deadlines = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} else { // Partner role - Show all deadlines for projects the partner is in
     $user_partner_id = $_SESSION['partner_id'] ?? 0;
-    $stmt = $conn->prepare("SELECT a.name as activity_name, a.end_date, p.name as project_name, p.id as project_id
-                           FROM activities a 
-                           JOIN work_packages wp ON a.work_package_id = wp.id
-                           JOIN projects p ON wp.project_id = p.id
-                           JOIN project_partners pp ON p.id = pp.project_id
-                           WHERE pp.partner_id = ? 
-                           AND a.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 14 DAY)
-                           AND a.status != 'completed'
-                           ORDER BY a.end_date ASC LIMIT 5");
-    $stmt->execute([$user_partner_id]);
+    
+    $project_ids_stmt = $conn->prepare("SELECT DISTINCT project_id FROM project_partners WHERE partner_id = ?");
+    $project_ids_stmt->execute([$user_partner_id]);
+    $project_ids = $project_ids_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (!empty($project_ids)) {
+        $placeholders = str_repeat('?,', count($project_ids) - 1) . '?';
+
+        $activity_sql = "$base_activity_sql WHERE p.id IN ($placeholders) AND (a.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND a.status != 'completed'*/";
+        $milestone_sql = "$base_milestone_sql WHERE p.id IN ($placeholders) AND (m.due_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND m.status != 'completed'*/";
+        $project_sql = "$base_project_sql WHERE p.id IN ($placeholders) AND (p.end_date BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 90 DAY))/* AND p.status != 'completed'*/";
+
+        $final_sql = "($activity_sql) UNION ALL ($milestone_sql) UNION ALL ($project_sql) ORDER BY due_date ASC LIMIT 5";
+        $stmt = $conn->prepare($final_sql);
+
+        $params = array_merge($project_ids, $project_ids, $project_ids);
+        $stmt->execute($params);
+        $upcoming_deadlines = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $upcoming_deadlines = []; // No projects, so no deadlines
+    }
 }
-$upcoming_deadlines = $stmt->fetchAll();
 
 // Recent reports
 if ($user_role === 'super_admin') {
@@ -458,13 +496,22 @@ $recent_reports = $stmt->fetchAll();
                                 <?php else: ?>
                                 <?php foreach($upcoming_deadlines as $deadline): ?>
                                 <div class="deadline-item">
-                                    <h6 class="mb-1"><?= htmlspecialchars($deadline['activity_name']) ?></h6>
+                                    <h6 class="mb-1">
+                                        <?php 
+                                            $badge_class = 'primary'; // Default
+                                            if ($deadline['type'] === 'activity') $badge_class = 'primary';
+                                            if ($deadline['type'] === 'milestone') $badge_class = 'warning';
+                                            if ($deadline['type'] === 'project') $badge_class = 'danger';
+                                        ?>
+                                        <span class="badge badge-<?php echo $badge_class; ?>"><?= htmlspecialchars(ucfirst($deadline['type'])) ?></span>
+                                        <?= htmlspecialchars($deadline['name']) ?>
+                                    </h6>
                                     <p class="mb-1 text-muted" style="font-size: 13px;">
                                         <?= htmlspecialchars($deadline['project_name']) ?>
                                     </p>
                                     <small class="text-danger">
                                         <i class="nc-icon nc-time-alarm"></i>
-                                        <?= formatDate($deadline['end_date']) ?>
+                                        <?= formatDate($deadline['due_date']) ?>
                                     </small>
                                 </div>
                                 <?php endforeach; ?>

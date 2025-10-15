@@ -33,7 +33,20 @@ $page_titles = [
     'edit-report.php' => 'Edit a Report',
     'create-report.php' => 'Create a Report',
     'partner-budget.php' => 'Partner Budget',
-    'manage-partners-budget.php' => 'Manage Partners Budget'
+    'manage-partners-budget.php' => 'Manage Partners Budget',
+    'project-files.php' => 'Project Files',
+    'edit-project-files.php' => 'Edit Project Files',
+    'admin-reports.php' => 'Admin Reports',
+    'partners.php' => 'Partners',
+    'add-partner.php' => 'Add Partner',
+    'edit-partner.php' => 'Edit Partner',
+    'add-work-package.php' => 'Add Work Package',
+    'edit-work-package.php' => 'Edit Work Package',
+    'add-milestone.php' => 'Add Milestone',
+    'edit-milestone.php' => 'Edit Milestone',
+    'add-risk.php' => 'Add Risk',
+    'edit-risk.php' => 'Edit Risk',
+    'change-password.php' => 'Change Password'
     
 ];
 

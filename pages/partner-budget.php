@@ -161,7 +161,7 @@ foreach ($wp_budgets as $wp_budget) {
 
 // Helper functions
 function formatCurrency($amount) {
-    return '€' . number_format((float)$amount, 2, '.', ',');
+    return '€' . number_format((float)$amount, 2, ',', '.');
 }
 
 function formatProgramName($program_type) {
@@ -204,6 +204,19 @@ function formatProgramName($program_type) {
             <?php include '../includes/navbar.php'; ?>
             
             <div class="content">
+                <!-- Header con breadcrumb -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="projects.php">Projects</a></li>
+                                <li class="breadcrumb-item"><a href="project-detail.php?id=<?php echo $project_id; ?>"><?php echo htmlspecialchars($project['name']); ?></a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Partner Budget</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-md-12">
                         <!-- Page Header -->
@@ -221,9 +234,6 @@ function formatProgramName($program_type) {
                                         </p>
                                     </div>
                                     <div class="col-md-4 text-right">
-                                        <a href="project-detail.php?id=<?php echo $project_id; ?>" class="btn btn-secondary btn-sm">
-                                            <i class="nc-icon nc-minimal-left"></i> Back to Project
-                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -292,7 +302,7 @@ function formatProgramName($program_type) {
                                     <?php else: ?>
                                         <div class="budget-line">
                                             <div class="budget-item">
-                                                <strong>Working Days:</strong>
+                                                <strong>Personnel costs:</strong>
                                                 <?php echo (int)($wp_budget['working_days'] ?? 0); ?> days × 
                                                 <?php echo formatCurrency($wp_budget['daily_rate'] ?? 0); ?>/day = 
                                                 <span class="budget-amount">
@@ -316,7 +326,7 @@ function formatProgramName($program_type) {
                                             <?php echo $travel['persons']; ?> persons × <?php echo $travel['days']; ?> days<br>
                                             Travel: <?php echo formatCurrency($travel['travel_cost']); ?> | 
                                             Subsistence: <?php echo formatCurrency($travel['daily_subsistence']); ?>/day<br>
-                                            <span class="budget-amount">Total: <?php echo formatCurrency($travel['travel_cost']); ?></span>
+                                            <span class="budget-amount">Total: <?php echo formatCurrency($travel['total']); ?></span>
                                         </div>
                                     </div>
                                     <?php endforeach; ?>

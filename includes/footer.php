@@ -42,6 +42,7 @@ $current_year = date('Y');
     
     <!-- Paper Dashboard CORE plugins -->
     <script src="../assets/js/plugins/chartjs.min.js"></script>
+    <script src="../assets/js/plugins/bootstrap-notify.js"></script>
     
     <!-- Paper Dashboard for Bootstrap 4 -->
     <script src="../assets/js/paper-dashboard.min.js?v=2.0.1"></script>

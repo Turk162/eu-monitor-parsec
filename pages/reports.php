@@ -137,8 +137,6 @@ if ($activity_filter) {
     $params[] = $activity_filter;
 }
 
-
-
 if ($partner_filter) {
     $where_conditions[] = "u.id = ?";
     $params[] = $partner_filter;
@@ -229,9 +227,20 @@ if ($user_role === 'super_admin' || $user_role === 'coordinator') {
 
 // Report statistics
 $stats = [
-    'total' => count($reports)
+    'total' => count($reports),
+    'pending' => count(array_filter($reports, fn($r) => empty($r['reviewed_by']))),
+    'reviewed' => count(array_filter($reports, fn($r) => !empty($r['reviewed_by'])))
 ];
 
+// ===================================================================
+//  BREADCRUMB DATA
+// ===================================================================
+$project_name_for_breadcrumb = null;
+if ($project_filter) {
+    $project_stmt = $conn->prepare("SELECT name FROM projects WHERE id = ?");
+    $project_stmt->execute([$project_filter]);
+    $project_name_for_breadcrumb = $project_stmt->fetchColumn();
+}
 
 ?>
 
@@ -243,12 +252,27 @@ $stats = [
 
             <!-- CONTENT -->
 <div class="content">
+    <?php if (isset($project_name_for_breadcrumb) && $project_name_for_breadcrumb): ?>
+    <!-- Header con breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="projects.php">Projects</a></li>
+                    <li class="breadcrumb-item"><a href="project-detail.php?id=<?php echo $project_filter; ?>"><?php echo htmlspecialchars($project_name_for_breadcrumb); ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Reports</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- ALERT MESSAGE -->
     <?php displayAlert(); ?>
     
     <!-- STATISTICS -->
     <div class="row">
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
             <div class="card card-stats">
                 <div class="card-body">
                     <div class="row">
@@ -261,6 +285,44 @@ $stats = [
                             <div class="numbers">
                                 <p class="card-category">Total Reports</p>
                                 <p class="card-title"><?= $stats['total'] ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-5 col-md-4">
+                            <div class="icon-big text-center icon-warning">
+                                <i class="nc-icon nc-time-alarm text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="col-7 col-md-8">
+                            <div class="numbers">
+                                <p class="card-category">Pending Review</p>
+                                <p class="card-title"><?= $stats['pending'] ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-5 col-md-4">
+                            <div class="icon-big text-center icon-warning">
+                                <i class="nc-icon nc-check-2 text-success"></i>
+                            </div>
+                        </div>
+                        <div class="col-7 col-md-8">
+                            <div class="numbers">
+                                <p class="card-category">Reviewed</p>
+                                <p class="card-title"><?= $stats['reviewed'] ?></p>
                             </div>
                         </div>
                     </div>
@@ -306,8 +368,12 @@ $stats = [
                 <form method="GET" action="" id="filterForm">
                     <input type="hidden" name="view" value="<?= $view_mode ?>">
                     
+                    <?php 
+                    $is_admin_view = ($user_role === 'super_admin' || $user_role === 'coordinator');
+                    ?>
+
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="<?= $is_admin_view ? 'col-md-4' : 'col-md-5' ?>">
                             <label>
                                 <i class="nc-icon nc-zoom-split"></i>
                                 Search Reports
@@ -319,7 +385,7 @@ $stats = [
                                    value="<?= htmlspecialchars($search_query) ?>">
                         </div>
                         
-                        <div class="col-md-2">
+                        <div class="<?= $is_admin_view ? 'col-md-3' : 'col-md-4' ?>">
                             <label>
                                 <i class="nc-icon nc-briefcase-24"></i>
                                 Project
@@ -334,8 +400,8 @@ $stats = [
                             </select>
                         </div>
                         
-                        <?php if ($user_role === 'super_admin' || $user_role === 'coordinator'): ?>
-                        <div class="col-md-2">
+                        <?php if ($is_admin_view): ?>
+                        <div class="col-md-3">
                             <label>
                                 <i class="nc-icon nc-single-02"></i>
                                 Partner
@@ -353,17 +419,15 @@ $stats = [
                         
                         <div class="col-md-2">
                             <label>&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="nc-icon nc-zoom-split"></i>
-                                Filter
-                            </button>
-                        </div>
-                        
-                        <div class="col-md-1">
-                            <label>&nbsp;</label>
-                            <a href="reports.php" class="btn btn-outline-secondary btn-block">
-                                <i class="nc-icon nc-simple-remove"></i>
-                            </a>
+                            <div class="d-flex">
+                                <button type="submit" class="btn btn-primary flex-grow-1 mr-2">
+                                    <i class="nc-icon nc-zoom-split"></i>
+                                    Filter
+                                </button>
+                                <a href="reports.php" class="btn btn-outline-secondary" title="Clear Filters">
+                                    <i class="nc-icon nc-simple-remove"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -435,7 +499,6 @@ $stats = [
                                 </small>
                             </div>
                             <div class="text-right">
-                                
                                 <div class="mt-1">
                                     <small class="text-muted">
                                         <?= $days_since == 0 ? 'Today' : $days_since . ' days ago' ?>
@@ -477,10 +540,8 @@ $stats = [
                     <div class="report-footer">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <small class="text-muted">
-                                    <i class="nc-icon nc-world-2"></i>
-                                    <?= htmlspecialchars($report['partner_org']) ?> (<?= htmlspecialchars($report['partner_country']) ?>)
-                                </small>
+                                <small class="text-muted">Reporter</small><br>
+                                <strong><?= htmlspecialchars($report['reporter_name']) ?></strong>
                             </div>
                             
                             <div>
@@ -488,6 +549,12 @@ $stats = [
                                     <i class="nc-icon nc-zoom-split"></i>
                                     View
                                 </button>
+                                <?php if (in_array($user_role, ['coordinator', 'super_admin'])): ?>
+                                    <a href="delete-report.php?id=<?= $report['id'] ?>" class="btn btn-danger btn-sm" onclick="confirmDelete(event, this.href);">
+                                        <i class="nc-icon nc-simple-delete"></i>
+                                        Delete
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -542,6 +609,12 @@ $stats = [
                                             <i class="nc-icon nc-zoom-split"></i>
                                             View
                                         </button>
+                                        <?php if (in_array($user_role, ['coordinator', 'super_admin'])): ?>
+                                            <a href="delete-report.php?id=<?= $report['id'] ?>" class="btn btn-danger btn-sm" onclick="confirmDelete(event, this.href);">
+                                                <i class="nc-icon nc-simple-delete"></i>
+                                                Delete
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -559,51 +632,46 @@ $stats = [
 <!-- FOOTER-->
 <?php include '../includes/footer.php'; ?>
 
-
-    
-
-    <!-- Pass user role to JavaScript -->
+<!-- Pass user role to JavaScript -->
 <script>
     const currentUserRole = "<?= htmlspecialchars($user_role, ENT_QUOTES, 'UTF-8') ?>";
 </script>
 
 <!-- VIEW REPORT MODAL -->
-    <div class="modal fade" id="viewReportModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="nc-icon nc-zoom-split"></i>
-                        Report Details
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                
-                <div class="modal-body" id="reportDetailsContent">
-                    <!-- Content loaded via JavaScript -->
-                </div>
-                
-                <div class="modal-footer">
-                    <a href="#" id="modal-edit-button" class="btn btn-warning" style="display: none;"><i class="nc-icon nc-ruler-pencil"></i> Edit</a>
-                    <a href="#" id="modal-delete-button" class="btn btn-danger" style="display: none;"><i class="nc-icon nc-simple-delete"></i> Delete</a>
-                    <button type="button" class="btn btn-secondary ml-auto" data-dismiss="modal">Close</button>
-                </div>
+<div class="modal fade" id="viewReportModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="nc-icon nc-zoom-split"></i>
+                    Report Details
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body" id="reportDetailsContent">
+                <!-- Content loaded via JavaScript -->
+            </div>
+            
+            <div class="modal-footer">
+                <a href="#" id="modal-edit-button" class="btn btn-warning" style="display: none;"><i class="nc-icon nc-ruler-pencil"></i> Edit</a>
+                <a href="#" id="modal-delete-button" class="btn btn-danger" style="display: none;"><i class="nc-icon nc-simple-delete"></i> Delete</a>
+                <button type="button" class="btn btn-secondary ml-auto" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
+</div>
 
-    
+<!-- Core JS Files -->
+<script src="../assets/js/core/jquery.min.js"></script>
+<script src="../assets/js/core/popper.min.js"></script>
+<script src="../assets/js/core/bootstrap.min.js"></script>
+<script src="../assets/js/plugins/perfect-scrollbar.jquery.min.js"></script>
+<script src="../assets/js/paper-dashboard.min.js?v=2.0.1" type="text/javascript"></script>
 
-    <!-- Core JS Files -->
-    <script src="../assets/js/core/jquery.min.js"></script>
-    <script src="../assets/js/core/popper.min.js"></script>
-    <script src="../assets/js/core/bootstrap.min.js"></script>
-    <script src="../assets/js/plugins/perfect-scrollbar.jquery.min.js"></script>
-    <script src="../assets/js/paper-dashboard.min.js?v=2.0.1" type="text/javascript"></script>
-    
-    <!-- Custom JS for Reports page -->
-    <script src="../assets/js/pages/reports.js"></script>
+<!-- Custom JS for Reports page -->
+<script src="../assets/js/pages/reports.js"></script>
 </body>
 </html>

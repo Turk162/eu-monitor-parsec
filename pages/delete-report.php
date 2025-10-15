@@ -6,6 +6,9 @@
 // Start session to access user data. This must be done before any output.
 session_start();
 
+// Temporary debug line to check the user's role
+die("Your current role is: " . ($_SESSION['user_role'] ?? 'not set'));
+
 // Core includes
 require_once '../config/database.php';
 require_once '../includes/functions.php';

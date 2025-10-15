@@ -90,7 +90,7 @@ try {
         'success' => true,
         'report' => [
             'id' => $report['id'],
-            'description' => nl2br(htmlspecialchars($report['description'])),
+            'description' => makeTextClickable($report['description']),
             'report_date' => formatDate($report['report_date']),
             
             'participants_data' => htmlspecialchars($report['participants_data']),

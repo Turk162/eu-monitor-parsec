@@ -196,6 +196,16 @@ $stats = [
     'my_completed' => count(array_filter($activities, fn($a) => $a['is_my_responsibility'] == 1 && $a['status'] === 'completed')),
 ];
 
+// ===================================================================
+//  BREADCRUMB DATA
+// ===================================================================
+$project_name_for_breadcrumb = null;
+if ($project_filter) {
+    $project_stmt = $conn->prepare("SELECT name FROM projects WHERE id = ?");
+    $project_stmt->execute([$project_filter]);
+    $project_name_for_breadcrumb = $project_stmt->fetchColumn();
+}
+
 ?>
 
 <!-- SIDEBAR & NAV -->
@@ -206,6 +216,21 @@ $stats = [
 
         <!-- CONTENT -->
         <div class="content">
+            <?php if (isset($project_name_for_breadcrumb) && $project_name_for_breadcrumb): ?>
+            <!-- Header con breadcrumb -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="projects.php">Projects</a></li>
+                            <li class="breadcrumb-item"><a href="project-detail.php?id=<?php echo $project_filter; ?>"><?php echo htmlspecialchars($project_name_for_breadcrumb); ?></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Activities</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- ALERT MESSAGE -->
             <?php displayAlert(); ?>
 

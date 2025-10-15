@@ -513,7 +513,26 @@ function handleFileUploads($conn, $files, $report_id, $user_id) {
             }
         } else {
             error_log("File '$name': Upload error code: $file_error.");
+            }
         }
-    }
+        }
+        
+        /**
+         * Converts plain text into HTML, making URLs clickable and preserving line breaks.
+         *
+         * @param string $text The input text.
+         * @return string The processed HTML.
+         */
+        function makeTextClickable($text) {
+    // 1. First, escape all HTML to prevent XSS
+    $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+
+    // 2. Find all URLs (http, https, ftp) and wrap them in <a> tags
+    $url_pattern = '/(https?:\\/\\/[a-zA-Z0-9\\-._~:?#\\[\\]@!$&\'()*+,;=\\/]+)/';
+    $text = preg_replace($url_pattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>', $text);
+
+    // 3. Convert newline characters to <br> tags
+    $text = nl2br($text);
+
+    return $text;
 }
-?>

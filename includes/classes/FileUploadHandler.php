@@ -1,13 +1,17 @@
 <?php
 /**
- * FileUploadHandler Class
+ * FileUploadHandler Class - Local Filesystem Storage
  * 
- * Handles file uploads for activity reports with project-based organization.
- * Files are organized in: uploads/reports/[project-name]/[files]
+ * Gestisce l'upload dei file per i report delle attività su filesystem locale.
+ * Struttura organizzata:
+ * - /uploads/progetto/reports/WPX/num_attivita-filename
+ * - /uploads/progetto/admin_reports/organizzazione/filename
+ * - /uploads/progetto/documents/filename
+ * - /uploads/progetto/deliverables/WPX/num_attivita-filename
+ * - /uploads/progetto/various/filename
  * 
  * @package EU Project Manager
- * @author EU Project Manager Team
- * @version 1.0
+ * @version 3.0 - Local Filesystem
  */
 
 class FileUploadHandler {
@@ -18,71 +22,187 @@ class FileUploadHandler {
     private $allowed_extensions;
     
     /**
-     * Constructor
+     * Costruttore
      * 
-     * @param PDO $conn Database connection
+     * @param PDO $conn Connessione database
      */
     public function __construct($conn) {
         $this->conn = $conn;
-        $this->base_upload_dir = '../uploads/reports/';
+        $this->base_upload_dir = __DIR__ . '/../../uploads/';
         $this->max_file_size = 10485760; // 10MB in bytes
         $this->allowed_extensions = ['pdf', 'doc', 'docx', 'xlsx', 'xls', 'ppt', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'gif'];
     }
     
     /**
-     * Main method to handle file uploads for reports
+     * Metodo principale per gestire upload file per report
      * 
-     * @param array $files $_FILES array for the uploaded files
-     * @param array $titles Array of titles for the files (optional)
-     * @param int $report_id The ID of the report these files belong to
-     * @param int $user_id The ID of the user uploading the files
-     * @return array Array with success status and message
+     * @param array $files Array $_FILES dei file caricati
+     * @param array $titles Array dei titoli dei file (opzionale)
+     * @param int $report_id ID del report
+     * @param int $user_id ID dell'utente che carica
+     * @return array Array con success status e message
      */
     public function handleReportFiles($files, $titles, $report_id, $user_id) {
         try {
-            // Log per debug
-            error_log("FileUploadHandler: Starting upload process for report #$report_id");
+            error_log("FileUploadHandler: Inizio processo upload per report #$report_id");
             
-            // Get project information from report_id
-            $project = $this->getProjectFromReport($report_id);
-            if (!$project) {
-                error_log("FileUploadHandler: Project not found for report #$report_id");
-                return $this->createResponse(false, 'Project not found for this report.');
+            // Recupera informazioni progetto, WP e activity dal report
+            $reportInfo = $this->getReportInformation($report_id);
+            if (!$reportInfo) {
+                error_log("FileUploadHandler: Informazioni report non trovate per #$report_id");
+                return $this->createResponse(false, 'Informazioni report non trovate.');
             }
             
-            error_log("FileUploadHandler: Found project: " . $project['name']);
+            error_log("FileUploadHandler: Report info - Project: {$reportInfo['project_name']}, WP: {$reportInfo['wp_number']}, Activity: {$reportInfo['activity_id']}");
             
-            // Create project-specific upload directory
-            $project_upload_dir = $this->createProjectDirectory($project['name']);
-            if (!$project_upload_dir) {
-                error_log("FileUploadHandler: Failed to create directory for project: " . $project['name']);
-                return $this->createResponse(false, 'Failed to create upload directory.');
+            // Crea struttura cartelle per report: /uploads/progetto/reports/WPX/
+            $uploadDir = $this->createReportDirectory(
+                $reportInfo['project_name'],
+                $reportInfo['wp_number']
+            );
+            
+            if (!$uploadDir) {
+                return $this->createResponse(false, 'Impossibile creare directory upload.');
             }
             
-            error_log("FileUploadHandler: Upload directory created: $project_upload_dir");
+            error_log("FileUploadHandler: Directory upload: $uploadDir");
             
-            // Process all uploaded files
-            return $this->processFiles($files, $titles, $project_upload_dir, $report_id, $user_id, $project['id']);
+            // Processa tutti i file caricati
+            return $this->processFilesToLocal(
+                $files, 
+                $titles, 
+                $uploadDir, 
+                $report_id, 
+                $user_id,
+                $reportInfo,
+                'report'  // Categoria file
+            );
             
         } catch (Exception $e) {
             error_log("FileUploadHandler Error: " . $e->getMessage());
-            return $this->createResponse(false, 'An error occurred during file upload: ' . $e->getMessage());
+            return $this->createResponse(false, 'Errore durante upload file: ' . $e->getMessage());
         }
     }
     
     /**
-     * Get project information from report ID
+     * Upload file per admin reports
      * 
-     * @param int $report_id Report ID
-     * @return array|false Project data or false if not found
+     * @param array $files Array $_FILES
+     * @param string $projectName Nome progetto
+     * @param string $organizationName Nome organizzazione
+     * @param int $user_id ID utente
+     * @param int $project_id ID progetto
+     * @return array Response
      */
-    private function getProjectFromReport($report_id) {
+    public function handleAdminReportFiles($files, $projectName, $organizationName, $user_id, $project_id) {
+        try {
+            // Crea struttura: /uploads/progetto/admin_reports/organizzazione/
+            $uploadDir = $this->createAdminReportDirectory($projectName, $organizationName);
+            
+            if (!$uploadDir) {
+                return $this->createResponse(false, 'Impossibile creare directory admin reports.');
+            }
+            
+            // Processa file
+            return $this->processFilesToLocal(
+                $files,
+                [],  // Nessun titolo per admin reports
+                $uploadDir,
+                null,  // Nessun report_id
+                $user_id,
+                ['project_id' => $project_id, 'project_name' => $projectName],
+                'admin_report'
+            );
+            
+        } catch (Exception $e) {
+            error_log("FileUploadHandler Error: " . $e->getMessage());
+            return $this->createResponse(false, 'Errore durante upload file: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Upload file generici (documents, deliverables, various)
+     * 
+     * @param array $files Array $_FILES
+     * @param string $category Categoria: document, deliverable, various
+     * @param int $project_id ID progetto
+     * @param int $wp_number Numero WP (solo per deliverables)
+     * @param int $activity_id ID attività (solo per deliverables)
+     * @param int $user_id ID utente
+     * @return array Response
+     */
+    public function handleGenericFiles($files, $category, $project_id, $wp_number = null, $activity_id = null, $user_id) {
+        try {
+            // Recupera nome progetto
+            $stmt = $this->conn->prepare("SELECT name FROM projects WHERE id = ?");
+            $stmt->execute([$project_id]);
+            $project = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$project) {
+                return $this->createResponse(false, 'Progetto non trovato.');
+            }
+            
+            // Crea directory in base alla categoria
+            switch ($category) {
+                case 'document':
+                    $uploadDir = $this->createDocumentDirectory($project['name']);
+                    break;
+                case 'deliverable':
+                    if (!$wp_number) {
+                        return $this->createResponse(false, 'Work Package richiesto per deliverable.');
+                    }
+                    $uploadDir = $this->createDeliverableDirectory($project['name'], $wp_number);
+                    break;
+                case 'various':
+                    $uploadDir = $this->createVariousDirectory($project['name']);
+                    break;
+                default:
+                    return $this->createResponse(false, 'Categoria file non valida.');
+            }
+            
+            if (!$uploadDir) {
+                return $this->createResponse(false, 'Impossibile creare directory upload.');
+            }
+            
+            // Processa file
+            return $this->processFilesToLocal(
+                $files,
+                [],
+                $uploadDir,
+                null,
+                $user_id,
+                ['project_id' => $project_id, 'project_name' => $project['name'], 'activity_id' => $activity_id],
+                $category
+            );
+            
+        } catch (Exception $e) {
+            error_log("FileUploadHandler Error: " . $e->getMessage());
+            return $this->createResponse(false, 'Errore durante upload file: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Recupera informazioni complete dal report
+     * 
+     * @param int $report_id ID del report
+     * @return array|false Array con info o false
+     */
+    private function getReportInformation($report_id) {
         $stmt = $this->conn->prepare("
-            SELECT p.id, p.name 
-            FROM activity_reports ar 
-            JOIN activities a ON ar.activity_id = a.id 
-            JOIN work_packages wp ON a.work_package_id = wp.id 
-            JOIN projects p ON wp.project_id = p.id 
+            SELECT 
+                ar.id as report_id,
+                ar.activity_id,
+                a.activity_number,
+                a.name as activity_name,
+                wp.id as work_package_id,
+                wp.wp_number,
+                wp.name as wp_name,
+                p.id as project_id,
+                p.name as project_name
+            FROM activity_reports ar
+            JOIN activities a ON ar.activity_id = a.id
+            JOIN work_packages wp ON a.work_package_id = wp.id
+            JOIN projects p ON wp.project_id = p.id
             WHERE ar.id = ?
         ");
         $stmt->execute([$report_id]);
@@ -90,331 +210,290 @@ class FileUploadHandler {
     }
     
     /**
-     * Create project-specific directory
-     * 
-     * @param string $project_name Original project name
-     * @return string|false Full path to project directory or false on failure
+     * Crea directory per report: /uploads/progetto/reports/WPX/
      */
-    private function createProjectDirectory($project_name) {
-        $project_folder = $this->sanitizeProjectName($project_name);
-        $full_project_dir = $this->base_upload_dir . $project_folder . '/';
+    private function createReportDirectory($projectName, $wpNumber) {
+        $projectFolder = $this->sanitizeName($projectName);
         
-        error_log("FileUploadHandler: Creating directory: $full_project_dir");
+        // Se wp_number contiene già "WP", non aggiungerlo
+        $wpFolder = (stripos($wpNumber, 'WP') === 0) ? $wpNumber : 'WP' . $wpNumber;
         
-        if (!is_dir($full_project_dir)) {
-            if (!mkdir($full_project_dir, 0755, true)) {
-                error_log("FileUploadHandler: mkdir failed for: $full_project_dir");
+        $path = $this->base_upload_dir . $projectFolder . '/reports/' . $wpFolder . '/';
+        
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                error_log("FileUploadHandler: Impossibile creare directory: $path");
                 return false;
             }
-            error_log("FileUploadHandler: Directory created successfully");
-        } else {
-            error_log("FileUploadHandler: Directory already exists");
         }
         
-        return $full_project_dir;
+        return $path;
     }
     
     /**
-     * Process all uploaded files
-     * 
-     * @param array $files Files array from $_FILES
-     * @param array $titles Array of titles for the files
-     * @param string $upload_dir Target upload directory
-     * @param int $report_id Report ID
-     * @param int $user_id User ID
-     * @return array Response array
+     * Crea directory per admin reports: /uploads/progetto/admin_reports/organizzazione/
      */
-    private function processFiles($files, $titles, $upload_dir, $report_id, $user_id, $project_id) {
+    private function createAdminReportDirectory($projectName, $organizationName) {
+        $projectFolder = $this->sanitizeName($projectName);
+        $orgFolder = $this->sanitizeName($organizationName);
+        $path = $this->base_upload_dir . $projectFolder . '/admin_reports/' . $orgFolder . '/';
+        
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                error_log("FileUploadHandler: Impossibile creare directory: $path");
+                return false;
+            }
+        }
+        
+        return $path;
+    }
+    
+    /**
+     * Crea directory per documenti: /uploads/progetto/documents/
+     */
+    private function createDocumentDirectory($projectName) {
+        $projectFolder = $this->sanitizeName($projectName);
+        $path = $this->base_upload_dir . $projectFolder . '/documents/';
+        
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                return false;
+            }
+        }
+        
+        return $path;
+    }
+    
+    /**
+     * Crea directory per deliverables: /uploads/progetto/deliverables/WPX/
+     */
+    private function createDeliverableDirectory($projectName, $wpNumber) {
+        $projectFolder = $this->sanitizeName($projectName);
+        
+        // Se wp_number contiene già "WP", non aggiungerlo
+        $wpFolder = (stripos($wpNumber, 'WP') === 0) ? $wpNumber : 'WP' . $wpNumber;
+        
+        $path = $this->base_upload_dir . $projectFolder . '/deliverables/' . $wpFolder . '/';
+        
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                return false;
+            }
+        }
+        
+        return $path;
+    }
+    
+    /**
+     * Crea directory per vari: /uploads/progetto/various/
+     */
+    private function createVariousDirectory($projectName) {
+        $projectFolder = $this->sanitizeName($projectName);
+        $path = $this->base_upload_dir . $projectFolder . '/various/';
+        
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                return false;
+            }
+        }
+        
+        return $path;
+    }
+    
+    /**
+     * Processa tutti i file e li salva localmente
+     */
+    private function processFilesToLocal($files, $titles, $uploadDir, $report_id, $user_id, $info, $category) {
         $uploaded_files = [];
         $errors = [];
         
-        error_log("FileUploadHandler: Processing " . count($files['name']) . " files");
+        error_log("FileUploadHandler: Processamento " . count($files['name']) . " file");
         
         for ($i = 0; $i < count($files['name']); $i++) {
             if ($files['error'][$i] === UPLOAD_ERR_OK) {
-                // Get title for this file (if provided)
+                
+                // Recupera titolo file se fornito
                 $file_title = isset($titles[$i]) ? trim($titles[$i]) : '';
-                if (empty($file_title)) {
-                    $file_title = $files['name'][$i]; // Fallback to filename if no title
-                }
                 
-                error_log("FileUploadHandler: Processing file #$i: " . $files['name'][$i] . " with title: $file_title");
-                
-                $result = $this->processSingleFile(
+                // Validazione file
+                $validation = $this->validateFile(
                     $files['name'][$i],
-                    $files['tmp_name'][$i],
                     $files['size'][$i],
-                    $file_title,
-                    $upload_dir,
-                    $report_id,
-                    $user_id,
-                    $project_id // Pass project_id down
+                    $files['tmp_name'][$i]
                 );
                 
-                if ($result['success']) {
-                    $uploaded_files[] = $files['name'][$i];
-                    error_log("FileUploadHandler: File uploaded successfully: " . $files['name'][$i]);
-                } else {
-                    $errors[] = $result['error'];
-                    error_log("FileUploadHandler: File upload failed: " . $result['error']);
+                if (!$validation['valid']) {
+                    $errors[] = "File '{$files['name'][$i]}': {$validation['message']}";
+                    error_log("FileUploadHandler: Validazione fallita per {$files['name'][$i]}: {$validation['message']}");
+                    continue;
                 }
-            } else {
-                $error_msg = "Upload error for: {$files['name'][$i]} (Error code: {$files['error'][$i]})";
-                $errors[] = $error_msg;
-                error_log("FileUploadHandler: " . $error_msg);
+                
+                // Genera nome file
+                $originalName = $files['name'][$i];
+                $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+                
+                // Nome file dipende dalla categoria
+                if ($category === 'report' || $category === 'deliverable') {
+                    // Per report e deliverable: num_attivita-filename
+                    $activityId = $info['activity_id'];
+                    $safeFilename = $activityId . '-' . $this->sanitizeName($originalName);
+                } else {
+                    // Per altri: timestamp-filename
+                    $safeFilename = time() . '-' . $this->sanitizeName($originalName);
+                }
+                
+                $filePath = $uploadDir . $safeFilename;
+                
+                error_log("FileUploadHandler: Upload file locale: $filePath");
+                
+                try {
+                    // Sposta file nella directory
+                    // Usa move_uploaded_file per file HTTP, rename per test
+                    $moved = false;
+                    if (is_uploaded_file($files['tmp_name'][$i])) {
+                        $moved = move_uploaded_file($files['tmp_name'][$i], $filePath);
+                    } else {
+                        // Fallback per test: usa rename/copy
+                        $moved = rename($files['tmp_name'][$i], $filePath);
+                    }
+                    
+                    if ($moved) {
+                        
+                        // Path relativo per il database
+                        $relativePath = str_replace($this->base_upload_dir, 'uploads/', $filePath);
+                        
+                        // Salva riferimento nel database
+                        $dbInsert = $this->saveFileToDatabase(
+                            $report_id,
+                            $user_id,
+                            $info['project_id'],
+                            $safeFilename,
+                            $originalName,
+                            $file_title,
+                            $relativePath,
+                            $category,
+                            $files['size'][$i],
+                            $files['type'][$i]
+                        );
+                        
+                        if ($dbInsert) {
+                            $uploaded_files[] = $safeFilename;
+                            error_log("FileUploadHandler: File salvato con successo");
+                        } else {
+                            $errors[] = "File '{$originalName}': salvato ma errore DB";
+                            // Elimina file se DB fallisce
+                            @unlink($filePath);
+                        }
+                        
+                    } else {
+                        $errors[] = "File '{$originalName}': impossibile spostare file";
+                        error_log("FileUploadHandler: Impossibile spostare file {$originalName}");
+                    }
+                    
+                } catch (Exception $e) {
+                    $errors[] = "File '{$originalName}': {$e->getMessage()}";
+                    error_log("FileUploadHandler: Errore upload per {$originalName}: " . $e->getMessage());
+                }
+                
+            } else if ($files['error'][$i] !== UPLOAD_ERR_NO_FILE) {
+                $errors[] = "File '{$files['name'][$i]}': Upload error code {$files['error'][$i]}";
+                error_log("FileUploadHandler: Upload error {$files['error'][$i]} per {$files['name'][$i]}");
             }
         }
         
-        return $this->createFinalResponse($uploaded_files, $errors);
-    }
-    
-/**
-     * Process a single uploaded file
-     * 
-     * @param string $filename Original filename
-     * @param string $tmp_name Temporary file path
-     * @param int $file_size File size in bytes
-     * @param string $title User-provided title for the file
-     * @param string $upload_dir Target upload directory
-     * @param int $report_id Report ID
-     * @param int $user_id User ID
-     * @return array Result array
-     */
-    private function processSingleFile($filename, $tmp_name, $file_size, $title, $upload_dir, $report_id, $user_id, $project_id) {
-        // Security validations
-        if (!$this->isAllowedFileType($filename)) {
-            return ['success' => false, 'error' => "File type not allowed: {$filename}"];
-        }
-        
-        if ($file_size > $this->max_file_size) {
-            return ['success' => false, 'error' => "File too large: {$filename}"];
-        }
-        
-        // Generate safe filename USANDO IL TITOLO
-        $safe_filename = $this->generateSafeFilename($filename, $title);
-        $full_file_path = $upload_dir . $safe_filename;
-        
-        error_log("FileUploadHandler: Moving file from $tmp_name to $full_file_path");
-        
-        // Move file
-        if (!move_uploaded_file($tmp_name, $full_file_path)) {
-            return ['success' => false, 'error' => "Failed to move file: {$filename}"];
-        }
-        
-        error_log("FileUploadHandler: File moved successfully, saving to database");
-        
-        // Save to database
-        if (!$this->saveFileToDatabase($report_id, $project_id, $safe_filename, $filename, $title, $full_file_path, $file_size, $user_id)) {
-            // Clean up file if database insert failed
-            if (file_exists($full_file_path)) {
-                unlink($full_file_path);
-            }
-            return ['success' => false, 'error' => "Database error for: {$filename}"];
-        }
-        
-        return ['success' => true];
-    }
-    
-    /**
-     * Generate safe filename with timestamp, usando il titolo se disponibile
-     * 
-     * @param string $original_filename Original filename
-     * @param string $title User-provided title (optional)
-     * @return string Safe filename
-     */
-    private function generateSafeFilename($original_filename, $title = '') {
-        $file_extension = pathinfo($original_filename, PATHINFO_EXTENSION);
-        
-        // Usa il titolo se disponibile, altrimenti usa il nome del file originale
-        if (!empty($title)) {
-            // Sanitizza il titolo per renderlo sicuro come nome file
-            $safe_basename = $this->sanitizeForFilename($title);
+        // Genera risposta finale
+        if (count($uploaded_files) > 0 && count($errors) === 0) {
+            return $this->createResponse(true, count($uploaded_files) . " file caricati con successo.");
+        } else if (count($uploaded_files) > 0) {
+            return $this->createResponse(true, count($uploaded_files) . " file caricati, ma con alcuni errori: " . implode("; ", $errors));
         } else {
-            // Fallback al nome originale del file
-            $safe_basename = preg_replace('/[^a-zA-Z0-9._-]/', '', pathinfo($original_filename, PATHINFO_FILENAME));
+            return $this->createResponse(false, "Nessun file caricato. Errori: " . implode("; ", $errors));
         }
-        
-        // Se dopo la sanitizzazione il nome è vuoto, usa il nome originale
-        if (empty($safe_basename)) {
-            $safe_basename = preg_replace('/[^a-zA-Z0-9._-]/', '', pathinfo($original_filename, PATHINFO_FILENAME));
-        }
-        
-        // Se ancora vuoto, usa un nome di default
-        if (empty($safe_basename)) {
-            $safe_basename = 'file';
-        }
-        
-        return time() . '_' . $safe_basename . '.' . $file_extension;
     }
     
     /**
-     * Sanitizza una stringa per renderla sicura come nome file
-     * 
-     * @param string $input Input string
-     * @return string Sanitized string
+     * Valida un file prima dell'upload
      */
-    private function sanitizeForFilename($input) {
-        // Rimuove caratteri speciali e li sostituisce con underscore
-        $sanitized = trim($input);
-        
-        // Sostituisce spazi con underscore
-        $sanitized = str_replace(' ', '_', $sanitized);
-        
-        // Rimuove caratteri non sicuri per i file system
-        $sanitized = preg_replace('/[^a-zA-Z0-9._-]/', '', $sanitized);
-        
-        // Rimuove underscore multipli consecutivi
-        $sanitized = preg_replace('/_+/', '_', $sanitized);
-        
-        // Rimuove underscore all'inizio e alla fine
-        $sanitized = trim($sanitized, '_');
-        
-        // Limita la lunghezza per evitare nomi file troppo lunghi
-        if (strlen($sanitized) > 50) {
-            $sanitized = substr($sanitized, 0, 50);
-            $sanitized = rtrim($sanitized, '_');
+    private function validateFile($filename, $filesize, $tmpPath) {
+        // Verifica estensione
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (!in_array($extension, $this->allowed_extensions)) {
+            return ['valid' => false, 'message' => "Estensione file non consentita (.{$extension})"];
         }
         
-        return $sanitized;
+        // Verifica dimensione
+        if ($filesize > $this->max_file_size) {
+            return ['valid' => false, 'message' => "File troppo grande (max 10MB)"];
+        }
+        
+        // Verifica file esistente
+        if (!file_exists($tmpPath)) {
+            return ['valid' => false, 'message' => "File temporaneo non trovato"];
+        }
+        
+        return ['valid' => true, 'message' => 'OK'];
     }
     
     /**
-     * Save file information to database
-     * 
-     * @param int $report_id Report ID
-     * @param string $safe_filename Safe filename
-     * @param string $original_filename Original filename
-     * @param string $title User-provided title
-     * @param string $file_path Full file path
-     * @param int $file_size File size
-     * @param int $user_id User ID
-     * @return bool Success status
+     * Salva riferimento file nel database
      */
-    private function saveFileToDatabase($report_id, $project_id, $safe_filename, $original_filename, $title, $file_path, $file_size, $user_id) {
-        $file_extension = pathinfo($original_filename, PATHINFO_EXTENSION);
-        
-        // Prima verifichiamo se esiste il campo title nella tabella
+    private function saveFileToDatabase($report_id, $user_id, $project_id, $filename, $originalName, $title, $filePath, $category, $fileSize, $mimeType) {
         try {
             $stmt = $this->conn->prepare("
-                INSERT INTO uploaded_files 
-                (report_id, project_id, filename, original_filename, title, file_path, file_size, file_type, uploaded_by, uploaded_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                INSERT INTO uploaded_files (
+                    report_id,
+                    project_id,
+                    uploaded_by,
+                    filename,
+                    original_filename,
+                    title,
+                    file_path,
+                    file_category,
+                    file_size,
+                    file_type,
+                    uploaded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             
-            $result = $stmt->execute([
+            return $stmt->execute([
                 $report_id,
                 $project_id,
-                $safe_filename,
-                $original_filename,
-                $title,
-                $file_path,
-                $file_size,
-                $file_extension,
-                $user_id
+                $user_id,
+                $filename,
+                $originalName,
+                $title ?: null,
+                $filePath,
+                $category,
+                $fileSize,
+                $mimeType
             ]);
             
-            if ($result) {
-                error_log("FileUploadHandler: File saved to database successfully");
-            } else {
-                error_log("FileUploadHandler: Database insert failed: " . implode(', ', $stmt->errorInfo()));
-            }
-            
-            return $result;
-            
-        } catch (PDOException $e) {
-            error_log("FileUploadHandler: Database error: " . $e->getMessage());
-            
-            // Se il campo title non esiste, prova senza
-            if (strpos($e->getMessage(), 'title') !== false) {
-                error_log("FileUploadHandler: Trying without title field");
-                $stmt = $this->conn->prepare("
-                    INSERT INTO uploaded_files 
-                    (report_id, project_id, filename, original_filename, file_path, file_size, file_type, uploaded_by, uploaded_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                ");
-                
-                return $stmt->execute([
-                    $report_id,
-                    $project_id,
-                    $safe_filename,
-                    $original_filename,
-                    $file_path,
-                    $file_size,
-                    $file_extension,
-                    $user_id
-                ]);
-            }
-            
+        } catch (Exception $e) {
+            error_log("FileUploadHandler: Errore salvataggio DB: " . $e->getMessage());
             return false;
         }
     }
     
     /**
-     * Check if file type is allowed
-     * 
-     * @param string $filename Filename to check
-     * @return bool True if allowed
+     * Sanitizza nome per filesystem
      */
-    private function isAllowedFileType($filename) {
-        $file_extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        return in_array($file_extension, $this->allowed_extensions);
-    }
-    
-  
-    /**
-     * Sanitize project name for use as folder name
-     * 
-     * @param string $project_name Original project name
-     * @return string Sanitized folder name
-     */
-    private function sanitizeProjectName($project_name) {
-        // Convert to lowercase and replace spaces/special chars with underscores
-        $sanitized = strtolower(trim($project_name));
-        $sanitized = preg_replace('/[^a-z0-9._-]/', '_', $sanitized);
-        $sanitized = preg_replace('/_+/', '_', $sanitized); // Remove multiple underscores
-        $sanitized = trim($sanitized, '_'); // Remove leading/trailing underscores
-        
-        // Ensure it's not empty and has reasonable length
-        if (empty($sanitized)) {
-            $sanitized = 'unknown_project';
-        }
-        
-        if (strlen($sanitized) > 50) {
-            $sanitized = substr($sanitized, 0, 50);
-        }
-        
-        return $sanitized;
+    private function sanitizeName($name) {
+        // Rimuovi caratteri speciali
+        $name = preg_replace('/[^a-zA-Z0-9-_\s.]/', '', $name);
+        // Sostituisci spazi con underscore
+        $name = preg_replace('/\s+/', '_', $name);
+        // Limita lunghezza
+        $name = substr($name, 0, 100);
+        return $name;
     }
     
     /**
-     * Create standardized response array
-     * 
-     * @param bool $success Success status
-     * @param string $message Response message
-     * @return array Response array
+     * Crea response standardizzata
      */
     private function createResponse($success, $message) {
-        return ['success' => $success, 'message' => $message];
-    }
-    
-    /**
-     * Create final response based on upload results
-     * 
-     * @param array $uploaded_files Successfully uploaded files
-     * @param array $errors Error messages
-     * @return array Final response
-     */
-    private function createFinalResponse($uploaded_files, $errors) {
-        $success_count = count($uploaded_files);
-        $error_count = count($errors);
-        
-        if ($success_count > 0 && $error_count === 0) {
-            return $this->createResponse(true, "{$success_count} file(s) uploaded successfully.");
-        } elseif ($success_count > 0 && $error_count > 0) {
-            return $this->createResponse(true, "{$success_count} file(s) uploaded, {$error_count} error(s): " . implode(', ', $errors));
-        } else {
-            return $this->createResponse(false, "Upload failed: " . implode(', ', $errors));
-        }
+        return [
+            'success' => $success,
+            'message' => $message
+        ];
     }
 }
-?>
