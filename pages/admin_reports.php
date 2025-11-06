@@ -52,12 +52,59 @@ if (!$project || !$partner) {
     header('Location: projects.php');
     exit;
 }
+// Recupera tutte le mobilità per questo progetto, organizzate per work package
+$mobilities_stmt = $conn->prepare("
+    SELECT * FROM mobilities 
+    WHERE project_id = ? 
+    ORDER BY work_package_id, name
+");
+$mobilities_stmt->execute([$project_id]);
+$all_mobilities = $mobilities_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Organizza le mobilità per work package ID
+$mobilities_by_wp = [];
+foreach ($all_mobilities as $mobility) {
+    $mobilities_by_wp[$mobility['work_package_id']][] = $mobility;
+}
 // ===================================================================
 // FORM SUBMISSION HANDLING
 // ===================================================================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // ===================================================================
+// GESTIONE ELIMINAZIONE FILE
+// ===================================================================
+
+if (isset($_POST['delete_file_id'])) {
+    $file_id = (int)$_POST['delete_file_id'];
+    
+    // Recupera info sul file
+    $file_stmt = $conn->prepare("SELECT * FROM uploaded_files WHERE id = ? AND project_id = ?");
+    $file_stmt->execute([$file_id, $project_id]);
+    $file_data = $file_stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($file_data) {
+        // Cancella il file fisico
+        $full_file_path = '../' . $file_data['file_path'];
+        if (file_exists($full_file_path)) {
+            unlink($full_file_path);
+        }
+        
+        // Cancella dal database
+        $delete_stmt = $conn->prepare("DELETE FROM uploaded_files WHERE id = ?");
+        if ($delete_stmt->execute([$file_id])) {
+            $_SESSION['success'] = 'File deleted successfully.';
+        } else {
+            $_SESSION['error'] = 'Error deleting file from database.';
+        }
+    } else {
+        $_SESSION['error'] = 'File not found.';
+    }
+    
+    // Redirect per evitare re-submit
+    header("Location: admin_reports.php?project_id=$project_id&partner_id=$partner_id");
+    exit;
+}
     try {
         $conn->beginTransaction();
         
@@ -392,53 +439,86 @@ if (!empty($report_entries_raw)) {
                                                         </div>
                                                     </div>
                                                     <div class="form-group col-md-12 mt-3">
-                                                        <label>Personnel Attachments:</label>
-                                                        <div class="custom-file mb-2">
-                                                            <input type="file" name="letter_of_assignment[<?= $wp['id'] ?>][<?= $entry['id'] ?>]" class="custom-file-input" lang="en">
-                                                            <label class="custom-file-label">Letter of Assignment</label>
-                                                        </div>
-                                                        <div class="file-list">
-                                                            <?php if (isset($uploaded_files[$entry['id']])): ?>
-                                                                <?php foreach ($uploaded_files[$entry['id']] as $file): ?>
-                                                                    <?php if ($file['original_file_type'] === 'letter_of_assignment'): ?>
-                                                                        <p><i class="nc-icon nc-paper"></i> <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><?= htmlspecialchars($file['original_filename']) ?></a> <small>(<?= number_format($file['file_size']/1024, 1) ?> KB)</small></p>
-                                                                    <?php endif; ?>
-                                                                <?php endforeach; ?>
-                                                            <?php else: ?>
-                                                                <small class="text-muted">No files uploaded</small>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        <div class="custom-file mb-2">
-                                                            <input type="file" name="timesheet[<?= $wp['id'] ?>][<?= $entry['id'] ?>]" class="custom-file-input" lang="en">
-                                                            <label class="custom-file-label">Timesheet</label>
-                                                        </div>
-                                                        <div class="file-list">
-                                                            <?php if (isset($uploaded_files[$entry['id']])): ?>
-                                                                <?php foreach ($uploaded_files[$entry['id']] as $file): ?>
-                                                                    <?php if ($file['original_file_type'] === 'timesheet'): ?>
-                                                                        <p><i class="nc-icon nc-paper"></i> <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><?= htmlspecialchars($file['original_filename']) ?></a> <small>(<?= number_format($file['file_size']/1024, 1) ?> KB)</small></p>
-                                                                    <?php endif; ?>
-                                                                <?php endforeach; ?>
-                                                            <?php else: ?>
-                                                                <small class="text-muted">No files uploaded</small>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        <div class="custom-file">
-                                                            <input type="file" name="invoices[<?= $wp['id'] ?>][<?= $entry['id'] ?>]" class="custom-file-input" lang="en">
-                                                            <label class="custom-file-label">Invoices</label>
-                                                        </div>
-                                                        <div class="file-list">
-                                                            <?php if (isset($uploaded_files[$entry['id']])): ?>
-                                                                <?php foreach ($uploaded_files[$entry['id']] as $file): ?>
-                                                                    <?php if ($file['original_file_type'] === 'invoices'): ?>
-                                                                        <p><i class="nc-icon nc-paper"></i> <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><?= htmlspecialchars($file['original_filename']) ?></a> <small>(<?= number_format($file['file_size']/1024, 1) ?> KB)</small></p>
-                                                                    <?php endif; ?>
-                                                                <?php endforeach; ?>
-                                                            <?php else: ?>
-                                                                <small class="text-muted">No files uploaded</small>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
+    <label>Personnel Attachments:</label>
+    
+    <!-- Letter of Assignment -->
+    <div class="custom-file mb-2">
+        <input type="file" name="letter_of_assignment[<?= $wp['id'] ?>][<?= $entry['id'] ?>]" class="custom-file-input" lang="en">
+        <label class="custom-file-label">Letter of Assignment</label>
+    </div>
+    <div class="file-list">
+        <?php if (isset($uploaded_files[$entry['id']])): ?>
+            <?php foreach ($uploaded_files[$entry['id']] as $file): ?>
+                <?php if ($file['original_file_type'] === 'letter_of_assignment'): ?>
+                    <p>
+                        <i class="nc-icon nc-paper"></i> 
+                        <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">
+                            <?= htmlspecialchars($file['original_filename']) ?>
+                        </a> 
+                        <small>(<?= number_format($file['file_size']/1024, 1) ?> KB)</small>
+                        <button type="submit" name="delete_file_id" value="<?= $file['id'] ?>" 
+                                class="btn btn-sm btn-danger btn-link" 
+                                onclick="return confirm('Are you sure you want to delete this file?')">
+                            <i class="nc-icon nc-simple-remove"></i>
+                        </button>
+                    </p>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Timesheet -->
+    <div class="custom-file mb-2">
+        <input type="file" name="timesheet[<?= $wp['id'] ?>][<?= $entry['id'] ?>]" class="custom-file-input" lang="en">
+        <label class="custom-file-label">Timesheet</label>
+    </div>
+    <div class="file-list">
+        <?php if (isset($uploaded_files[$entry['id']])): ?>
+            <?php foreach ($uploaded_files[$entry['id']] as $file): ?>
+                <?php if ($file['original_file_type'] === 'timesheet'): ?>
+                    <p>
+                        <i class="nc-icon nc-paper"></i> 
+                        <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">
+                            <?= htmlspecialchars($file['original_filename']) ?>
+                        </a> 
+                        <small>(<?= number_format($file['file_size']/1024, 1) ?> KB)</small>
+                        <button type="submit" name="delete_file_id" value="<?= $file['id'] ?>" 
+                                class="btn btn-sm btn-danger btn-link" 
+                                onclick="return confirm('Are you sure you want to delete this file?')">
+                            <i class="nc-icon nc-simple-remove"></i>
+                        </button>
+                    </p>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Invoices -->
+    <div class="custom-file">
+        <input type="file" name="invoices[<?= $wp['id'] ?>][<?= $entry['id'] ?>]" class="custom-file-input" lang="en">
+        <label class="custom-file-label">Invoices</label>
+    </div>
+    <div class="file-list">
+        <?php if (isset($uploaded_files[$entry['id']])): ?>
+            <?php foreach ($uploaded_files[$entry['id']] as $file): ?>
+                <?php if ($file['original_file_type'] === 'invoices'): ?>
+                    <p>
+                        <i class="nc-icon nc-paper"></i> 
+                        <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">
+                            <?= htmlspecialchars($file['original_filename']) ?>
+                        </a> 
+                        <small>(<?= number_format($file['file_size']/1024, 1) ?> KB)</small>
+                        <button type="submit" name="delete_file_id" value="<?= $file['id'] ?>" 
+                                class="btn btn-sm btn-danger btn-link" 
+                                onclick="return confirm('Are you sure you want to delete this file?')">
+                            <i class="nc-icon nc-simple-remove"></i>
+                        </button>
+                    </p>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -487,16 +567,27 @@ if (!empty($report_entries_raw)) {
                                                             <label>Mobility Name</label>
                                                             <input type="text" name="mobility_name[<?= $wp['id'] ?>][<?= $mobility['id'] ?>]" class="form-control" value="<?= htmlspecialchars(str_replace('MOBILITY: ', '', $mobility['personnel_name'])) ?>">
                                                         </div>
-                                                        <div class="form-group col-md-4">
+                                                        <div class="form-group col-md-6">
                                                             <label>Mobility Attachments:</label>
                                                             <div class="custom-file mb-2">
                                                                 <input type="file" name="boarding_cards[<?= $wp['id'] ?>][<?= $mobility['id'] ?>]" class="custom-file-input" lang="en">
                                                                 <label class="custom-file-label">Boarding Cards</label>
-                                                            </div><div class="file-list">
+                                                            </div>
+                                                            <div class="file-list">
                                                                 <?php if (isset($uploaded_files[$mobility['id']])): ?>
                                                                     <?php foreach ($uploaded_files[$mobility['id']] as $file): ?>
                                                                         <?php if ($file['file_field'] === 'boarding_cards'): ?>
-                                                                            <p><i class="nc-icon nc-paper"></i> <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><?= htmlspecialchars($file['original_filename']) ?></a></p>
+                                                                            <p>
+                                                                                <i class="nc-icon nc-paper"></i> 
+                                                                                <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">
+                                                                                    <?= htmlspecialchars($file['original_filename']) ?>
+                                                                                </a>
+                                                                                <button type="submit" name="delete_file_id" value="<?= $file['id'] ?>" 
+                                                                                        class="btn btn-sm btn-danger btn-link" 
+                                                                                        onclick="return confirm('Are you sure you want to delete this file?')">
+                                                                                    <i class="nc-icon nc-simple-remove"></i>
+                                                                                </button>
+                                                                            </p>
                                                                         <?php endif; ?>
                                                                     <?php endforeach; ?>
                                                                 <?php endif; ?>
@@ -504,18 +595,26 @@ if (!empty($report_entries_raw)) {
                                                             <div class="custom-file">
                                                                 <input type="file" name="mobility_invoices[<?= $wp['id'] ?>][<?= $mobility['id'] ?>]" class="custom-file-input" lang="en">
                                                                 <label class="custom-file-label">Invoices</label>
-                                                            </div><div class="file-list">
+                                                            </div>
+                                                            <div class="file-list">
                                                                 <?php if (isset($uploaded_files[$mobility['id']])): ?>
                                                                     <?php foreach ($uploaded_files[$mobility['id']] as $file): ?>
                                                                         <?php if ($file['file_field'] === 'mobility_invoices'): ?>
-                                                                            <p><i class="nc-icon nc-paper"></i> <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank"><?= htmlspecialchars($file['original_filename']) ?></a></p>
+                                                                            <p>
+                                                                                <i class="nc-icon nc-paper"></i> 
+                                                                                <a href="../<?= htmlspecialchars($file['file_path']) ?>" target="_blank">
+                                                                                    <?= htmlspecialchars($file['original_filename']) ?>
+                                                                                </a>
+                                                                                <button type="submit" name="delete_file_id" value="<?= $file['id'] ?>" 
+                                                                                        class="btn btn-sm btn-danger btn-link" 
+                                                                                        onclick="return confirm('Are you sure you want to delete this file?')">
+                                                                                    <i class="nc-icon nc-simple-remove"></i>
+                                                                                </button>
+                                                                            </p>
                                                                         <?php endif; ?>
                                                                     <?php endforeach; ?>
                                                                 <?php endif; ?>
                                                             </div>
-                                                        </div>
-                                                        <div class="form-group col-md-2 d-flex align-items-end">
-                                                            <button type="button" class="btn btn-danger btn-round btn-sm remove-mobility">Remove</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -529,11 +628,21 @@ if (!empty($report_entries_raw)) {
                                                     <label>Mobility Name</label>
                                                     <select name="mobility_name[<?= $wp['id'] ?>][]" class="form-control">
                                                         <option value="">Select Mobility</option>
-                                                        <option>Mobility Spain - September 2025</option>
-                                                        <option>Mobility Germany - October 2025</option>
+                                                        <?php if (isset($mobilities_by_wp[$wp['id']])): ?>
+                                                            <?php foreach ($mobilities_by_wp[$wp['id']] as $mobility): ?>
+                                                                <option value="<?= htmlspecialchars($mobility['name']) ?>">
+                                                                    <?= htmlspecialchars($mobility['name']) ?>
+                                                                    <?php if (!empty($mobility['location'])): ?>
+                                                                        - <?= htmlspecialchars($mobility['location']) ?>
+                                                                    <?php endif; ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            <option value="" disabled>No mobilities available for this WP</option>
+                                                        <?php endif; ?>
                                                     </select>
                                                 </div>
-                                                <div class="form-group col-md-4">
+                                                <div class="form-group col-md-6">
                                                     <label>Mobility Attachments:</label>
                                                     <div class="custom-file mb-2">
                                                         <input type="file" name="boarding_cards[<?= $wp['id'] ?>][]" class="custom-file-input" lang="en">
@@ -543,9 +652,6 @@ if (!empty($report_entries_raw)) {
                                                         <input type="file" name="mobility_invoices[<?= $wp['id'] ?>][]" class="custom-file-input" lang="en">
                                                         <label class="custom-file-label">Invoices</label>
                                                     </div><div class="file-list"></div>
-                                                </div>
-                                                <div class="form-group col-md-2 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-danger btn-round btn-sm remove-mobility">Remove</button>
                                                 </div>
                                             </div>
                                         </div>

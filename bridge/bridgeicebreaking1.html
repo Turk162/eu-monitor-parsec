@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridgeland Regions - Collection Results</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 15mm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 4px solid #667eea;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin: 0 0 10px 0;
+            font-size: 2.2em;
+            text-transform: uppercase;
+        }
+        
+        .header .subtitle {
+            color: #764ba2;
+            font-size: 1.1em;
+            font-style: italic;
+        }
+        
+        .regions-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .region-card {
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            background: linear-gradient(to bottom, #f8f9ff, #fff);
+            position: relative;
+        }
+        
+        .region-card.region1 {
+            border-color: #667eea;
+        }
+        
+        .region-card.region2 {
+            border-color: #f093fb;
+        }
+        
+        .region-card.region3 {
+            border-color: #4facfe;
+        }
+        
+        .region-header {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .region1 .region-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        .region2 .region-header {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .region3 .region-header {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        
+        .input-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #f0f0f0;
+        }
+        
+        .input-section.active {
+            animation: highlight 0.5s ease;
+        }
+        
+        @keyframes highlight {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(102, 126, 234, 0); }
+            50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(102, 126, 234, 0); }
+        }
+        
+        .field-label {
+            font-weight: bold;
+            color: #764ba2;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .field-input {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        .field-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .field-display {
+            min-height: 30px;
+            padding: 8px;
+            background: #f8f9ff;
+            border-radius: 6px;
+            margin-top: 5px;
+            font-size: 1em;
+            color: #333;
+            word-wrap: break-word;
+        }
+        
+        .field-display.empty {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .council-members {
+            margin-top: 10px;
+        }
+        
+        .council-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 8px 0;
+        }
+        
+        .council-item.active {
+            animation: highlight 0.5s ease;
+        }
+        
+        .council-number {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+        
+        .council-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .council-input-small {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 0.85em;
+            font-family: inherit;
+        }
+        
+        .council-input-small:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .council-display {
+            padding: 5px;
+            background: #f8f9ff;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .council-display.empty {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9em;
+        }
+        
+        .print-button {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .print-button:active {
+            transform: translateY(0);
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            
+            .field-input, .council-input-small {
+                display: none;
+            }
+        }
+        
+        /* ID Card Styles */
+        .id-card-page {
+            display: none;
+            background: white;
+            padding: 40px;
+            min-height: 100vh;
+        }
+        
+        .id-card-page.active {
+            display: block;
+        }
+        
+        .id-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            margin: 30px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            color: white;
+        }
+        
+        .id-card-header {
+            text-align: center;
+            border-bottom: 3px solid white;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .id-card-header h1 {
+            font-size: 2.5em;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .id-card-header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .id-card-region {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .id-card-region-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .id-card-field {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        .id-card-field-label {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .id-card-field-value {
+            font-size: 1.2em;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+        }
+        
+        .id-card-council {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .id-card-council-member {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .id-card-council-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: white;
+            color: #667eea;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .id-card-council-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+        
+        .id-card-council-role {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .back-button {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 30px;
+            font-size: 1em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        @media print {
+            .back-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Bridgeland Regions - Results 🌈</h1>
+            <div class="subtitle">Kick-off Meeting - Germany, November 6-7, 2025</div>
+        </div>
+        
+        <div class="regions-container">
+            <!-- REGION 1 -->
+            <div class="region-card region1">
+                <div class="region-header">REGION 1</div>
+                
+                <div class="input-section" id="region1-name-section">
+                    <label class="field-label">📛 Region Name</label>
+                    <input type="text" class="field-input" id="region1-name" placeholder="Enter region name...">
+                    <div class="field-display empty" id="region1-name-display">Not yet entered</div>
+                </div>
+                
+                <div class="input-section" id="region1-claim-section">
+                    <label class="field-label">💬 Claim</label>
+                    <input type="text" class="field-input" id="region1-claim" placeholder="Enter claim...">
+                    <div class="field-display empty" id="region1-claim-display">Not yet entered</div>
+                </div>
+                
+                <div class="input-section">
+                    <label class="field-label">✨ Council Members</label>
+                    <div class="council-members">
+                        <div class="council-item" id="region1-council1-section">
+                            <span class="council-number">1</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region1-council1-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region1-council1-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region1-council1-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region1-council2-section">
+                            <span class="council-number">2</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region1-council2-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region1-council2-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region1-council2-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region1-council3-section">
+                            <span class="council-number">3</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region1-council3-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region1-council3-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region1-council3-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region1-council4-section">
+                            <span class="council-number">4</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region1-council4-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region1-council4-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region1-council4-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region1-council5-section">
+                            <span class="council-number">5</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region1-council5-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region1-council5-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region1-council5-display">Not yet entered</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- REGION 2 -->
+            <div class="region-card region2">
+                <div class="region-header">REGION 2</div>
+                
+                <div class="input-section" id="region2-name-section">
+                    <label class="field-label">📛 Region Name</label>
+                    <input type="text" class="field-input" id="region2-name" placeholder="Enter region name...">
+                    <div class="field-display empty" id="region2-name-display">Not yet entered</div>
+                </div>
+                
+                <div class="input-section" id="region2-claim-section">
+                    <label class="field-label">💬 Claim</label>
+                    <input type="text" class="field-input" id="region2-claim" placeholder="Enter claim...">
+                    <div class="field-display empty" id="region2-claim-display">Not yet entered</div>
+                </div>
+                
+                <div class="input-section">
+                    <label class="field-label">✨ Council Members</label>
+                    <div class="council-members">
+                        <div class="council-item" id="region2-council1-section">
+                            <span class="council-number">1</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region2-council1-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region2-council1-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region2-council1-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region2-council2-section">
+                            <span class="council-number">2</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region2-council2-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region2-council2-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region2-council2-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region2-council3-section">
+                            <span class="council-number">3</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region2-council3-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region2-council3-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region2-council3-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region2-council4-section">
+                            <span class="council-number">4</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region2-council4-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region2-council4-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region2-council4-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region2-council5-section">
+                            <span class="council-number">5</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region2-council5-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region2-council5-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region2-council5-display">Not yet entered</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- REGION 3 -->
+            <div class="region-card region3">
+                <div class="region-header">REGION 3</div>
+                
+                <div class="input-section" id="region3-name-section">
+                    <label class="field-label">📛 Region Name</label>
+                    <input type="text" class="field-input" id="region3-name" placeholder="Enter region name...">
+                    <div class="field-display empty" id="region3-name-display">Not yet entered</div>
+                </div>
+                
+                <div class="input-section" id="region3-claim-section">
+                    <label class="field-label">💬 Claim</label>
+                    <input type="text" class="field-input" id="region3-claim" placeholder="Enter claim...">
+                    <div class="field-display empty" id="region3-claim-display">Not yet entered</div>
+                </div>
+                
+                <div class="input-section">
+                    <label class="field-label">✨ Council Members</label>
+                    <div class="council-members">
+                        <div class="council-item" id="region3-council1-section">
+                            <span class="council-number">1</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region3-council1-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region3-council1-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region3-council1-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region3-council2-section">
+                            <span class="council-number">2</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region3-council2-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region3-council2-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region3-council2-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region3-council3-section">
+                            <span class="council-number">3</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region3-council3-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region3-council3-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region3-council3-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region3-council4-section">
+                            <span class="council-number">4</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region3-council4-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region3-council4-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region3-council4-display">Not yet entered</div>
+                        </div>
+                        
+                        <div class="council-item" id="region3-council5-section">
+                            <span class="council-number">5</span>
+                            <div class="council-grid">
+                                <input type="text" class="council-input-small" id="region3-council5-name" placeholder="Name">
+                                <input type="text" class="council-input-small" id="region3-council5-role" placeholder="Role">
+                            </div>
+                            <div class="council-display empty" id="region3-council5-display">Not yet entered</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <strong>BRIDGE Project</strong> - Building Resilience through Interactive Development of Gaming and Education<br>
+            Ice Breaker Activity Results
+            <br>
+            <button class="print-button" onclick="generateIDCard()">🌍 Generate Bridgeland ID Card</button>
+        </div>
+    </div>
+    
+    <!-- ID Card Page -->
+    <div class="id-card-page" id="id-card-page">
+        <button class="back-button" onclick="goBack()">← Back to Collection</button>
+        <div id="id-cards-container"></div>
+        <button class="back-button" onclick="window.print()">🖨️ Print ID Cards</button>
+    </div>
+    
+    <script>
+        // Setup simple text field
+        function setupTextField(inputId, displayId, sectionId) {
+            const input = document.getElementById(inputId);
+            const display = document.getElementById(displayId);
+            const section = document.getElementById(sectionId);
+            
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    display.textContent = this.value;
+                    display.classList.remove('empty');
+                    section.classList.add('active');
+                    setTimeout(() => section.classList.remove('active'), 500);
+                } else {
+                    display.textContent = 'Not yet entered';
+                    display.classList.add('empty');
+                }
+            });
+        }
+        
+        // Setup council member field
+        function setupCouncilField(region, number) {
+            const nameInput = document.getElementById(`${region}-council${number}-name`);
+            const roleInput = document.getElementById(`${region}-council${number}-role`);
+            const display = document.getElementById(`${region}-council${number}-display`);
+            const section = document.getElementById(`${region}-council${number}-section`);
+            
+            function updateDisplay() {
+                const name = nameInput.value.trim();
+                const role = roleInput.value.trim();
+                
+                if (name || role) {
+                    const parts = [];
+                    if (name) parts.push(`<strong>${name}</strong>`);
+                    if (role) parts.push(role);
+                    display.innerHTML = parts.join(' - ');
+                    display.classList.remove('empty');
+                    section.classList.add('active');
+                    setTimeout(() => section.classList.remove('active'), 500);
+                } else {
+                    display.textContent = 'Not yet entered';
+                    display.classList.add('empty');
+                }
+            }
+            
+            nameInput.addEventListener('input', updateDisplay);
+            roleInput.addEventListener('input', updateDisplay);
+        }
+        
+        // Initialize all fields for all three regions
+        ['region1', 'region2', 'region3'].forEach(region => {
+            setupTextField(`${region}-name`, `${region}-name-display`, `${region}-name-section`);
+            setupTextField(`${region}-claim`, `${region}-claim-display`, `${region}-claim-section`);
+            
+            for (let i = 1; i <= 5; i++) {
+                setupCouncilField(region, i);
+            }
+        });
+        
+        // Generate ID Card function
+        function generateIDCard() {
+            const idCardsContainer = document.getElementById('id-cards-container');
+            idCardsContainer.innerHTML = '';
+            
+            ['region1', 'region2', 'region3'].forEach((region, index) => {
+                const regionName = document.getElementById(`${region}-name`).value.trim() || 'Unnamed Region';
+                const claim = document.getElementById(`${region}-claim`).value.trim() || 'No claim specified';
+                
+                // Get council members
+                const councilMembers = [];
+                for (let i = 1; i <= 5; i++) {
+                    const name = document.getElementById(`${region}-council${i}-name`).value.trim();
+                    const role = document.getElementById(`${region}-council${i}-role`).value.trim();
+                    if (name || role) {
+                        councilMembers.push({ number: i, name: name || 'N/A', role: role || 'N/A' });
+                    }
+                }
+                
+                // Create ID card HTML
+                const councilHTML = councilMembers.map(member => `
+                    <div class="id-card-council-member">
+                        <div class="id-card-council-number">${member.number}</div>
+                        <div class="id-card-council-name">${member.name}</div>
+                        <div class="id-card-council-role">${member.role}</div>
+                    </div>
+                `).join('');
+                
+                const idCard = `
+                    <div class="id-card">
+                        <div class="id-card-header">
+                            <h1>🌍 Bridgeland ID Card 🌈</h1>
+                            <div class="subtitle">Region ${index + 1} - Official Identity</div>
+                        </div>
+                        
+                        <div class="id-card-region">
+                            <div class="id-card-region-title">${regionName}</div>
+                            
+                            <div class="id-card-field">
+                                <div class="id-card-field-label">💬 Claim</div>
+                                <div class="id-card-field-value">${claim}</div>
+                            </div>
+                            
+                            <div class="id-card-field">
+                                <div class="id-card-field-label">✨ Council Members</div>
+                                <div class="id-card-council">
+                                    ${councilHTML || '<div style="text-align: center; opacity: 0.7;">No council members specified</div>'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                            <strong>BRIDGE Project</strong><br>
+                            Building Resilience through Interactive Development of Gaming and Education<br>
+                            Kick-off Meeting - Germany, November 6-7, 2025
+                        </div>
+                    </div>
+                `;
+                
+                idCardsContainer.innerHTML += idCard;
+            });
+            
+            // Show ID card page
+            document.querySelector('.container').style.display = 'none';
+            document.getElementById('id-card-page').classList.add('active');
+        }
+        
+        // Go back to collection page
+        function goBack() {
+            document.querySelector('.container').style.display = 'block';
+            document.getElementById('id-card-page').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

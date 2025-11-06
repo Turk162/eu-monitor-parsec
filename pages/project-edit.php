@@ -291,7 +291,30 @@ case 'update_work_package':
                 }
                 break;
 
+            case 'add_mobility':
+    $work_package_id = (int)$_POST['work_package_id'];
+    $name = trim($_POST['name']);
+    $location = trim($_POST['location'] ?? '');
+    
+    if ($work_package_id && $name) {
+        // Recupera project_id dal work_package
+        $wp_stmt = $conn->prepare("SELECT project_id FROM work_packages WHERE id = ?");
+        $wp_stmt->execute([$work_package_id]);
+        $project_id = $wp_stmt->fetchColumn();
+        
+        if ($project_id) {
+            $insert_stmt = $conn->prepare("
+                INSERT INTO mobilities (project_id, work_package_id, name, location) 
+                VALUES (?, ?, ?, ?)
+            ");
+            $insert_stmt->execute([$project_id, $work_package_id, $name, $location]);
             
+            $_SESSION['success'] = 'Mobility added successfully';
+        }
+    }
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $project_id . '#workpackages');
+    exit;
+    break;
 
             case 'add_milestone':
                 $name = sanitizeInput($_POST['name']);
@@ -521,7 +544,7 @@ $wp_stmt = $conn->prepare("
 $wp_stmt->execute([$project_id]);
 $work_packages = $wp_stmt->fetchAll();
 
-// For each work package, get its partner budgets and activities
+// Prepare statements for partner budgets, activities and mobilities
 $partner_budgets_stmt = $conn->prepare("
     SELECT wpb.*, p.name as partner_name, p.country
     FROM work_package_partner_budgets wpb
@@ -538,15 +561,27 @@ $activities_stmt = $conn->prepare("
     ORDER BY a.activity_number
 ");
 
+$mobilities_stmt = $conn->prepare("
+    SELECT * FROM mobilities 
+    WHERE work_package_id = ? 
+    ORDER BY created_at DESC
+");
+
+// Loop through work packages and get their related data
 foreach ($work_packages as $key => $wp) {
     // Get partner budgets for this WP
     $partner_budgets_stmt->execute([$wp['id']]);
     $work_packages[$key]['partner_budgets'] = $partner_budgets_stmt->fetchAll();
     
-    // Get activities for this WP (NO BUDGET FIELD)
+    // Get activities for this WP
     $activities_stmt->execute([$wp['id']]);
     $work_packages[$key]['activities'] = $activities_stmt->fetchAll();
+    
+    // Get mobilities for this WP
+    $mobilities_stmt->execute([$wp['id']]);
+    $work_packages[$key]['mobilities'] = $mobilities_stmt->fetchAll();
 }
+
 // Get project milestones
 $milestones_stmt = $conn->prepare("
     SELECT m.*, wp.wp_number, wp.name as wp_name
@@ -1085,6 +1120,31 @@ window.projectData = {
                             <?php endif; ?>
                             <button class="btn btn-sm btn-primary btn-add-activity" data-wp-id="<?= $wp['id'] ?>">+ Add Activity</button>
                         </div>
+
+                        <!-- Mobilities Section -->
+                        <div class="mobilities-section mt-3">
+                            <h6>Mobilities</h6>
+                            <?php if (empty($wp['mobilities'])) : ?>
+                                <p class="text-muted">No mobilities for this work package yet.</p>
+                            <?php else: ?>
+                                <table class="table table-sm">
+                                    <tbody>
+                                    <?php foreach ($wp['mobilities'] as $mobility): ?>
+                                        <tr>
+                                            <td><i class="nc-icon nc-pin-3"></i></td>
+                                            <td><?= htmlspecialchars($mobility['name']) ?></td>
+                                            <td><?= htmlspecialchars($mobility['location'] ?? 'N/A') ?></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-info btn-edit-mobility" data-mobility-id="<?= $mobility['id'] ?>">Edit</button>
+                                                <button class="btn btn-sm btn-danger btn-delete-mobility" data-mobility-id="<?= $mobility['id'] ?>">Delete</button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            <?php endif; ?>
+                            <button class="btn btn-sm btn-success btn-add-mobility" data-wp-id="<?= $wp['id'] ?>">+ Add Mobility</button>
+                        </div>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -1453,6 +1513,44 @@ window.projectData = {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Update Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Mobility Modal -->
+<div class="modal fade" id="addMobilityModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="add_mobility">
+                <input type="hidden" id="add_mobility_wp_id" name="work_package_id">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Mobility</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label>Mobility Name *</label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g., Mobility Spain - September 2025" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" name="location" class="form-control" placeholder="e.g., Madrid, Spain">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Mobility</button>
                 </div>
             </form>
         </div>

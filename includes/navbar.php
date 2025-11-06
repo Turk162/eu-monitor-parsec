@@ -36,7 +36,7 @@ $page_titles = [
     'manage-partners-budget.php' => 'Manage Partners Budget',
     'project-files.php' => 'Project Files',
     'edit-project-files.php' => 'Edit Project Files',
-    'admin-reports.php' => 'Admin Reports',
+    'admin_reports.php' => 'Admin Reports',
     'partners.php' => 'Partners',
     'add-partner.php' => 'Add Partner',
     'edit-partner.php' => 'Edit Partner',
@@ -47,6 +47,7 @@ $page_titles = [
     'add-risk.php' => 'Add Risk',
     'edit-risk.php' => 'Edit Risk',
     'change-password.php' => 'Change Password'
+    
     
 ];
 

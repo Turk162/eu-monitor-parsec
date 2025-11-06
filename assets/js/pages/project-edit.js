@@ -8,11 +8,13 @@
  *  - Gestione partners
  *  - Work packages
  *  - Activities
+ *  - Mobilities
  *  - Milestones
  *  - Upload file
  *  - Validazione form
  *  - Google Groups integration
  * =================================================================== */
+
 
 $(document).ready(function() {
 
@@ -20,7 +22,7 @@ $(document).ready(function() {
     // AUTO-SAVE FUNCTIONALITY
     // Salva automaticamente i campi dopo 2 secondi di inattività
     // ===================================================================
-    
+   console.log('project-edit.js caricato!'); 
     let autoSaveTimeout;
     
     $('.auto-save').on('input', function() {
@@ -258,6 +260,17 @@ $(document).ready(function() {
             submitPostAction('delete_activity', { activity_id: activityId });
         }
     });
+
+
+    /**
+ * Apre modal per aggiungere mobility
+ */
+$(document).on('click', '.btn-add-mobility', function() {
+    const wpId = $(this).data('wp-id');
+    $('#add_mobility_wp_id').val(wpId);
+    $('#addMobilityModal').modal('show');
+});
+
 
     // ===================================================================
     // GESTIONE MILESTONES

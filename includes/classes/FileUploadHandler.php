@@ -11,7 +11,7 @@
  * - /uploads/progetto/various/filename
  * 
  * @package EU Project Manager
- * @version 3.0 - Local Filesystem
+ * @version 3.1 - Con supporto work_package_id e activity_id
  */
 
 class FileUploadHandler {
@@ -164,6 +164,22 @@ class FileUploadHandler {
                 return $this->createResponse(false, 'Impossibile creare directory upload.');
             }
             
+            // Prepara informazioni aggiuntive
+            $additionalInfo = [
+                'project_id' => $project_id, 
+                'project_name' => $project['name'], 
+                'activity_id' => $activity_id,
+                'work_package_id' => null
+            ];
+            
+            // Per deliverable, recupera work_package_id dall'activity_id se presente
+            if ($category === 'deliverable' && $activity_id) {
+                $stmt = $this->conn->prepare("SELECT work_package_id FROM activities WHERE id = ?");
+                $stmt->execute([$activity_id]);
+                $work_package_id_from_activity = $stmt->fetchColumn();
+                $additionalInfo['work_package_id'] = $work_package_id_from_activity;
+            }
+            
             // Processa file
             return $this->processFilesToLocal(
                 $files,
@@ -171,7 +187,7 @@ class FileUploadHandler {
                 $uploadDir,
                 null,
                 $user_id,
-                ['project_id' => $project_id, 'project_name' => $project['name'], 'activity_id' => $activity_id],
+                $additionalInfo,
                 $category
             );
             
@@ -362,6 +378,10 @@ class FileUploadHandler {
                         // Path relativo per il database
                         $relativePath = str_replace($this->base_upload_dir, 'uploads/', $filePath);
                         
+                        // Estrai work_package_id e activity_id da info (se presenti)
+                        $work_package_id = isset($info['work_package_id']) ? $info['work_package_id'] : null;
+                        $activity_id = isset($info['activity_id']) ? $info['activity_id'] : null;
+                        
                         // Salva riferimento nel database
                         $dbInsert = $this->saveFileToDatabase(
                             $report_id,
@@ -373,7 +393,9 @@ class FileUploadHandler {
                             $relativePath,
                             $category,
                             $files['size'][$i],
-                            $files['type'][$i]
+                            $files['type'][$i],
+                            $work_package_id,
+                            $activity_id
                         );
                         
                         if ($dbInsert) {
@@ -436,13 +458,29 @@ class FileUploadHandler {
     
     /**
      * Salva riferimento file nel database
+     * 
+     * @param int|null $report_id ID report (opzionale)
+     * @param int $user_id ID utente
+     * @param int $project_id ID progetto
+     * @param string $filename Nome file sanitizzato
+     * @param string $originalName Nome file originale
+     * @param string $title Titolo file (opzionale)
+     * @param string $filePath Path relativo file
+     * @param string $category Categoria file
+     * @param int $fileSize Dimensione file
+     * @param string $mimeType MIME type
+     * @param int|null $work_package_id ID work package (opzionale)
+     * @param int|null $activity_id ID activity (opzionale)
+     * @return bool Success
      */
-    private function saveFileToDatabase($report_id, $user_id, $project_id, $filename, $originalName, $title, $filePath, $category, $fileSize, $mimeType) {
+    private function saveFileToDatabase($report_id, $user_id, $project_id, $filename, $originalName, $title, $filePath, $category, $fileSize, $mimeType, $work_package_id = null, $activity_id = null) {
         try {
             $stmt = $this->conn->prepare("
                 INSERT INTO uploaded_files (
                     report_id,
                     project_id,
+                    work_package_id,
+                    activity_id,
                     uploaded_by,
                     filename,
                     original_filename,
@@ -452,12 +490,14 @@ class FileUploadHandler {
                     file_size,
                     file_type,
                     uploaded_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             
             return $stmt->execute([
                 $report_id,
                 $project_id,
+                $work_package_id,
+                $activity_id,
                 $user_id,
                 $filename,
                 $originalName,
@@ -485,6 +525,105 @@ class FileUploadHandler {
         // Limita lunghezza
         $name = substr($name, 0, 100);
         return $name;
+    }
+    
+    /**
+     * Elimina un file dal filesystem e dal database
+     * 
+     * @param int $file_id ID del file da eliminare
+     * @param int $user_id ID dell'utente che richiede l'eliminazione
+     * @return array Response con success e message
+     */
+    public function deleteFile($file_id, $user_id) {
+        try {
+            // Recupera informazioni file dal database
+            $stmt = $this->conn->prepare("
+                SELECT 
+                    uf.*,
+                    p.name as project_name,
+                    u.role as user_role,
+                    u.partner_id as user_partner_id
+                FROM uploaded_files uf
+                JOIN projects p ON uf.project_id = p.id
+                JOIN users u ON u.id = ?
+                WHERE uf.id = ?
+            ");
+            $stmt->execute([$user_id, $file_id]);
+            $file = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$file) {
+                return $this->createResponse(false, 'File non trovato.');
+            }
+            
+            // Verifica permessi di eliminazione
+            $canDelete = $this->checkDeletePermission($file, $user_id);
+            if (!$canDelete['allowed']) {
+                return $this->createResponse(false, $canDelete['message']);
+            }
+            
+            // Costruisci path completo del file
+            $fullPath = $this->base_upload_dir . str_replace('uploads/', '', $file['file_path']);
+            
+            error_log("FileUploadHandler: Tentativo eliminazione file: $fullPath");
+            
+            // Elimina file dal filesystem
+            $fileDeleted = false;
+            if (file_exists($fullPath)) {
+                $fileDeleted = @unlink($fullPath);
+                if (!$fileDeleted) {
+                    error_log("FileUploadHandler: Impossibile eliminare file fisico: $fullPath");
+                }
+            } else {
+                error_log("FileUploadHandler: File fisico non trovato: $fullPath");
+                $fileDeleted = true; // Considera ok se il file non esiste già
+            }
+            
+            // Elimina record dal database
+            $stmt = $this->conn->prepare("DELETE FROM uploaded_files WHERE id = ?");
+            $dbDeleted = $stmt->execute([$file_id]);
+            
+            if ($dbDeleted) {
+                if ($fileDeleted) {
+                    return $this->createResponse(true, 'File eliminato con successo.');
+                } else {
+                    return $this->createResponse(true, 'Record eliminato dal database, ma file fisico non trovato.');
+                }
+            } else {
+                return $this->createResponse(false, 'Errore durante eliminazione dal database.');
+            }
+            
+        } catch (Exception $e) {
+            error_log("FileUploadHandler Delete Error: " . $e->getMessage());
+            return $this->createResponse(false, 'Errore durante eliminazione: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Verifica se l'utente ha i permessi per eliminare il file
+     * 
+     * @param array $file Dati del file
+     * @param int $user_id ID utente
+     * @return array ['allowed' => bool, 'message' => string]
+     */
+    private function checkDeletePermission($file, $user_id) {
+        $user_role = $file['user_role'];
+        $uploaded_by = $file['uploaded_by'];
+        
+        // Super admin e admin possono eliminare qualsiasi file
+        if ($user_role === 'super_admin' || $user_role === 'admin' || $user_role === 'coordinator') {
+            return ['allowed' => true, 'message' => ''];
+        }
+        
+        // Partner può eliminare solo i propri file
+        if ($user_role === 'partner') {
+            if ($uploaded_by == $user_id) {
+                return ['allowed' => true, 'message' => ''];
+            } else {
+                return ['allowed' => false, 'message' => 'Non hai i permessi per eliminare questo file.'];
+            }
+        }
+        
+        return ['allowed' => false, 'message' => 'Ruolo non autorizzato.'];
     }
     
     /**

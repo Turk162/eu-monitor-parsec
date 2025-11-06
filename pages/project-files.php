@@ -4,6 +4,8 @@
  * 
  * Pagina per visualizzare e gestire tutti i file caricati per un progetto
  * Accessibile da project details
+ * 
+ * @version 3.1 - Aggiunto delete file e tracciamento WP/Activity
  */
 
 // Page configuration
@@ -66,7 +68,10 @@ if ($user_role === 'partner') {
     }
 }
 
-// Recupera tutti i file del progetto
+// Determina se l'utente può eliminare file
+$can_delete = in_array($user_role, ['super_admin', 'admin', 'coordinator']);
+
+// Recupera tutti i file del progetto con informazioni complete su WP e Activity
 $stmt = $conn->prepare("
     SELECT 
         uf.id,
@@ -78,17 +83,25 @@ $stmt = $conn->prepare("
         uf.file_size,
         uf.file_type,
         uf.uploaded_at,
+        uf.uploaded_by,
         uf.report_id,
+        uf.work_package_id,
+        uf.activity_id,
         p.name as partner_name,
-        ar.activity_id,
+        u.full_name as uploaded_by_name,
+        ar.activity_id as report_activity_id,
         a.activity_number,
-        wp.wp_number
+        wp.wp_number,
+        COALESCE(wp_direct.wp_number, wp.wp_number) as display_wp_number,
+        COALESCE(a_direct.activity_number, a.activity_number) as display_activity_number
     FROM uploaded_files uf
     LEFT JOIN users u ON uf.uploaded_by = u.id
     LEFT JOIN partners p ON u.partner_id = p.id
     LEFT JOIN activity_reports ar ON uf.report_id = ar.id
     LEFT JOIN activities a ON ar.activity_id = a.id
     LEFT JOIN work_packages wp ON a.work_package_id = wp.id
+    LEFT JOIN work_packages wp_direct ON uf.work_package_id = wp_direct.id
+    LEFT JOIN activities a_direct ON uf.activity_id = a_direct.id
     WHERE uf.project_id = ?
     ORDER BY uf.uploaded_at DESC
 ");
@@ -149,9 +162,9 @@ include '../includes/header.php';
                                         </h4>
                                     </div>
                                     <div class="col-md-4 text-right">
-                                        <button class="btn btn-primary btn-sm" id="addNewFileBtn">
-                                            <i class="nc-icon nc-simple-add"></i> Add New File
-                                        </button>
+                                        <a href="project-files-upload.php?project_id=<?php echo $project_id; ?>" class="btn btn-primary btn-sm">
+                                            <i class="nc-icon nc-simple-add"></i> Upload New Files
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -274,7 +287,7 @@ include '../includes/header.php';
                                                 <option value="">All Work Packages</option>
                                                 <?php
                                                 // Recupera WP unici
-                                                $unique_wps = array_unique(array_filter(array_column($files, 'wp_number')));
+                                                $unique_wps = array_unique(array_filter(array_column($files, 'display_wp_number')));
                                                 sort($unique_wps);
                                                 foreach ($unique_wps as $wp) {
                                                     echo "<option value='" . htmlspecialchars($wp) . "'>" . htmlspecialchars($wp) . "</option>";
@@ -315,7 +328,10 @@ include '../includes/header.php';
                                             <?php if (empty($files)): ?>
                                                 <tr>
                                                     <td colspan="8" class="text-center">
-                                                        <p class="text-muted">No files uploaded yet</p>
+                                                        <p class="text-muted">
+                                                            <i class="nc-icon nc-folder-16"></i><br>
+                                                            No files uploaded yet
+                                                        </p>
                                                     </td>
                                                 </tr>
                                             <?php else: ?>
@@ -323,7 +339,7 @@ include '../includes/header.php';
                                                     <tr class="file-row" 
                                                         data-filename="<?php echo htmlspecialchars($file['original_filename']); ?>"
                                                         data-category="<?php echo htmlspecialchars($file['file_category']); ?>"
-                                                        data-wp="<?php echo htmlspecialchars($file['wp_number'] ?? ''); ?>">
+                                                        data-wp="<?php echo htmlspecialchars($file['display_wp_number'] ?? ''); ?>">
                                                         <td>
                                                             <i class="nc-icon nc-single-copy-04"></i>
                                                             <strong><?php echo htmlspecialchars($file['original_filename']); ?></strong>
@@ -346,15 +362,26 @@ include '../includes/header.php';
                                                                 <?php echo ucfirst(str_replace('_', ' ', $file['file_category'])); ?>
                                                             </span>
                                                         </td>
-                                                        <td><?php echo $file['wp_number'] ? htmlspecialchars($file['wp_number']) : '-'; ?></td>
-                                                        <td><?php echo $file['activity_number'] ? htmlspecialchars($file['activity_number']) : '-'; ?></td>
-                                                        <td><?php echo number_format($file['file_size'] / 1024, 2); ?> KB</td>
-                                                        <td><?php echo htmlspecialchars($file['partner_name'] ?? 'N/A'); ?></td>
+                                                        <td><?php echo $file['display_wp_number'] ? htmlspecialchars($file['display_wp_number']) : '<span class="text-muted">-</span>'; ?></td>
+                                                        <td><?php echo $file['display_activity_number'] ? htmlspecialchars($file['display_activity_number']) : '<span class="text-muted">-</span>'; ?></td>
+                                                        <td>
+                                                            <?php 
+                                                            $size = $file['file_size'];
+                                                            if ($size >= 1048576) {
+                                                                echo number_format($size / 1048576, 2) . ' MB';
+                                                            } elseif ($size >= 1024) {
+                                                                echo number_format($size / 1024, 2) . ' KB';
+                                                            } else {
+                                                                echo $size . ' bytes';
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($file['uploaded_by_name'] ?? $file['partner_name'] ?? 'N/A'); ?></td>
                                                         <td><?php echo date('d/m/Y H:i', strtotime($file['uploaded_at'])); ?></td>
                                                         <td class="text-right">
                                                             <a href="../<?php echo htmlspecialchars($file['file_path']); ?>" 
                                                                class="btn btn-sm btn-info" 
-                                                               download
+                                                               target="_blank"
                                                                title="Download">
                                                                 <i class="nc-icon nc-cloud-download-93"></i>
                                                             </a>
@@ -364,6 +391,20 @@ include '../includes/header.php';
                                                                    title="View Report">
                                                                     <i class="nc-icon nc-paper"></i>
                                                                 </a>
+                                                            <?php endif; ?>
+                                                            
+                                                            <?php 
+                                                            // Partner può eliminare solo i propri file
+                                                            $can_delete_this_file = $can_delete || ($user_role === 'partner' && $file['uploaded_by'] == $user_id);
+                                                            if ($can_delete_this_file): 
+                                                            ?>
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-danger delete-file-btn"
+                                                                        data-file-id="<?php echo $file['id']; ?>"
+                                                                        data-file-name="<?php echo htmlspecialchars($file['original_filename']); ?>"
+                                                                        title="Delete">
+                                                                    <i class="nc-icon nc-simple-remove"></i>
+                                                                </button>
                                                             <?php endif; ?>
                                                         </td>
                                                     </tr>
@@ -386,7 +427,11 @@ include '../includes/header.php';
 <!-- Hidden data for JS -->
 <script>
     const projectId = <?php echo $project_id; ?>;
+    const userCanDelete = <?php echo $can_delete ? 'true' : 'false'; ?>;
 </script>
+
+<!-- Include delete file JavaScript -->
+<script src="../assets/js/file-delete.js"></script>
 
 </body>
 </html>
