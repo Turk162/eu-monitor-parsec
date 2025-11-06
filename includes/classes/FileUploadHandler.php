@@ -28,7 +28,7 @@ class FileUploadHandler {
      */
     public function __construct($conn) {
         $this->conn = $conn;
-        $this->base_upload_dir = __DIR__ . '/../../uploads/';
+        $this->base_upload_dir = __DIR__ . '/../../uploads';
         $this->max_file_size = 10485760; // 10MB in bytes
         $this->allowed_extensions = ['pdf', 'doc', 'docx', 'xlsx', 'xls', 'ppt', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'gif'];
     }
@@ -121,81 +121,116 @@ class FileUploadHandler {
     }
     
     /**
-     * Upload file generici (documents, deliverables, various)
-     * 
-     * @param array $files Array $_FILES
-     * @param string $category Categoria: document, deliverable, various
-     * @param int $project_id ID progetto
-     * @param int $wp_number Numero WP (solo per deliverables)
-     * @param int $activity_id ID attività (solo per deliverables)
-     * @param int $user_id ID utente
-     * @return array Response
-     */
-    public function handleGenericFiles($files, $category, $project_id, $wp_number = null, $activity_id = null, $user_id) {
-        try {
-            // Recupera nome progetto
-            $stmt = $this->conn->prepare("SELECT name FROM projects WHERE id = ?");
-            $stmt->execute([$project_id]);
-            $project = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$project) {
-                return $this->createResponse(false, 'Progetto non trovato.');
-            }
-            
-            // Crea directory in base alla categoria
-            switch ($category) {
-                case 'document':
-                    $uploadDir = $this->createDocumentDirectory($project['name']);
-                    break;
-                case 'deliverable':
-                    if (!$wp_number) {
-                        return $this->createResponse(false, 'Work Package richiesto per deliverable.');
-                    }
-                    $uploadDir = $this->createDeliverableDirectory($project['name'], $wp_number);
-                    break;
-                case 'various':
-                    $uploadDir = $this->createVariousDirectory($project['name']);
-                    break;
-                default:
-                    return $this->createResponse(false, 'Categoria file non valida.');
-            }
-            
-            if (!$uploadDir) {
-                return $this->createResponse(false, 'Impossibile creare directory upload.');
-            }
-            
-            // Prepara informazioni aggiuntive
-            $additionalInfo = [
-                'project_id' => $project_id, 
-                'project_name' => $project['name'], 
-                'activity_id' => $activity_id,
-                'work_package_id' => null
-            ];
-            
-            // Per deliverable, recupera work_package_id dall'activity_id se presente
-            if ($category === 'deliverable' && $activity_id) {
-                $stmt = $this->conn->prepare("SELECT work_package_id FROM activities WHERE id = ?");
-                $stmt->execute([$activity_id]);
-                $work_package_id_from_activity = $stmt->fetchColumn();
-                $additionalInfo['work_package_id'] = $work_package_id_from_activity;
-            }
-            
-            // Processa file
-            return $this->processFilesToLocal(
-                $files,
-                [],
-                $uploadDir,
-                null,
-                $user_id,
-                $additionalInfo,
-                $category
-            );
-            
-        } catch (Exception $e) {
-            error_log("FileUploadHandler Error: " . $e->getMessage());
-            return $this->createResponse(false, 'Errore durante upload file: ' . $e->getMessage());
+ * Upload file generici (deliverable, document, presentation, template, various)
+ * 
+ * @param array $files Array $_FILES
+ * @param string $category Categoria: deliverable, document, presentation, template, various
+ * @param int $project_id ID progetto
+ * @param int $wp_number Numero WP (opzionale)
+ * @param int $activity_id ID attività (opzionale)
+ * @param int $user_id ID utente
+ * @return array Response
+ */
+public function handleGenericFiles($files, $category, $project_id, $user_id, $wp_number = null, $activity_id = null) {
+    try {
+        // Recupera nome progetto
+        $stmt = $this->conn->prepare("SELECT name FROM projects WHERE id = ?");
+        $stmt->execute([$project_id]);
+        $project = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$project) {
+            return $this->createResponse(false, 'Progetto non trovato.');
+        }
+
+        // Valida categoria
+        $validCategories = ['deliverable', 'document', 'presentation', 'template', 'various'];
+        if (!in_array($category, $validCategories)) {
+            return $this->createResponse(false, 'Categoria file non valida.');
+        }
+
+        // NORMALIZZA I PARAMETRI: converte stringhe vuote in NULL
+        $wp_number = ($wp_number === '' || $wp_number === null) ? null : (int)$wp_number;
+        $activity_id = ($activity_id === '' || $activity_id === null) ? null : (int)$activity_id;
+
+        // Crea directory in base alla categoria e WP (se specificato)
+        $uploadDir = $this->createCategoryDirectory($project['name'], $category, $wp_number);
+        
+        if (!$uploadDir) {
+            return $this->createResponse(false, 'Impossibile creare directory upload.');
+        }
+
+        // Prepara informazioni aggiuntive
+        $additionalInfo = [
+            'project_id' => $project_id, 
+            'project_name' => $project['name'], 
+            'activity_id' => $activity_id,  // Ora è NULL o int
+            'work_package_id' => null
+        ];
+
+        // Recupera work_package_id dall'activity_id se presente
+        if ($activity_id !== null) {
+            $stmt = $this->conn->prepare("SELECT work_package_id FROM activities WHERE id = ?");
+            $stmt->execute([$activity_id]);
+            $work_package_id_from_activity = $stmt->fetchColumn();
+            $additionalInfo['work_package_id'] = $work_package_id_from_activity;
+        }
+
+        // Processa file
+        return $this->processFilesToLocal(
+            $files,
+            [],
+            $uploadDir,
+            null,
+            $user_id,
+            $additionalInfo,
+            $category
+        );
+        
+    } catch (Exception $e) {
+        error_log("FileUploadHandler Error: " . $e->getMessage());
+        return $this->createResponse(false, 'Errore durante upload file: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Crea directory per categoria con opzionale sottocartella WP
+ * 
+ * @param string $projectName Nome progetto
+ * @param string $category Categoria file
+ * @param int|null $wp_number Numero WP (opzionale)
+ * @return string|false Path directory o false se errore
+ */
+private function createCategoryDirectory($projectName, $category, $wp_number = null) {
+    $sanitizedProjectName = $this->sanitizeDirectoryName($projectName);
+    
+    // Pluralizza nome categoria per directory
+    $categoryDir = $category . 's';
+    
+    // Path base: uploads/project-name/category/ (rimuove slash finale da base_upload_dir se presente)
+    $baseDir = rtrim($this->base_upload_dir, '/');
+    $basePath = $baseDir . '/' . $sanitizedProjectName . '/' . $categoryDir;
+    
+    // Se specificato WP, aggiungi sottocartella (solo numero, non "WP")
+    if ($wp_number !== null) {
+        $basePath .= '/WP' . $wp_number;  // Questo è corretto
+    }
+    
+    // Crea directory se non esistente
+    if (!file_exists($basePath)) {
+        if (!mkdir($basePath, 0755, true)) {
+            error_log("Failed to create directory: " . $basePath);
+            return false;
         }
     }
+    
+    // Verifica che sia effettivamente una directory e sia scrivibile
+    if (!is_dir($basePath) || !is_writable($basePath)) {
+        error_log("Directory exists but is not writable: " . $basePath);
+        return false;
+    }
+    
+    return $basePath;
+}
     
     /**
      * Recupera informazioni complete dal report
@@ -513,7 +548,22 @@ class FileUploadHandler {
             return false;
         }
     }
+    /**
+ * Sanitizza nome directory rimuovendo caratteri non validi
+ * 
+ * @param string $name Nome da sanitizzare
+ * @return string Nome sanitizzato
+ */
+private function sanitizeDirectoryName($name) {
+    // Rimuove caratteri speciali, mantiene lettere, numeri, trattini e underscore
+    $sanitized = preg_replace('/[^a-zA-Z0-9_-]/', '_', $name);
+    // Rimuove underscore multipli consecutivi
+    $sanitized = preg_replace('/_+/', '_', $sanitized);
+    // Rimuove underscore all'inizio e alla fine
+    $sanitized = trim($sanitized, '_');
     
+    return $sanitized;
+}
     /**
      * Sanitizza nome per filesystem
      */

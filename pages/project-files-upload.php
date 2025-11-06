@@ -70,6 +70,11 @@ $activities = $stmt_act->fetchAll(PDO::FETCH_ASSOC);
 // Gestione del form di upload
 $upload_success = null;
 $upload_error = null;
+require_once '../includes/classes/FileUploadHandler.php';
+$fileHandler = new FileUploadHandler($conn);
+
+$upload_success = null;
+$upload_error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['project_files'])) {
     require_once '../includes/classes/FileUploadHandler.php';
@@ -86,16 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['project_files'])) {
         $stmt->execute([$wp_id]);
         $wp_number = $stmt->fetchColumn();
     }
-
-    $result = $file_uploader->handleGenericFiles(
+    
+    $result = $fileHandler->handleGenericFiles(
         $_FILES['project_files'],
         $category,
         $project_id,
+        $user_id,
         $wp_number,
-        $activity_id,
-        $user_id
+        $activity_id
     );
-    
+
     if ($result['success']) {
         $upload_success = $result['message'];
     } else {
@@ -184,14 +189,15 @@ include '../includes/header.php';
                                     <div class="form-group">
                                         <label for="file_category">File Category</label>
                                         <select class="form-control" id="file_category" name="file_category" required>
-                                            <option value="document">Document</option>
                                             <option value="deliverable">Deliverable</option>
+                                            <option value="document">Document</option>
+                                            <option value="presentation">Presentation</option>
+                                            <option value="template">Template</option>
                                             <option value="various">Various</option>
                                         </select>
                                     </div>
 
-                                    <!-- Campi condizionali per Deliverable -->
-                                    <div id="deliverable_fields" style="display: none;">
+                                    <!-- Campi WP e Activity -->
                                         <div class="form-group">
                                             <label for="work_package_id">Work Package</label>
                                             <select class="form-control" id="work_package_id" name="work_package_id">

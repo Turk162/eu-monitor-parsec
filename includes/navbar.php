@@ -46,7 +46,8 @@ $page_titles = [
     'edit-milestone.php' => 'Edit Milestone',
     'add-risk.php' => 'Add Risk',
     'edit-risk.php' => 'Edit Risk',
-    'change-password.php' => 'Change Password'
+    'change-password.php' => 'Change Password',
+    'project-files-upload.php' => 'Files Upload Page'
     
     
 ];

@@ -179,12 +179,14 @@ $activities_stmt = $conn->prepare("
 $activities_stmt->execute([$project_id]);
 $recent_activities = $activities_stmt->fetchAll();
 
-// Get project files (general documents)
+// Get project files (official documents only)
 $files_stmt = $conn->prepare("
     SELECT uf.*, u.full_name as uploaded_by_name
     FROM uploaded_files uf
     LEFT JOIN users u ON uf.uploaded_by = u.id
-    WHERE uf.project_id = ? AND uf.report_id IS NULL
+    WHERE uf.project_id = ? 
+    AND uf.report_id IS NULL 
+    AND uf.file_category = 'official_documents'
     ORDER BY uf.uploaded_at DESC
 ");
 $files_stmt->execute([$project_id]);
