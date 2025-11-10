@@ -1,15 +1,19 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 // ===================================================================
-// LOGIN PAGE
+// FORGOT PASSWORD PAGE
 // ===================================================================
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once 'config/environment.php'; 
+require_once 'config/environment.php';
 require_once 'config/database.php';
-require_once 'config/auth.php'; 
+require_once 'config/auth.php';
+require_once 'config/email.php';
+require_once 'vendor/autoload.php';
 
 // If already logged in, redirect to dashboard
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
@@ -17,23 +21,57 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
     exit;
 }
 
-$error_message = '';
+$message = '';
+$message_type = '';
 
-// Establish database connection
-$database = new Database();
-$conn = $database->connect();
-
-// Handle login form
-if ($_POST) {
-    if (isset($_POST['username']) && isset($_POST['password'])) {
-        $auth = new Auth($conn); 
-        $result = $auth->login($_POST['username'], $_POST['password']);
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
+    $email = trim($_POST['email']);
+    
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $message = 'Please enter a valid email address';
+        $message_type = 'danger';
+    } else {
+        $database = new Database();
+        $conn = $database->connect();
+        $auth = new Auth($conn);
         
-        if ($result['success']) {
-            header('Location: pages/dashboard.php');
-            exit;
+        // Create reset token
+        $result = $auth->createPasswordResetToken($email);
+        
+        if ($result['success'] && isset($result['token'])) {
+            // Send email
+            $emailService = new EmailService();
+            
+            // Build reset link
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'];
+            $reset_link = $protocol . '://' . $host . '/reset-password.php?token=' . $result['token'];
+            
+            $email_result = $emailService->sendPasswordReset(
+                $result['user']['email'],
+                $result['user']['full_name'],
+                $reset_link,
+                date('d/m/Y H:i', strtotime($result['expires_at']))
+            );
+            
+            if ($email_result['success']) {
+                $message = 'If this email exists in our system, you will receive a password reset link shortly.';
+                $message_type = 'success';
+                
+                // In test mode, show the link
+                if (isset($email_result['reset_link'])) {
+                    $message .= '<br><br><strong>TEST MODE:</strong> Check logs/email_test.log or use this link:<br>';
+                    $message .= '<a href="' . $email_result['reset_link'] . '" target="_blank">' . $email_result['reset_link'] . '</a>';
+                }
+            } else {
+                $message = 'An error occurred. Please try again later.';
+                $message_type = 'danger';
+            }
         } else {
-            $error_message = $result['message'];
+            // Always show success message (security best practice)
+            $message = 'If this email exists in our system, you will receive a password reset link shortly.';
+            $message_type = 'success';
         }
     }
 }
@@ -45,11 +83,14 @@ if ($_POST) {
     <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="assets/img/favicon.png">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Login - EU Project Manager</title>
+    <title>Forgot Password - EU Project Manager</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     
+    <!-- Fonts and icons -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/paper-dashboard.css?v=2.0.1" rel="stylesheet" />
     
@@ -104,7 +145,7 @@ if ($_POST) {
             box-shadow: 0 0 0 0.2rem rgba(81, 202, 207, 0.25);
         }
         
-        .btn-login {
+        .btn-primary {
             width: 100%;
             height: 45px;
             border-radius: 25px;
@@ -116,7 +157,7 @@ if ($_POST) {
             transition: all 0.3s ease;
         }
         
-        .btn-login:hover {
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(81, 202, 207, 0.4);
             color: white;
@@ -124,8 +165,7 @@ if ($_POST) {
         
         .btn-link {
             color: #667eea;
-            font-size: 13px;
-            text-decoration: none;
+            font-size: 14px;
         }
         
         .btn-link:hover {
@@ -137,60 +177,56 @@ if ($_POST) {
             border-radius: 15px;
             font-size: 14px;
         }
+        
+        .back-to-login {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body class="login-page">
     <div class="login-card">
         <div class="login-header">
-            <h3><i class="nc-icon nc-badge text-info"></i> EU Project Manager<br>Parsec</h3>
-            <p>European Projects Management</p>
+            <h3><i class="nc-icon nc-key-25 text-info"></i> Forgot Password</h3>
+            <p>Enter your email to reset your password</p>
         </div>
         
-        <?php if ($error_message): ?>
-        <div class="alert alert-danger" role="alert">
-            <i class="nc-icon nc-simple-remove"></i>
-            <?= htmlspecialchars($error_message) ?>
+        <?php if ($message): ?>
+        <div class="alert alert-<?= $message_type ?>" role="alert">
+            <?= $message ?>
         </div>
         <?php endif; ?>
         
+        <?php if ($message_type !== 'success'): ?>
         <form method="POST" action="">
             <div class="form-group">
-                <input type="text" 
+                <input type="email" 
                        class="form-control" 
-                       name="username" 
-                       placeholder="Username or Email" 
+                       name="email" 
+                       placeholder="Your email address" 
                        required 
-                       value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
+                       value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>">
             </div>
             
-            <div class="form-group">
-                <input type="password" 
-                       class="form-control" 
-                       name="password" 
-                       placeholder="Password" 
-                       required>
-            </div>
-            
-            <div style="text-align: right; margin-bottom: 15px;">
-                <a href="forgot-password.php" class="btn-link">
-                    <i class="nc-icon nc-key-25"></i> Forgot password?
-                </a>
-            </div>
-            
-            <button type="submit" class="btn btn-login">
-                <i class="nc-icon nc-key-25"></i>
-                Sign In
+            <button type="submit" class="btn btn-primary">
+                <i class="nc-icon nc-email-85"></i>
+                Send Reset Link
             </button>
         </form>
+        <?php endif; ?>
+        
+        <div class="back-to-login">
+            <a href="login.php" class="btn-link">
+                <i class="nc-icon nc-minimal-left"></i>
+                Back to Login
+            </a>
+        </div>
     </div>
 
+    <!-- Core JS Files -->
     <script src="assets/js/core/jquery.min.js"></script>
     <script src="assets/js/core/popper.min.js"></script>
     <script src="assets/js/core/bootstrap.min.js"></script>
-    
-    <script>
-        document.querySelector('input[name="username"]').focus();
-    </script>
 </body>
 </html>

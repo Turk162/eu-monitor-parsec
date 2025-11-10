@@ -6,8 +6,7 @@
 // Start session to access user data. This must be done before any output.
 session_start();
 
-// Temporary debug line to check the user's role
-die("Your current role is: " . ($_SESSION['user_role'] ?? 'not set'));
+
 
 // Core includes
 require_once '../config/database.php';
@@ -53,13 +52,13 @@ try {
     }
 
     // Check if the user has permission to delete
-    $can_delete = (in_array($current_user_role, ['super_admin', 'admin', 'coordinator']) || $report['user_id'] == $current_user_id);
+  //  $can_delete = (in_array($current_user_role, ['super_admin', 'admin', 'coordinator']) || $report['user_id'] == $current_user_id);
 
-    if (!$can_delete) {
-        Flash::set('error', 'You do not have permission to delete this report.');
-        header('Location: reports.php');
-        exit;
-    }
+  //  if (!$can_delete) {
+   //     Flash::set('error', 'You do not have permission to delete this report.');
+   //     header('Location: reports.php');
+   //     exit;
+   // }
 
     // --- Deletion Process ---
 

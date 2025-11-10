@@ -199,7 +199,7 @@ $available_activities = $activities_stmt->fetchAll();
                         </div>
 
                         <div class="form-group">
-                            <label>Attach New Files (Optional)</label>
+                            <button><label>Attach New Files (Optional)</label></button>
                             <input type="file" name="report_files[]" class="form-control-file" multiple id="editReportFilesInput">
                             <small class="form-text text-muted">You can select multiple files to add to this report.</small>
                             <div id="editSelectedFiles" class="mt-2"></div>

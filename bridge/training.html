@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WP3 Training Overview - BRIDGE Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .slide {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 50px;
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.8em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .header .description {
+            color: #7f8c8d;
+            font-size: 1em;
+            font-style: italic;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .info-card h3 {
+            color: #667eea;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .info-card p {
+            color: #2c3e50;
+            font-size: 1.05em;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .topics-section {
+            margin-top: 40px;
+        }
+        
+        .topics-section h2 {
+            color: #2c3e50;
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .topics-section h2:after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 3px;
+            background: #667eea;
+            margin: 10px auto 0;
+        }
+        
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        
+        .topic-card {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 15px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .topic-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+        
+        .topic-card h3 {
+            color: #2c3e50;
+            font-size: 1.25em;
+            margin-bottom: 12px;
+            padding-left: 15px;
+            line-height: 1.4;
+        }
+        
+        .topic-card p {
+            color: #5a6c7d;
+            font-size: 0.95em;
+            line-height: 1.6;
+            padding-left: 15px;
+        }
+        
+        .topic-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+        
+        .methodology-box {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 35px;
+            border-left: 5px solid #fdcb6e;
+        }
+        
+        .methodology-box h3 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+        
+        .methodology-box p {
+            color: #2c3e50;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            padding-top: 20px;
+            border-top: 2px solid #e0e6ed;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .slide {
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="header">
+            <h1>WP3: Empathic Listening Training</h1>
+            <p class="subtitle">Training for Youth Workers & Operators</p>
+            <p class="description">Strengthening professional capacities to foster inclusion and prevent radicalization</p>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>Type</h3>
+                <p>International intensive training workshop with scenario-based learning and interactive methodologies</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Coordination</h3>
+                <p>Marta - Parsec Cooperativa Sociale (Italy)</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Duration</h3>
+                <p>5 days (4 training days + 1 travel day)</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Participants</h3>
+                <p>4 per country: 3 youth workers + 1 coordinator/trainer</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Venue</h3>
+                <p>Netherlands (hosted by Changes&Chances)</p>
+            </div>
+            
+            <div class="info-card">
+                <h3>Timeline</h3>
+                <p>June - July 2026</p>
+            </div>
+        </div>
+        
+        <div class="topics-section">
+            <h2>Training Topics & Content</h2>
+            
+            <div class="topics-grid">
+                <div class="topic-card">
+                    <h3>
+                        <span class="topic-number">1</span>
+                        Empathetic Listening & Trauma-Aware Communication
+                    </h3>
+                    <p>Building trust with young migrants through empathetic listening techniques, recognizing early signs of marginalization and disengagement, trauma-informed approaches to support vulnerable youth</p>
+                </div>
+                
+                <div class="topic-card">
+                    <h3>
+                        <span class="topic-number">2</span>
+                        Peer Education & Youth Participation
+                    </h3>
+                    <p>Facilitating peer-to-peer learning processes, empowering young migrants as active participants and co-creators, developing peer educator teams for sustainable inclusion strategies</p>
+                </div>
+                
+                <div class="topic-card">
+                    <h3>
+                        <span class="topic-number">3</span>
+                        Intercultural Mediation & Conflict Navigation
+                    </h3>
+                    <p>Enhancing intercultural communication and dialogue facilitation, conflict resolution and mediation techniques, bridging cultural differences in reception services</p>
+                </div>
+                
+                <div class="topic-card">
+                    <h3>
+                        <span class="topic-number">4</span>
+                        Safeguarding, Case Management & Referral (incl. UAMs)
+                    </h3>
+                    <p>Understanding radicalization dynamics and risk factors, implementing safeguarding protocols for vulnerable youth, effective case management and referral pathways for Unaccompanied Minors</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="methodology-box">
+            <h3>🎯 Training Methodology</h3>
+            <p>Interactive sessions combining scenario analysis, role-playing exercises, real-life case studies, and co-creation workshops. The training fosters practical, adaptable approaches across different national contexts and creates a sustainable peer support network among youth workers.</p>
+        </div>
+        
+        <div class="methodology-box" style="background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%); border-left: 5px solid #56ab91; margin-top: 25px;">
+            <h3>📖 Story Collection & Cultural Narratives as Mediation Tools</h3>
+            <p>A core component of empathetic listening: collecting and sharing personal stories from young migrants to foster intercultural understanding, build trust through narrative exchange, and use storytelling as a bridge for conflict resolution and social inclusion. Participants learn to facilitate safe spaces where young people can share their experiences, creating pathways for dialogue and mutual understanding.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>BRIDGE Project</strong> - Building Resilience through Interactive Development of Gaming and Education<br>
+            Erasmus+ KA220-YOU Cooperation Partnership in Youth</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -249,5 +249,118 @@ class Auth {
             return ['success' => false, 'message' => 'Error resetting password'];
         }
     }
+    /**
+     * Generate and store password reset token
+     */
+    public function createPasswordResetToken($email) {
+        try {
+            // Check if user exists and is active
+            $sql = "SELECT id, username, full_name, email FROM users WHERE email = ? AND is_active = 1";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+            
+            if (!$user) {
+                // Non rivelare se l'email esiste o no (sicurezza)
+                return ['success' => true, 'message' => 'If email exists, reset link has been sent'];
+            }
+            
+            // Generate secure random token
+            $token = bin2hex(random_bytes(32)); // 64 caratteri
+            
+            // Token expires in 1 hour
+$expires_at = date('Y-m-d H:i:s', time() + 3600);
+            
+            // Delete old unused tokens for this user
+            $sql = "DELETE FROM password_reset_tokens WHERE user_id = ? AND used = 0";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$user['id']]);
+            
+            // Insert new token
+            $sql = "INSERT INTO password_reset_tokens (user_id, email, token, expires_at) 
+                    VALUES (?, ?, ?, ?)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$user['id'], $email, $token, $expires_at]);
+            
+            return [
+                'success' => true,
+                'message' => 'Reset token created',
+                'token' => $token,
+                'user' => $user,
+                'expires_at' => $expires_at
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Create reset token error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error creating reset token'];
+        }
+    }
+    
+    public function verifyPasswordResetToken($token) {
+    try {
+        $sql = "SELECT prt.id, prt.user_id, prt.email, prt.token, prt.expires_at, prt.used,
+                       u.username, u.full_name, u.email as user_email, u.is_active
+                FROM password_reset_tokens prt
+                JOIN users u ON prt.user_id = u.id
+                WHERE prt.token = ? 
+                AND prt.used = 0 
+                AND u.is_active = 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$token]);
+        $result = $stmt->fetch();
+        
+        if (!$result) {
+            return ['success' => false, 'message' => 'Invalid or expired token'];
+        }
+        
+        // Check expiry in PHP instead of SQL
+        if (strtotime($result['expires_at']) < time()) {
+            return ['success' => false, 'message' => 'Token has expired'];
+        }
+        
+        return [
+            'success' => true,
+            'user_id' => $result['user_id'],
+            'email' => $result['user_email'],
+            'username' => $result['username'],
+            'full_name' => $result['full_name']
+        ];
+        
+    } catch (PDOException $e) {
+        error_log("Verify reset token error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error verifying token'];
+    }
+}
+    /**
+     * Reset password using token
+     */
+    public function resetPasswordWithToken($token, $new_password) {
+        try {
+            // Verify token
+            $verification = $this->verifyPasswordResetToken($token);
+            if (!$verification['success']) {
+                return $verification;
+            }
+            
+            $user_id = $verification['user_id'];
+            
+            // Update password
+            $password_hash = password_hash($new_password, PASSWORD_DEFAULT);
+            $sql = "UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$password_hash, $user_id]);
+            
+            // Mark token as used
+            $sql = "UPDATE password_reset_tokens SET used = 1 WHERE token = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$token]);
+            
+            return ['success' => true, 'message' => 'Password reset successfully'];
+            
+        } catch (PDOException $e) {
+            error_log("Reset password with token error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error resetting password'];
+        }
+    }
 }
 ?>  

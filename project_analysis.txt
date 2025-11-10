@@ -1,0 +1,189 @@
+# Analisi del Progetto EU Project Manager
+
+Questo documento fornisce una panoramica della struttura del progetto, delle tecnologie utilizzate e della funzione di ciascun file principale.
+
+## Struttura delle Cartelle
+
+/var/www/eu-project-manager/
+├───.gitignore
+├───DOCUMENTAZIONE TECNICA EU MONITOR.md
+├───eu_projectmanager.txt
+├───index.php
+├───login.php
+├───logout.php
+├───manuale_utente_partner.md
+├───newpasw.php
+├───project_analysis.md
+├───test_delete_report_db.php
+├───test_upload_drive.php
+├───.git/...
+├───.vscode/
+├───api/
+│   ├───delete_file.php
+│   ├───get_activity_details.php
+│   ├───get_milestone_details.php
+│   ├───get_project_partners.php
+│   ├───get_project_work_packages.php
+│   ├───get_report_details.php
+│   ├───get_work_package_details.php
+│   ├───mark_alert_read.php
+│   ├───projects.php
+│   └───update_password.php
+├───assets/
+│   ├───css/
+│   ├───demo/
+│   ├───fonts/
+│   ├───img/
+│   ├───js/
+│   └───scss/
+├───bridge/
+│   ├───bridge_calendar_puzzle.html
+│   ├───bridgeicebreaking1.html
+│   └───training.html
+├───config/
+│   ├───auth.php
+│   ├───database.example.php
+│   ├───environment.php
+│   └───settings.php
+├───includes/
+│   ├───footer.php
+│   ├───functions.php
+│   ├───header.php
+│   ├───navbar.php
+│   ├───sidebar.php
+│   └───classes/
+│       ├───AlertSystem.php
+│       ├───FileUploadHandler.php
+│       └───RiskCalculator.php
+├───pages/
+│   ├───activities.php
+│   ├───activity-view.php
+│   ├───add-project-milestones.php
+│   ├───add-project-partners.php
+│   ├───add-project-workpackages.php
+│   ├───admin_reports.php
+│   ├───calendar.php
+│   ├───change-password.php
+│   ├───create-project.php
+│   ├───create-report.php
+│   ├───dashboard.php
+│   ├───delete-project.php
+│   ├───delete-report.php
+│   ├───delete-user.php
+│   ├───edit-report.php
+│   ├───edit-user.php
+│   ├───layout-debug-test.php
+│   ├───manage-partners-budget.php
+│   ├───manage-project-risks.php
+│   ├───partner-budget.php
+│   ├───partners.php
+│   ├───project-detail.php
+│   ├───project-edit.php
+│   ├───project-files-upload.php
+│   ├───project-files.php
+│   ├───project-gantt.php
+│   ├───projects.php
+│   ├───reports.php
+│   ├───risk-dashboard.php
+│   ├───test-file-system.php
+│   ├───upload-project-files.php
+│   └───users.php
+├───uploads/
+└───vendor/
+
+## Descrizione dei File e delle Cartelle
+
+### Cartella Principale (`/`)
+
+- **index.php**: Punto di ingresso dell'applicazione. Reindirizza gli utenti loggati alla dashboard e gli altri alla pagina di login.
+- **login.php**: Pagina di login per l'autenticazione degli utenti.
+- **logout.php**: Script per terminare la sessione utente e reindirizzare alla pagina di login.
+- **newpasw.php**: Script di utilità per generare hash di password.
+- **DOCUMENTAZIONE TECNICA EU MONITOR.md**: Documentazione tecnica del progetto.
+- **manuale_utente_partner.md**: Manuale utente per i partner di progetto.
+
+### `api/`
+
+Questa cartella contiene gli endpoint API per le richieste AJAX dal frontend.
+
+- **delete_file.php**: Gestisce l'eliminazione di un file.
+- **get_activity_details.php**: Restituisce i dettagli di una specifica attività.
+- **get_milestone_details.php**: Restituisce i dettagli di una specifica milestone.
+- **get_project_partners.php**: Restituisce l'elenco dei partner di un progetto.
+- **get_project_work_packages.php**: Restituisce l'elenco dei work package di un progetto.
+- **get_report_details.php**: Restituisce i dettagli di un report.
+- **get_work_package_details.php**: Restituisce i dettagli di un work package.
+- **mark_alert_read.php**: Segna un avviso come letto.
+- **update_password.php**: Aggiorna la password di un utente.
+
+### `assets/`
+
+Contiene tutte le risorse statiche del frontend.
+
+- **css/**: Fogli di stile CSS, inclusi Bootstrap e stili personalizzati.
+- **js/**: File JavaScript, inclusi jQuery, Paper Dashboard e script specifici per le pagine.
+- **img/**: Immagini utilizzate nell'interfaccia.
+- **fonts/**: Font personalizzati.
+- **scss/**: Codice sorgente SASS per i fogli di stile.
+
+### `config/`
+
+File di configurazione dell'applicazione.
+
+- **auth.php**: Classe per la gestione dell'autenticazione e delle autorizzazioni degli utenti.
+- **database.php**: Classe per la connessione al database. Gestisce ambienti di sviluppo e produzione.
+- **database.example.php**: File di esempio per la configurazione del database.
+- **environment.php**: Definisce l'ambiente di esecuzione (locale o produzione) e carica la configurazione del database appropriata.
+- **settings.php**: File per impostazioni generali (attualmente vuoto).
+
+### `includes/`
+
+Moduli PHP riutilizzabili.
+
+- **header.php**: Intestazione comune a tutte le pagine, include la configurazione iniziale, l'autenticazione e i tag `<head>`.
+- **footer.php**: Piè di pagina comune, include i file JavaScript principali.
+- **sidebar.php**: Barra laterale di navigazione.
+- **navbar.php**: Barra di navigazione superiore.
+- **functions.php**: Raccolta di funzioni di utilità utilizzate in tutto il progetto (es. formattazione date, gestione avvisi, ecc.).
+- **classes/**:
+    - **AlertSystem.php**: Classe per la gestione e l'invio di avvisi (email e dashboard).
+    - **FileUploadHandler.php**: Classe per la gestione del caricamento di file.
+    - **RiskCalculator.php**: Classe per il calcolo e l'aggiornamento dei punteggi di rischio del progetto.
+
+### `pages/`
+
+Pagine principali dell'applicazione.
+
+- **dashboard.php**: Pagina principale dopo il login, mostra una panoramica dei progetti e delle scadenze.
+- **projects.php**: Elenco dei progetti a cui l'utente ha accesso.
+- **project-detail.php**: Pagina di dettaglio di un singolo progetto, con work package, partner, milestone, ecc.
+- **create-project.php**: Form per la creazione di un nuovo progetto.
+- **add-project-partners.php**: Form per aggiungere partner a un progetto.
+- **add-project-workpackages.php**: Form per aggiungere work package e attività a un progetto.
+- **add-project-milestones.php**: Form per aggiungere milestone a un progetto.
+- **project-edit.php**: Pagina per modificare i dettagli di un progetto.
+- **activities.php**: Pagina per la gestione e la visualizzazione delle attività.
+- **activity-view.php**: Pagina di dettaglio di una singola attività.
+- **reports.php**: Elenco dei report di attività.
+- **create-report.php**: Form per la creazione di un nuovo report di attività.
+- **edit-report.php**: Pagina per modificare un report esistente.
+- **delete-project.php**: Script per l'eliminazione di un progetto.
+- **delete-report.php**: Script per l'eliminazione di un report.
+- **project-gantt.php**: Visualizzazione del diagramma di Gantt per un progetto.
+- **partners.php**: Gestione dei partner di progetto.
+- **users.php**: Gestione degli utenti (per amministratori).
+- **change-password.php**: Pagina per la modifica della password utente.
+- **risk-dashboard.php**: Dashboard per la visualizzazione dei rischi di progetto.
+- **manage-project-risks.php**: Pagina per la gestione dei rischi di un progetto.
+- **partner-budget.php**: Visualizzazione del budget di un partner per un progetto.
+- **manage-partners-budget.php**: Pagina per la gestione dettagliata dei budget dei partner.
+- **project-files.php**: Pagina per la visualizzazione dei file di un progetto.
+- **project-files-upload.php**: Form per il caricamento di file di progetto.
+
+### `uploads/`
+
+Cartella per i file caricati dagli utenti.
+
+### `vendor/`
+
+Dipendenze PHP installate tramite Composer.
