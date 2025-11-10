@@ -37,8 +37,8 @@ private function setupProduction() {
     $this->mailer->isSMTP();
     $this->mailer->Host = 'out.postassl.it';
     $this->mailer->SMTPAuth = true;
-    $this->mailer->Username = 'project@cooperativaparsec.it';
-    $this->mailer->Password = 'Parsec@2025';
+    $this->mailer->Username = '';
+    $this->mailer->Password = '';
     $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $this->mailer->Port = 465;
     $this->mailer->SMTPDebug = 0; // Disable debug in production
